@@ -1,0 +1,45 @@
+name: fitness_app
+description: Eine Fitness-App mit strukturierter Architektur.
+
+publish_to: 'none' # Verhindert die Veröffentlichung auf pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI-Pakete
+  cupertino_icons: ^1.0.5
+  
+  # Zustandsmanagement
+  provider: ^6.0.5
+  
+  # Hilfsbibliotheken (können nach Bedarf erweitert werden)
+  intl: ^0.18.1
+  shared_preferences: ^2.2.0
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  shared_preferences: ^2.5.3
+  uuid: ^4.5.1
+  provider: ^6.1.4
+
+flutter:
+  uses-material-design: true
+  
+  # Hier kannst du später Assets hinzufügen:
+  # assets:
+  #   - assets/images/
+  #   - assets/icons/
+  
+  # Hier kannst du später Schriftarten hinzufügen:
+  # fonts:
+  #   - family: Schmalfette
+  #     fonts:
+  #       - asset: fonts/Schmalfette.ttf

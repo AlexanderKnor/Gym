@@ -113,7 +113,7 @@ class RuleListWidget extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Regeln werden von oben nach unten ausgewertet. Pfeile zum Ändern der Reihenfolge nutzen.',
+                  'Regeln werden wie if/else-if von oben nach unten ausgewertet. Nur die erste zutreffende Regel wird angewendet.',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,

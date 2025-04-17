@@ -28,12 +28,7 @@ class ProgressionManagerScreenContent extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Progression Manager'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => _showHelpDialog(context),
-          ),
-        ],
+        // Info-Button entfernt
       ),
       body: provider.zeigeRegelEditor || provider.zeigeProfilEditor
           ? _buildEditorScreen(context, provider)
@@ -51,15 +46,9 @@ class ProgressionManagerScreenContent extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             children: [
-              // Übungsname und Info-Karte
-              _buildExerciseHeader(context),
-              const SizedBox(height: 16),
+              // Demo Übung Header wurde komplett entfernt
 
-              // Sätze als Karten anzeigen
-              for (final satz in provider.saetze) SetCardWidget(satz: satz),
-              const SizedBox(height: 24),
-
-              // Aktives Profil anzeigen
+              // Aktives Profil anzeigen - nach oben verschoben
               if (profil != null)
                 Card(
                   elevation: 1,
@@ -98,6 +87,10 @@ class ProgressionManagerScreenContent extends StatelessWidget {
                 ),
               const SizedBox(height: 16),
 
+              // Sätze als Karten anzeigen
+              for (final satz in provider.saetze) SetCardWidget(satz: satz),
+              const SizedBox(height: 24),
+
               // Button zum Öffnen des detaillierten Progression Manager Screens
               ElevatedButton.icon(
                 onPressed: () {
@@ -133,55 +126,6 @@ class ProgressionManagerScreenContent extends StatelessWidget {
       return const ProfileEditorScreen();
     }
     return const SizedBox.shrink();
-  }
-
-  Widget _buildExerciseHeader(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.blue[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.fitness_center,
-                color: Colors.blue,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bankdrücken',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Brustübung • Hauptbewegung',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildCompletedTrainingCard(BuildContext context) {
@@ -318,46 +262,6 @@ class ProgressionManagerScreenContent extends StatelessWidget {
                 ),
               ],
             ),
-    );
-  }
-
-  void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Progression Manager Hilfe'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Mit dem Progression Manager kannst du deine Trainingsgewichte intelligent steigern.',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                  '1. Trage für jeden Satz deine Werte ein (Gewicht, Wiederholungen, RIR)'),
-              Text('2. Nach Abschluss eines Satzes wird der nächste aktiv'),
-              Text(
-                  '3. Mit „Empfehlung übernehmen" kannst du die KI-gestützten Werte verwenden'),
-              Text(
-                  '4. Im detaillierten Progression Manager kannst du eigene Profile erstellen und anpassen'),
-              SizedBox(height: 8),
-              Text(
-                'RIR = Reps in Reserve (wie viele Wiederholungen du noch schaffst)',
-                style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Verstanden'),
-          ),
-        ],
-      ),
     );
   }
 }

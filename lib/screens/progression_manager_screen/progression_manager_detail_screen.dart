@@ -53,39 +53,7 @@ class ProgressionManagerDetailScreenContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Einführungstext
-          Card(
-            elevation: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text(
-                        'Über den Progression Manager',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Hier kannst du detaillierte Einstellungen für dein Progressionsverhalten vornehmen. '
-                    'Wähle ein Profil aus oder erstelle ein neues, und passe die Regeln an, die bestimmen, '
-                    'wie deine Trainingsgewichte über die Zeit gesteigert werden.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
+          // "Über den Progression Manager" Card wurde entfernt
 
           // Profilauswahl
           const Text(

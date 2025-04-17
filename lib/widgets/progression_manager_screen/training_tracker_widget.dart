@@ -24,13 +24,18 @@ class TrainingTrackerWidget extends StatelessWidget {
                 // Titel
                 const Center(
                   child: Text(
-                    'Bankdrücken Tracking',
+                    'Demo Übung Tracking', // Geändert von Bankdrücken zu Demo Übung
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 16),
+
+                // Profilinformation wird jetzt oben angezeigt
+                _buildExplanationPanel(context),
 
                 const SizedBox(height: 16),
 
@@ -72,9 +77,6 @@ class TrainingTrackerWidget extends StatelessWidget {
                 const SetTableWidget(),
 
                 const SizedBox(height: 16),
-
-                // Erklärungspanel
-                _buildExplanationPanel(context),
               ],
             ),
           ),
@@ -120,7 +122,6 @@ class TrainingTrackerWidget extends StatelessWidget {
 
   Widget _buildActiveTrainingUI(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
-    final profil = provider.aktuellesProfil;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -137,21 +138,6 @@ class TrainingTrackerWidget extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.blue,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.purple[100],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'Profil: ${profil?.name ?? ""}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.purple[700],
-                ),
               ),
             ),
           ],
@@ -188,21 +174,31 @@ class TrainingTrackerWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Colors.purple[50],
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Colors.purple[300]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Aktuelles Progressionsmodell: ${profil?.name ?? ""}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Icon(Icons.trending_up, color: Colors.purple[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Aktives Progressionsmodell: ${profil?.name ?? ""}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple[800],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
             profil?.description ?? "",
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(color: Colors.purple[600], fontSize: 12),
           ),
           const SizedBox(height: 8),
           Row(
@@ -216,7 +212,7 @@ class TrainingTrackerWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[500],
+                        color: Colors.purple[500],
                       ),
                     ),
                     Text(
@@ -235,7 +231,7 @@ class TrainingTrackerWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[500],
+                        color: Colors.purple[500],
                       ),
                     ),
                     Text(
@@ -254,7 +250,7 @@ class TrainingTrackerWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[500],
+                        color: Colors.purple[500],
                       ),
                     ),
                     Text(

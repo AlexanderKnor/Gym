@@ -25,14 +25,24 @@ class SetTableWidget extends StatelessWidget {
           final istAktiv = satz.id == provider.aktiverSatz &&
               !provider.trainingAbgeschlossen;
           final istAbgeschlossen = satz.abgeschlossen;
+          final sollEmpfehlungAnzeigen =
+              provider.sollEmpfehlungAnzeigen(satz.id);
 
-          // Empfehlung berechnen wenn es ein aktiver Satz ist
-          final empfehlung =
-              istAktiv ? provider.berechneProgression(satz) : null;
-
-          // 1RM berechnen
+          // 1RM für aktuelle Werte berechnen
           final aktueller1RM = OneRMCalculatorService.calculate1RM(
               satz.kg, satz.wiederholungen, satz.rir);
+
+          // 1RM für empfohlene Werte berechnen, wenn vorhanden und die Empfehlung angezeigt werden soll
+          double? empfohlener1RM;
+          if (istAktiv &&
+              sollEmpfehlungAnzeigen &&
+              satz.empfehlungBerechnet &&
+              satz.empfKg != null &&
+              satz.empfWiederholungen != null &&
+              satz.empfRir != null) {
+            empfohlener1RM = OneRMCalculatorService.calculate1RM(
+                satz.empfKg!, satz.empfWiederholungen!, satz.empfRir!);
+          }
 
           return DataRow(
             color: MaterialStateProperty.resolveWith<Color?>(
@@ -80,10 +90,12 @@ class SetTableWidget extends StatelessWidget {
                         },
                       ),
                     ),
-                    if (istAktiv && empfehlung != null) ...[
+                    if (sollEmpfehlungAnzeigen &&
+                        istAktiv &&
+                        satz.empfKg != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        '→ ${empfehlung['kg']}kg',
+                        '→ ${satz.empfKg}kg',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.purple[600],
@@ -123,10 +135,12 @@ class SetTableWidget extends StatelessWidget {
                         },
                       ),
                     ),
-                    if (istAktiv && empfehlung != null) ...[
+                    if (sollEmpfehlungAnzeigen &&
+                        istAktiv &&
+                        satz.empfWiederholungen != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        '→ ${empfehlung['wiederholungen']}',
+                        '→ ${satz.empfWiederholungen}',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.purple[600],
@@ -165,10 +179,12 @@ class SetTableWidget extends StatelessWidget {
                         },
                       ),
                     ),
-                    if (istAktiv && empfehlung != null) ...[
+                    if (sollEmpfehlungAnzeigen &&
+                        istAktiv &&
+                        satz.empfRir != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        '→ ${empfehlung['rir']}',
+                        '→ ${satz.empfRir}',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.purple[600],
@@ -180,7 +196,7 @@ class SetTableWidget extends StatelessWidget {
                 ),
               ),
 
-              // 1RM
+              // 1RM - mit einheitlicher Anzeigelogik für den empfohlenen 1RM
               DataCell(
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -190,15 +206,14 @@ class SetTableWidget extends StatelessWidget {
                       aktueller1RM > 0 ? aktueller1RM.toStringAsFixed(1) : '-',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    if (istAktiv &&
-                        empfehlung != null &&
-                        aktueller1RM > 0 &&
-                        empfehlung['neuer1RM'] > 0) ...[
+                    if (sollEmpfehlungAnzeigen &&
+                        empfohlener1RM != null &&
+                        aktueller1RM > 0) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Text(
-                            '→ ${empfehlung['neuer1RM'].toStringAsFixed(1)}',
+                            '→ ${empfohlener1RM.toStringAsFixed(1)}',
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.purple[600],
@@ -206,14 +221,17 @@ class SetTableWidget extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 2),
-                          Text(
-                            '(+${((empfehlung['neuer1RM'] / aktueller1RM - 1) * 100).toStringAsFixed(1)}%)',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.green[600],
-                              fontWeight: FontWeight.bold,
+                          if ((empfohlener1RM - aktueller1RM).abs() > 0.1)
+                            Text(
+                              '(${empfohlener1RM > aktueller1RM ? '+' : ''}${((empfohlener1RM / aktueller1RM - 1) * 100).toStringAsFixed(1)}%)',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: empfohlener1RM > aktueller1RM
+                                    ? Colors.green[600]
+                                    : Colors.red[600],
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ],

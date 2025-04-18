@@ -1,17 +1,57 @@
-// lib/widgets/progression_manager_screen/components/modals/rule_editor_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../../../models/progression_manager_screen/progression_variable_model.dart';
 
+/// Ein universeller Editor für Progressionsregeln, der sowohl als eigenständiger Screen
+/// als auch als Dialog verwendet werden kann.
 class RuleEditorScreen extends StatelessWidget {
-  const RuleEditorScreen({Key? key}) : super(key: key);
+  /// Bestimmt, ob die Komponente als Dialog oder als Screen dargestellt wird
+  final bool isDialog;
+
+  const RuleEditorScreen({
+    Key? key,
+    this.isDialog = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
 
+    // Dialog-Modus: Im Stack mit abgedunkeltem Hintergrund
+    if (isDialog) {
+      return Stack(
+        children: [
+          // Abgedunkelter Hintergrund
+          GestureDetector(
+            onTap: provider.closeRuleEditor,
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+
+          // Dialog-Inhalt
+          Center(
+            child: Card(
+              elevation: 4,
+              margin: const EdgeInsets.all(24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 800),
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: RuleEditorContent(isDialog: true),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Screen-Modus: Als vollständiger Screen mit AppBar
     return WillPopScope(
       onWillPop: () async {
         provider.closeRuleEditor();
@@ -45,27 +85,74 @@ class RuleEditorScreen extends StatelessWidget {
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Regeltyp-Auswahl
-                _buildRuleTypeSelector(context, provider),
-                const SizedBox(height: 24),
-
-                // Bedingungen - nur anzeigen wenn Regeltyp "condition" ist
-                if (provider.regelTyp == 'condition')
-                  _buildConditionsSection(context, provider),
-
-                if (provider.regelTyp == 'condition')
-                  const SizedBox(height: 24),
-
-                // Aktionen - immer anzeigen
-                _buildActionsSection(context, provider),
-              ],
-            ),
+            child: RuleEditorContent(isDialog: false),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Der eigentliche Inhalt des Regel-Editors, der sowohl im Dialog als auch im Screen verwendet wird
+class RuleEditorContent extends StatelessWidget {
+  final bool isDialog;
+
+  const RuleEditorContent({
+    Key? key,
+    required this.isDialog,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<ProgressionManagerProvider>(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Nur im Dialog-Modus Header mit Schließen-Button anzeigen
+        if (isDialog) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                provider.bearbeiteteRegel != null
+                    ? 'Regel bearbeiten'
+                    : 'Neue Regel hinzufügen',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: provider.closeRuleEditor,
+              ),
+            ],
+          ),
+          const Divider(),
+          const SizedBox(height: 16),
+        ],
+
+        // Regeltyp-Auswahl
+        _buildRuleTypeSelector(context, provider),
+        const SizedBox(height: 24),
+
+        // Bedingungen - nur anzeigen wenn Regeltyp "condition" ist
+        if (provider.regelTyp == 'condition')
+          _buildConditionsSection(context, provider),
+
+        if (provider.regelTyp == 'condition') const SizedBox(height: 24),
+
+        // Aktionen - immer anzeigen
+        _buildActionsSection(context, provider),
+
+        // Buttons am Ende - im Dialog-Modus anders als im Screen
+        const SizedBox(height: 24),
+        if (isDialog)
+          _buildDialogButtons(context, provider)
+        else
+          _buildScreenButtons(context, provider),
+      ],
     );
   }
 
@@ -959,6 +1046,41 @@ class RuleEditorScreen extends StatelessWidget {
     );
   }
 
+  // Buttons für Dialog-Modus
+  Widget _buildDialogButtons(
+      BuildContext context, ProgressionManagerProvider provider) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OutlinedButton(
+          onPressed: provider.closeRuleEditor,
+          child: const Text('Abbrechen'),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: provider.saveRule,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.purple,
+          ),
+          child: Text(
+            provider.bearbeiteteRegel != null
+                ? 'Regel aktualisieren'
+                : 'Regel hinzufügen',
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Buttons für Screen-Modus - optional, da bereits in der AppBar vorhanden
+  Widget _buildScreenButtons(
+      BuildContext context, ProgressionManagerProvider provider) {
+    // Im Screen-Modus werden die Hauptbuttons in der AppBar angezeigt
+    // Zusätzliche Aktionen können hier hinzugefügt werden, falls nötig
+    return const SizedBox.shrink();
+  }
+
+  // Hilfsmethode zum Finden verwandter Variablen für die rechte Seite einer Bedingung
   List<ProgressionVariableModel> _getRelatedVariables(
       ProgressionManagerProvider provider, String leftVariableId) {
     final relatedIds = <String>[];

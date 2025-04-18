@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import 'progression_manager_detail_screen.dart';
 import '../../widgets/progression_manager_screen/components/set_card_widget.dart';
-import '../../widgets/progression_manager_screen/components/modals/rule_editor_screen.dart';
-import '../../widgets/progression_manager_screen/components/modals/profile_editor_screen.dart';
+import '../../screens/progression_manager_screen/rule_editor_screen.dart';
+import '../../screens/progression_manager_screen/profile_editor_screen.dart';
 
 class ProgressionManagerScreen extends StatelessWidget {
   const ProgressionManagerScreen({Key? key}) : super(key: key);

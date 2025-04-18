@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/progression_manager_screen/progression_manager_provider.dart';
 
+/// Ein universeller Editor für Progressionsprofile, der sowohl als eigenständiger Screen
+/// als auch als Dialog verwendet werden kann.
 class ProfileEditorScreen extends StatelessWidget {
-  const ProfileEditorScreen({Key? key}) : super(key: key);
+  /// Bestimmt, ob die Komponente als Dialog oder als Screen dargestellt wird
+  final bool isDialog;
+
+  const ProfileEditorScreen({
+    Key? key,
+    this.isDialog = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +22,41 @@ class ProfileEditorScreen extends StatelessWidget {
       return const SizedBox();
     }
 
+    // Dialog-Modus: Im Stack mit abgedunkeltem Hintergrund
+    if (isDialog) {
+      return Stack(
+        children: [
+          // Abgedunkelter Hintergrund
+          GestureDetector(
+            onTap: provider.closeProfileEditor,
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+
+          // Dialog-Inhalt
+          Center(
+            child: Card(
+              elevation: 4,
+              margin: const EdgeInsets.all(24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                padding: const EdgeInsets.all(24),
+                child: ProfileEditorContent(
+                  profil: profil,
+                  isDialog: true,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Screen-Modus: Als vollständiger Screen mit AppBar
     return WillPopScope(
       onWillPop: () async {
         provider.closeProfileEditor();
@@ -44,17 +87,69 @@ class ProfileEditorScreen extends StatelessWidget {
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBasicInfoSection(context, provider, profil),
-                const SizedBox(height: 24),
-                _buildConfigSection(context, provider, profil),
-              ],
+            child: ProfileEditorContent(
+              profil: profil,
+              isDialog: false,
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Der eigentliche Inhalt des Profil-Editors, der sowohl im Dialog als auch im Screen verwendet wird
+class ProfileEditorContent extends StatelessWidget {
+  final dynamic profil;
+  final bool isDialog;
+
+  const ProfileEditorContent({
+    Key? key,
+    required this.profil,
+    required this.isDialog,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<ProgressionManagerProvider>(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Nur im Dialog-Modus Header mit Schließen-Button anzeigen
+        if (isDialog) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Profil bearbeiten: ${profil.name}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: provider.closeProfileEditor,
+              ),
+            ],
+          ),
+          const Divider(),
+          const SizedBox(height: 16),
+        ],
+
+        // Gemeinsame Inhalte
+        _buildBasicInfoSection(context, provider, profil),
+        const SizedBox(height: 24),
+        _buildConfigSection(context, provider, profil),
+
+        // Buttons am Ende - im Dialog-Modus anders als im Screen
+        const SizedBox(height: 24),
+        if (isDialog)
+          _buildDialogButtons(context, provider)
+        else
+          _buildScreenButtons(context, provider),
+      ],
     );
   }
 
@@ -287,5 +382,35 @@ class ProfileEditorScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Buttons für Dialog-Modus
+  Widget _buildDialogButtons(
+      BuildContext context, ProgressionManagerProvider provider) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OutlinedButton(
+          onPressed: provider.closeProfileEditor,
+          child: const Text('Abbrechen'),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: provider.saveProfile,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.purple,
+          ),
+          child: const Text('Profil speichern'),
+        ),
+      ],
+    );
+  }
+
+  // Buttons für Screen-Modus - optional, da bereits in der AppBar vorhanden
+  Widget _buildScreenButtons(
+      BuildContext context, ProgressionManagerProvider provider) {
+    // Im Screen-Modus werden die Hauptbuttons in der AppBar angezeigt
+    // Zusätzliche Aktionen können hier hinzugefügt werden, falls nötig
+    return const SizedBox.shrink();
   }
 }

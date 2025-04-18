@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../widgets/progression_manager_screen/components/progression_profile_selector_widget.dart';
 import '../../widgets/progression_manager_screen/components/rule_list_widget.dart';
-import '../../widgets/progression_manager_screen/components/modals/rule_editor_screen.dart';
-import '../../widgets/progression_manager_screen/components/modals/profile_editor_screen.dart';
+import '../../screens/progression_manager_screen/rule_editor_screen.dart';
+import '../../screens/progression_manager_screen/profile_editor_screen.dart';
 
 class ProgressionManagerDetailScreen extends StatelessWidget {
   final ProgressionManagerProvider provider;

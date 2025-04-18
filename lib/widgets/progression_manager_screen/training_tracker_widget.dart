@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import 'components/set_table_widget.dart';
 import 'components/progression_config_panel_widget.dart';
-import 'components/modals/rule_editor_dialog.dart';
-import 'components/modals/profile_editor_dialog.dart';
+import '../../screens/progression_manager_screen/rule_editor_screen.dart';
+import '../../screens/progression_manager_screen/profile_editor_screen.dart';
 
 class TrainingTrackerWidget extends StatelessWidget {
   const TrainingTrackerWidget({Key? key}) : super(key: key);
@@ -83,9 +83,9 @@ class TrainingTrackerWidget extends StatelessWidget {
         ),
 
         // Dialoge
-        if (provider.zeigeRegelEditor) const RuleEditorDialog(),
+        if (provider.zeigeRegelEditor) const RuleEditorScreen(),
 
-        if (provider.zeigeProfilEditor) const ProfileEditorDialog(),
+        if (provider.zeigeProfilEditor) const ProfileEditorScreen(),
       ],
     );
   }

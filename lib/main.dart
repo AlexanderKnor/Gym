@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import 'firebase_options.dart';
 import 'providers/shared/navigation_provider.dart';
 import 'providers/create_training_plan_screen/create_training_plan_provider.dart';
 import 'providers/auth/auth_provider.dart';
+import 'providers/training_plans_screen/training_plans_screen_provider.dart';
 import 'screens/auth/auth_checker_screen.dart';
 
 void main() async {
@@ -15,9 +17,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // Initialize other services (like SharedPreferences)
-  // await SharedPreferences.getInstance();
 
   runApp(const MyApp());
 }
@@ -33,18 +32,18 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => CreateTrainingPlanProvider(),
         ),
-        // Add Auth Provider
         ChangeNotifierProvider(
           create: (context) => AuthProvider(),
         ),
-        // Add other providers as needed
+        ChangeNotifierProvider(
+          create: (context) => TrainingPlansProvider(),
+        ),
       ],
       child: MaterialApp(
         title: 'Prover',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
-          // Additional theming options
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
@@ -56,9 +55,8 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        // Use AuthCheckerScreen as entry point
         home: const AuthCheckerScreen(),
-        debugShowCheckedModeBanner: false, // Remove debug banner
+        debugShowCheckedModeBanner: false,
       ),
     );
   }

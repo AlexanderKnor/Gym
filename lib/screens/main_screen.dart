@@ -65,6 +65,7 @@ class MainScreen extends StatelessWidget {
       body: screens[navigationProvider.currentIndex],
       bottomNavigationBar: const BottomNavigationBarWidget(),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'main_create_plan', // Hero-Tag hinzugefügt
         onPressed: () {
           // Navigation to create a new training plan
           Navigator.of(context).push(

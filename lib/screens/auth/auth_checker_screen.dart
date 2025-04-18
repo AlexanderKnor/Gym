@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
+import '../../providers/shared/navigation_provider.dart';
 import '../main_screen.dart';
 import 'login_screen.dart';
 
@@ -14,6 +15,11 @@ class AuthCheckerScreen extends StatelessWidget {
     // Based on auth status, show the appropriate screen
     switch (authProvider.status) {
       case AuthStatus.authenticated:
+        // Stelle sicher, dass Navigation auf den ersten Tab (Training) gesetzt ist
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Provider.of<NavigationProvider>(context, listen: false)
+              .setCurrentIndex(0);
+        });
         return const MainScreen();
       case AuthStatus.unauthenticated:
         return const LoginScreen();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
+import '../../providers/shared/navigation_provider.dart';
 import 'register_screen.dart';
 import 'reset_password_screen.dart';
 
@@ -27,6 +28,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      // Stelle sicher, dass die Navigation auf Tab 0 (Training) gesetzt wird
+      final navigationProvider =
+          Provider.of<NavigationProvider>(context, listen: false);
+      navigationProvider.setCurrentIndex(0);
+
       final success = await authProvider.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),

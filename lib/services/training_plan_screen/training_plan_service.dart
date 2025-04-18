@@ -93,7 +93,7 @@ class TrainingPlanService {
     }
   }
 
-  // NEUE METHODE: Trainingsplan aus Firestore löschen
+  // Trainingsplan aus Firestore löschen
   Future<bool> deletePlan(String planId) async {
     try {
       final userId = _getUserId();
@@ -173,6 +173,8 @@ class TrainingPlanService {
                           'secondaryMuscleGroup': exercise.secondaryMuscleGroup,
                           'standardIncrease': exercise.standardIncrease,
                           'restPeriodSeconds': exercise.restPeriodSeconds,
+                          'progressionProfileId':
+                              exercise.progressionProfileId, // Neu hinzugefügt
                         })
                     .toList(),
               })
@@ -194,6 +196,8 @@ class TrainingPlanService {
           secondaryMuscleGroup: exerciseJson['secondaryMuscleGroup'],
           standardIncrease: exerciseJson['standardIncrease'].toDouble(),
           restPeriodSeconds: exerciseJson['restPeriodSeconds'],
+          progressionProfileId:
+              exerciseJson['progressionProfileId'], // Neu hinzugefügt
         );
       }).toList();
 

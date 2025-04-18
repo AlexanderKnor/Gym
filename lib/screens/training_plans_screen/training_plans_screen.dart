@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/training_plans_screen/training_plans_screen_provider.dart';
+import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../create_training_plan_screen/create_training_plan_screen.dart';
+import '../create_training_plan_screen/training_day_editor_screen.dart';
 
 class TrainingPlansScreen extends StatelessWidget {
   const TrainingPlansScreen({Key? key}) : super(key: key);
@@ -33,7 +35,7 @@ class TrainingPlansScreen extends StatelessWidget {
                   },
                 ),
       floatingActionButton: FloatingActionButton(
-        heroTag: 'plans_add_plan', // Hero-Tag hinzugefügt
+        heroTag: 'plans_add_plan',
         onPressed: () {
           Navigator.push(
             context,
@@ -241,6 +243,14 @@ class TrainingPlansScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // Bearbeiten-Button
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _navigateToEditPlan(context, plan),
+                  color: Colors.blue,
+                  tooltip: 'Bearbeiten',
+                ),
+
                 // Löschen-Button
                 IconButton(
                   icon: const Icon(Icons.delete),
@@ -253,15 +263,8 @@ class TrainingPlansScreen extends StatelessWidget {
                 if (!plan.isActive)
                   TextButton.icon(
                     onPressed: () async {
-                      final success =
-                          await provider.activateTrainingPlan(plan.id);
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Trainingsplan aktiviert'),
-                          ),
-                        );
-                      }
+                      await provider.activateTrainingPlan(plan.id);
+                      // Entferne die SnackBar-Anzeige
                     },
                     icon: const Icon(Icons.check_circle_outline),
                     label: const Text('Aktivieren'),
@@ -270,6 +273,25 @@ class TrainingPlansScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Neue Methode für die Navigation zum Editor
+  void _navigateToEditPlan(BuildContext context, TrainingPlanModel plan) {
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+
+    // Plan in den Provider laden und direkt zum Editor navigieren
+    createProvider.skipToEditor(plan);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangeNotifierProvider.value(
+          value: createProvider,
+          child: const TrainingDayEditorScreen(),
+        ),
       ),
     );
   }
@@ -294,11 +316,7 @@ class TrainingPlansScreen extends StatelessWidget {
             onPressed: () async {
               await provider.deleteTrainingPlan(plan.id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Trainingsplan gelöscht'),
-                ),
-              );
+              // SnackBar-Meldung entfernt
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

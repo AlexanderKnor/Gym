@@ -23,8 +23,10 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
   Widget build(BuildContext context) {
     final createProvider = Provider.of<CreateTrainingPlanProvider>(context);
     final plan = createProvider.draftPlan;
+    final isEditMode = createProvider.isEditMode;
 
-    print("TrainingDayEditorScreen gebaut - Plan: ${plan?.name}");
+    print(
+        "TrainingDayEditorScreen gebaut - Plan: ${plan?.name} - Edit Mode: $isEditMode");
 
     if (plan == null) {
       return Scaffold(
@@ -50,7 +52,8 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
       length: plan.days.length,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('${plan.name} bearbeiten'),
+          title: Text(
+              isEditMode ? '${plan.name} bearbeiten' : 'Neuen Plan erstellen'),
           bottom: TabBar(
             isScrollable: true,
             tabs: plan.days.map((day) {
@@ -94,29 +97,44 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
   }
 
   void _saveTrainingPlan(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Trainingsplan speichern'),
-        content: const Text('Möchtest du den Trainingsplan aktivieren?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              _processSave(context, false);
-            },
-            child: const Text('Nur speichern'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              _processSave(context, true);
-            },
-            child: const Text('Aktivieren'),
-          ),
-        ],
-      ),
-    );
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    final plan = createProvider.draftPlan;
+
+    // Wenn kein Plan vorhanden ist, nichts tun
+    if (plan == null) return;
+
+    // Prüfen, ob der Plan bereits aktiviert ist
+    if (plan.isActive) {
+      // Wenn bereits aktiv, direkt speichern ohne nachzufragen
+      _processSave(
+          context, true); // Mit true, um den aktiven Status beizubehalten
+    } else {
+      // Wenn nicht aktiv, Dialog anzeigen
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Trainingsplan speichern'),
+          content: const Text('Möchtest du den Trainingsplan aktivieren?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _processSave(context, false);
+              },
+              child: const Text('Nur speichern'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _processSave(context, true);
+              },
+              child: const Text('Aktivieren'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Future<void> _processSave(BuildContext context, bool activate) async {
@@ -134,61 +152,32 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
       final navigationProvider =
           Provider.of<NavigationProvider>(context, listen: false);
       final planToSave = createProvider.draftPlan!;
+      final wasAlreadyActive = planToSave.isActive;
 
-      print('Speichere Plan: ${planToSave.name}');
-
-      // Setze Navigation Index auf 0 (Trainings-Tab)
-      navigationProvider.setCurrentIndex(0);
+      // Setze Navigation Index auf 0 (Trainings-Tab) oder 2 (Pläne-Tab)
+      // Wenn der Plan aktiviert ist oder wird, gehe zum Training-Tab (0), sonst zum Pläne-Tab (2)
+      navigationProvider.setCurrentIndex(wasAlreadyActive || activate ? 0 : 2);
 
       // Speichere Plan
-      final success =
-          await plansProvider.saveTrainingPlan(planToSave, activate);
+      await plansProvider.saveTrainingPlan(planToSave, activate);
 
       // Provider zurücksetzen
       createProvider.reset();
 
-      if (success) {
-        // WICHTIG: Diese Navigation entfernt ALLE vorherigen Routen und ersetzt sie durch MainScreen
-        // Das entfernt den Zurück-Button in der TopBar
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-          (route) => false, // Entferne alle vorherigen Routen
-        );
+      // Navigation ohne Meldung
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+        (route) => false, // Entferne alle vorherigen Routen
+      );
 
-        // SnackBar für Feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(activate
-                ? 'Trainingsplan aktiviert'
-                : 'Trainingsplan gespeichert'),
-          ),
-        );
-      } else {
-        // Fehlerbehandlung
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Fehler beim Speichern des Trainingsplans'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          setState(() {
-            _isSaving = false;
-          });
-        }
-      }
+      // SnackBar-Meldungen wurden entfernt
     } catch (e) {
       print('Fehler beim Speichern: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
         setState(() {
           _isSaving = false;
         });
+        // Fehler-SnackBar entfernt
       }
     }
   }

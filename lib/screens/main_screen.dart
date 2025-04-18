@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/shared/navigation_provider.dart';
-import '../providers/auth/auth_provider.dart';
 import 'training_screen/training_screen.dart';
 import 'progression_manager_screen/progression_manager_screen.dart';
 import 'training_plans_screen/training_plans_screen.dart';
@@ -15,7 +14,6 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     // List of screens
     final screens = [
@@ -26,46 +24,11 @@ class MainScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prover'),
-        actions: [
-          // Add logout button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              // Show confirmation dialog
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Abmelden'),
-                  content: const Text('Möchtest du dich wirklich abmelden?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Abbrechen'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        authProvider.signOut();
-                      },
-                      child: const Text('Abmelden'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-            tooltip: 'Abmelden',
-          ),
-        ],
-      ),
+      // AppBar wurde entfernt
       body: screens[navigationProvider.currentIndex],
       bottomNavigationBar: const BottomNavigationBarWidget(),
       floatingActionButton: FloatingActionButton(
-        heroTag: 'main_create_plan', // Hero-Tag hinzugefügt
+        heroTag: 'main_create_plan',
         onPressed: () {
           // Navigation to create a new training plan
           Navigator.of(context).push(

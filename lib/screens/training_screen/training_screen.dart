@@ -1,7 +1,7 @@
 // lib/screens/training_screen/training_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/shared/navigation_provider.dart'; // Hinzugefügt
+import '../../providers/shared/navigation_provider.dart';
 import '../../providers/training_plans_screen/training_plans_screen_provider.dart';
 import '../../widgets/training_screen/active_plan_card_widget.dart';
 
@@ -35,28 +35,7 @@ class TrainingScreen extends StatelessWidget {
                   // Aktive Plan-Karte
                   ActivePlanCardWidget(plan: activePlan),
 
-                  // Schnellstatistiken
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatItem(context, 'Tage',
-                                activePlan.days.length.toString()),
-                            _buildStatItem(
-                              context,
-                              'Übungen',
-                              _getTotalExercises(activePlan).toString(),
-                            ),
-                            _buildStatItem(context, 'Status', 'Aktiv'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Statistik-Karte wurde entfernt
                 ],
               )
             : _buildNoActivePlanState(context),
@@ -109,31 +88,5 @@ class TrainingScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildStatItem(BuildContext context, String title, String value) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  int _getTotalExercises(dynamic plan) {
-    return plan.days.fold(0, (sum, day) => sum + day.exercises.length);
   }
 }

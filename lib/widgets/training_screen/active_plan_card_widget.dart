@@ -1,6 +1,9 @@
 // lib/widgets/training_screen/active_plan_card_widget.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
+import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
+import '../../screens/create_training_plan_screen/training_day_editor_screen.dart';
 
 class ActivePlanCardWidget extends StatelessWidget {
   final TrainingPlanModel plan;
@@ -48,6 +51,12 @@ class ActivePlanCardWidget extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Bearbeiten-Button hinzugefügt
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  onPressed: () => _navigateToEditPlan(context),
+                  tooltip: 'Trainingsplan bearbeiten',
+                ),
               ],
             ),
           ),
@@ -81,12 +90,8 @@ class ActivePlanCardWidget extends StatelessWidget {
                 subtitle: Text('${day.exercises.length} Übungen'),
                 trailing: ElevatedButton(
                   onPressed: () {
-                    // Platzhalter für Start-Button-Funktionalität
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Training "${day.name}" gestartet'),
-                      ),
-                    );
+                    // Start-Button-Funktionalität ohne Meldung
+                    // Hier könnte später die eigentliche Navigation zum Training stattfinden
                   },
                   child: const Text('Start'),
                 ),
@@ -94,33 +99,28 @@ class ActivePlanCardWidget extends StatelessWidget {
             },
           ),
 
-          // Footer mit Statistiken
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${plan.days.length} Trainingstage',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  'Gesamt: ${_getTotalExercises(plan)} Übungen',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Footer mit Statistiken wurde entfernt
         ],
       ),
     );
   }
 
-  int _getTotalExercises(TrainingPlanModel plan) {
-    return plan.days.fold(0, (sum, day) => sum + day.exercises.length);
+  // Methode zum Navigieren zum Editor-Screen
+  void _navigateToEditPlan(BuildContext context) {
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+
+    // Plan in den Provider laden und direkt zum Editor navigieren
+    createProvider.skipToEditor(plan);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangeNotifierProvider.value(
+          value: createProvider,
+          child: const TrainingDayEditorScreen(),
+        ),
+      ),
+    );
   }
 }

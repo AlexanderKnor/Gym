@@ -18,12 +18,18 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   TrainingPlanModel? _draftPlan;
   int _selectedDayIndex = 0;
 
+  // Modus-Tracking - neu hinzugefügt
+  bool _isEditMode = false;
+  String? _editingPlanId;
+
   // Getter
   String get planName => _planName;
   int get frequency => _frequency;
   List<String> get dayNames => _dayNames;
   TrainingPlanModel? get draftPlan => _draftPlan;
   int get selectedDayIndex => _selectedDayIndex;
+  bool get isEditMode => _isEditMode; // Neuer Getter
+  String? get editingPlanId => _editingPlanId; // Neuer Getter
 
   // Konstruktor mit Initialisierung
   CreateTrainingPlanProvider() {
@@ -100,6 +106,27 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // NEU: Methode zum Laden eines existierenden Plans zum Bearbeiten
+  void loadExistingPlanForEditing(TrainingPlanModel plan) {
+    _isEditMode = true;
+    _editingPlanId = plan.id;
+    _planName = plan.name;
+    _frequency = plan.days.length;
+
+    // Tagnamen aus dem Plan übernehmen
+    _dayNames = plan.days.map((day) => day.name).toList();
+
+    // Plan-Kopie als Draft-Plan setzen
+    _draftPlan = plan.copyWith();
+
+    notifyListeners();
+  }
+
+  // Methode für direkten Einstieg in den Editor (ohne den ersten Screen)
+  void skipToEditor(TrainingPlanModel plan) {
+    loadExistingPlanForEditing(plan);
+  }
+
   // Methoden für den zweiten Screen (Übungseditor)
   void setSelectedDayIndex(int index) {
     if (index >= 0 && index < _draftPlan!.days.length) {
@@ -173,6 +200,8 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _dayNames = ['Tag 1', 'Tag 2', 'Tag 3'];
     _draftPlan = null;
     _selectedDayIndex = 0;
+    _isEditMode = false;
+    _editingPlanId = null;
     notifyListeners();
   }
 }

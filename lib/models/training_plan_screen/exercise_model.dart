@@ -6,6 +6,7 @@ class ExerciseModel {
   String secondaryMuscleGroup;
   double standardIncrease;
   int restPeriodSeconds;
+  String? progressionProfileId; // Neues Feld für das Progressionsprofil
 
   ExerciseModel({
     required this.id,
@@ -14,6 +15,7 @@ class ExerciseModel {
     required this.secondaryMuscleGroup,
     required this.standardIncrease,
     required this.restPeriodSeconds,
+    this.progressionProfileId, // Optional, kann null sein
   });
 
   // Copy-Methode
@@ -24,6 +26,7 @@ class ExerciseModel {
     String? secondaryMuscleGroup,
     double? standardIncrease,
     int? restPeriodSeconds,
+    String? progressionProfileId,
   }) {
     return ExerciseModel(
       id: id ?? this.id,
@@ -32,6 +35,7 @@ class ExerciseModel {
       secondaryMuscleGroup: secondaryMuscleGroup ?? this.secondaryMuscleGroup,
       standardIncrease: standardIncrease ?? this.standardIncrease,
       restPeriodSeconds: restPeriodSeconds ?? this.restPeriodSeconds,
+      progressionProfileId: progressionProfileId ?? this.progressionProfileId,
     );
   }
 }

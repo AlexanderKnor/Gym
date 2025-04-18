@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "122044429576",
+    "project_id": "prover-fitness",
+    "storage_bucket": "prover-fitness.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122044429576:android:3ae50a924da0181b4f28bd",
+        "android_client_info": {
+          "package_name": "com.example.fitness_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiVXr-xJwmCPOWsNdOxeGtJGOVuzhK7w4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122044429576:android:83136290d0ed9ade4f28bd",
+        "android_client_info": {
+          "package_name": "com.prover.prover"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiVXr-xJwmCPOWsNdOxeGtJGOVuzhK7w4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

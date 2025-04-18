@@ -9,7 +9,7 @@ import '../../models/progression_manager_screen/progression_operator_model.dart'
 import '../../services/progression_manager_screen/one_rm_calculator_service.dart';
 import '../../services/progression_manager_screen/rule_evaluator_service.dart';
 import '../../services/progression_manager_screen/progression_calculator_service.dart';
-import '../../services/shared/profile_storage_service.dart';
+import '../../services/progression_manager_screen/firestore_profile_service.dart';
 
 class ProgressionManagerProvider extends ChangeNotifier {
   // ===== STATE DECLARATIONS =====
@@ -139,6 +139,10 @@ class ProgressionManagerProvider extends ChangeNotifier {
   // Progressionsprofile
   List<ProgressionProfileModel> _progressionsProfile = [];
 
+  // Firebase-Service für Profilspeicherung (NEU)
+  final FirestoreProfileService _profileStorageService =
+      FirestoreProfileService();
+
   // Konstruktor mit Initialisierung
   ProgressionManagerProvider() {
     _initializeProfiles();
@@ -191,21 +195,26 @@ class ProgressionManagerProvider extends ChangeNotifier {
 
   // ===== PROFIL PERSISTENZ METHODEN =====
 
-  // Methode zum Laden gespeicherter Profile
+  // Methode zum Laden gespeicherter Profile - AKTUALISIERT FÜR FIREBASE
   Future<void> _loadSavedProfiles() async {
     try {
+      print('Starte das Laden von Profilen aus Firestore...');
+
       // Zuerst die Standard-Profile an den Storage-Service übergeben
-      ProfileStorageService.setStandardProfiles(_progressionsProfile);
+      FirestoreProfileService.setStandardProfiles(_progressionsProfile);
+      print('Standardprofile an FirestoreProfileService übergeben');
 
       // Gespeicherte Profile (inklusive Standard-Profile) laden
-      final savedProfiles = await ProfileStorageService.loadProfiles();
+      final savedProfiles = await _profileStorageService.loadProfiles();
       _progressionsProfile = savedProfiles;
+      print('${savedProfiles.length} Profile aus Firestore geladen');
 
       // Aktives Profil laden
       final savedActiveProfileId =
-          await ProfileStorageService.loadActiveProfile();
+          await _profileStorageService.loadActiveProfile();
       if (savedActiveProfileId.isNotEmpty) {
         _aktivesProgressionsProfil = savedActiveProfileId;
+        print('Aktives Profil gesetzt: $_aktivesProgressionsProfil');
 
         // Konfiguration des aktiven Profils laden
         final aktivProfil = _progressionsProfile.firstWhere(
@@ -213,19 +222,24 @@ class ProgressionManagerProvider extends ChangeNotifier {
           orElse: () => _progressionsProfile.first,
         );
         _progressionsConfig = Map.from(aktivProfil.config);
+        print('Profilkonfiguration geladen: $_progressionsConfig');
       }
 
       notifyListeners();
+      print('Profile erfolgreich geladen und UI aktualisiert');
     } catch (e) {
       print('Fehler beim Laden der gespeicherten Profile: $e');
     }
   }
 
-  // Methode zum Speichern der Profile
+  // Methode zum Speichern der Profile - AKTUALISIERT FÜR FIREBASE
   Future<void> _saveProfiles() async {
     try {
-      await ProfileStorageService.saveProfiles(_progressionsProfile);
-      await ProfileStorageService.saveActiveProfile(_aktivesProgressionsProfil);
+      print('Starte das Speichern von Profilen in Firestore...');
+      await _profileStorageService.saveProfiles(_progressionsProfile);
+      await _profileStorageService
+          .saveActiveProfile(_aktivesProgressionsProfil);
+      print('Profile und aktives Profil erfolgreich in Firestore gespeichert');
     } catch (e) {
       print('Fehler beim Speichern der Profile: $e');
     }
@@ -301,6 +315,8 @@ class ProgressionManagerProvider extends ChangeNotifier {
 
   // Regeln für doppelte Progression erstellen
   List<ProgressionRuleModel> _createDoubleProgressionRules() {
+    // Hier würde der bereits existierende Code für die Erstellung der Double-Progression-Regeln folgen
+    // Ich belasse diesen Teil, da er unverändert bleibt
     return [
       // Regel 1: Wenn lastReps < targetRepsMax und lastRIR >= targetRIRMin
       ProgressionRuleModel(
@@ -423,6 +439,8 @@ class ProgressionManagerProvider extends ChangeNotifier {
 
   // Regeln für lineare Periodisierung erstellen
   List<ProgressionRuleModel> _createLinearPeriodizationRules() {
+    // Existierender Code für die Erstellung der Linear-Periodization-Regeln
+    // Bleibt unverändert
     return [
       // Gewicht erhöhen
       ProgressionRuleModel(
@@ -442,7 +460,6 @@ class ProgressionManagerProvider extends ChangeNotifier {
           ),
         ],
       ),
-
       // Wiederholungen verringern
       ProgressionRuleModel(
         id: 'lp_rule2',
@@ -461,7 +478,6 @@ class ProgressionManagerProvider extends ChangeNotifier {
           ),
         ],
       ),
-
       // RIR beibehalten
       ProgressionRuleModel(
         id: 'lp_rule3',
@@ -480,6 +496,8 @@ class ProgressionManagerProvider extends ChangeNotifier {
 
   // Regeln für RIR-basiertes Profil erstellen
   List<ProgressionRuleModel> _createRirBasedRules() {
+    // Existierender Code für die Erstellung der RIR-basierten Regeln
+    // Bleibt unverändert
     return [
       // Regel 1: Wenn lastRIR == 0
       ProgressionRuleModel(
@@ -514,7 +532,6 @@ class ProgressionManagerProvider extends ChangeNotifier {
           ),
         ],
       ),
-
       // Regel 2: Wenn lastRIR > targetRIRMax
       ProgressionRuleModel(
         id: 'rir_rule2',
@@ -563,6 +580,8 @@ class ProgressionManagerProvider extends ChangeNotifier {
 
   // Regeln für Satz-Konsistenz erstellen
   List<ProgressionRuleModel> _createSetConsistencyRules() {
+    // Existierender Code für die Erstellung der Set-Consistency-Regeln
+    // Bleibt unverändert
     return [
       // Regel 1: Wenn last1RM > previous1RM
       ProgressionRuleModel(
@@ -597,7 +616,6 @@ class ProgressionManagerProvider extends ChangeNotifier {
           ),
         ],
       ),
-
       // Regel 2: Wenn last1RM == previous1RM
       ProgressionRuleModel(
         id: 'sc_rule2',
@@ -631,7 +649,6 @@ class ProgressionManagerProvider extends ChangeNotifier {
           ),
         ],
       ),
-
       // Regel 3: Wenn lastReps <= targetRepsMax
       ProgressionRuleModel(
         id: 'sc_rule3',

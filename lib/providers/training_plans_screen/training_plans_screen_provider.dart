@@ -100,10 +100,17 @@ class TrainingPlansProvider extends ChangeNotifier {
     }
   }
 
-  // Trainingsplan löschen - AKTUALISIERT
+  // Trainingsplan löschen - AKTUALISIERT mit kaskadierender Löschung
   Future<bool> deleteTrainingPlan(String planId) async {
     try {
-      // Zuerst aus Firestore löschen
+      _isLoading = true;
+      notifyListeners();
+
+      // Überprüfen, ob der Plan der aktive Plan ist
+      final isActivePlan =
+          _trainingPlans.any((p) => p.id == planId && p.isActive);
+
+      // Zuerst in Firestore löschen (und alle abhängigen Trainingshistorien)
       final firestoreSuccess = await _trainingPlanService.deletePlan(planId);
 
       if (!firestoreSuccess) {
@@ -116,10 +123,18 @@ class TrainingPlansProvider extends ChangeNotifier {
       // Lokalen Speicher aktualisieren
       await _trainingPlanService.saveTrainingPlans(_trainingPlans);
 
+      // Wenn der gelöschte Plan der aktive war und es andere Pläne gibt, den ersten aktivieren
+      if (isActivePlan && _trainingPlans.isNotEmpty) {
+        await activateTrainingPlan(_trainingPlans.first.id);
+      }
+
+      _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       print('Fehler beim Löschen des Trainingsplans: $e');
+      _isLoading = false;
+      notifyListeners();
       return false;
     }
   }

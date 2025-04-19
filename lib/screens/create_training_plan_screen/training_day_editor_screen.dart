@@ -161,6 +161,9 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
       // Speichere Plan
       await plansProvider.saveTrainingPlan(planToSave, activate);
 
+      // GEÄNDERT: Jetzt gelöschte Übungen aus der Datenbank entfernen
+      await createProvider.cleanupDeletedExercises();
+
       // Provider zurücksetzen
       createProvider.reset();
 

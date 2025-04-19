@@ -7,6 +7,7 @@ import '../../providers/progression_manager_screen/progression_manager_provider.
 import '../../models/training_plan_screen/exercise_model.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import 'exercise_set_widget.dart';
+import '../../screens/strength_calculator_screen/strength_calculator_screen.dart';
 
 class ExerciseTabWidget extends StatefulWidget {
   final int exerciseIndex;
@@ -66,6 +67,33 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         }
       }
     }
+  }
+
+  // Öffnet den Kraftrechner und wendet die berechneten Werte auf den aktuellen Satz an
+  void _openStrengthCalculator(BuildContext context) {
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => StrengthCalculatorScreen(
+          onApplyValues: (calculatedWeight, targetReps, targetRIR) {
+            // Hole die aktive Satz-ID
+            final activeSetId =
+                sessionProvider.getActiveSetIdForCurrentExercise();
+
+            // Wende die berechneten Werte auf den aktuellen Satz an
+            sessionProvider.applyCustomValues(
+              widget.exerciseIndex,
+              activeSetId,
+              calculatedWeight,
+              targetReps,
+              targetRIR,
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -355,47 +383,69 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
           }
         : null;
 
-    return Row(
+    return Column(
       children: [
-        // Empfehlung übernehmen Button
-        Expanded(
+        // Kraftrechner-Button (NEU)
+        SizedBox(
+          width: double.infinity,
+          height: 48,
           child: ElevatedButton.icon(
-            onPressed: recommendation != null
-                ? () {
-                    sessionProvider.applyProgressionRecommendation(
-                      activeSetId,
-                      recommendation['kg']
-                          as double?, // Typumwandlung hinzugefügt
-                      recommendation['wiederholungen']
-                          as int?, // Typumwandlung hinzugefügt
-                      recommendation['rir']
-                          as int?, // Typumwandlung hinzugefügt
-                    );
-                  }
-                : null,
-            icon: const Icon(Icons.auto_fix_high),
-            label: const Text('Empfehlung übernehmen'),
+            onPressed: () => _openStrengthCalculator(context),
+            icon: const Icon(Icons.calculate),
+            label: const Text('Kraftrechner öffnen'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
+              backgroundColor: Colors.amber,
               foregroundColor: Colors.white,
             ),
           ),
         ),
-        const SizedBox(width: 12),
 
-        // Satz abschließen Button
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              sessionProvider.completeCurrentSet();
-            },
-            icon: const Icon(Icons.check),
-            label: const Text('Satz abschließen'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
+        const SizedBox(height: 16),
+
+        // Bestehende Buttons in einer Reihe
+        Row(
+          children: [
+            // Empfehlung übernehmen Button
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: recommendation != null
+                    ? () {
+                        sessionProvider.applyProgressionRecommendation(
+                          activeSetId,
+                          recommendation['kg']
+                              as double?, // Typumwandlung hinzugefügt
+                          recommendation['wiederholungen']
+                              as int?, // Typumwandlung hinzugefügt
+                          recommendation['rir']
+                              as int?, // Typumwandlung hinzugefügt
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.auto_fix_high),
+                label: const Text('Empfehlung übernehmen'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+
+            // Satz abschließen Button
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  sessionProvider.completeCurrentSet();
+                },
+                icon: const Icon(Icons.check),
+                label: const Text('Satz abschließen'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

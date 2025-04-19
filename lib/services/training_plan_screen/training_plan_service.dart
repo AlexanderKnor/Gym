@@ -6,10 +6,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
+import '../training_history/training_history_service.dart'; // Importiere TrainingHistoryService
 
 class TrainingPlanService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TrainingHistoryService _historyService =
+      TrainingHistoryService(); // Neue Instanz
 
   // Hilfsmethoden
   String? _getUserId() {
@@ -93,7 +96,7 @@ class TrainingPlanService {
     }
   }
 
-  // Trainingsplan aus Firestore löschen
+  // Trainingsplan aus Firestore löschen - AKTUALISIERT
   Future<bool> deletePlan(String planId) async {
     try {
       final userId = _getUserId();
@@ -105,13 +108,41 @@ class TrainingPlanService {
       }
 
       print('Lösche Plan mit ID: $planId aus Firestore...');
-      // Dokument in Firestore löschen
+
+      // 1. Zuerst zugehörige Trainingshistorie löschen
+      print('Lösche zugehörige Trainingshistorie...');
+      await _historyService.deleteSessionsByPlanId(planId);
+
+      // 2. Dann Dokument in Firestore löschen
       await _getTrainingPlansCollection().doc(planId).delete();
       print('Plan $planId erfolgreich aus Firestore gelöscht');
 
       return true;
     } catch (e) {
       print('Fehler beim Löschen des Plans aus Firestore: $e');
+      return false;
+    }
+  }
+
+  // Übung aus Firestore löschen (neue Methode)
+  Future<bool> deleteExercise(String exerciseId) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        // Wenn nicht angemeldet, kann nur lokal gelöscht werden
+        print('Kein User angemeldet, lösche nur lokal');
+        return true;
+      }
+
+      print('Lösche Übung mit ID: $exerciseId aus Trainingshistorie...');
+
+      // Lösche die Übung aus der Trainingshistorie
+      await _historyService.cleanupExerciseFromSessions(exerciseId);
+
+      print('Übung $exerciseId erfolgreich aus Trainingshistorie bereinigt');
+      return true;
+    } catch (e) {
+      print('Fehler beim Löschen der Übung aus Firestore: $e');
       return false;
     }
   }

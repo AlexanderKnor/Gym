@@ -143,4 +143,115 @@ class TrainingHistoryService {
       return false;
     }
   }
+
+  // NEUE METHODE: Trainingseinheiten für einen bestimmten Plan löschen
+  Future<bool> deleteSessionsByPlanId(String planId) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        print('Kann Sessions nicht löschen, Benutzer nicht angemeldet');
+        return false;
+      }
+
+      print('Suche nach Trainingseinheiten für Plan $planId...');
+
+      // Alle Sessions mit diesem planId finden
+      final querySnapshot = await _getTrainingHistoryCollection()
+          .where('trainingPlanId', isEqualTo: planId)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print('Keine Trainingseinheiten für Plan $planId gefunden.');
+        return true;
+      }
+
+      print(
+          '${querySnapshot.docs.length} Trainingseinheiten für Plan $planId gefunden.');
+
+      // Batch-Operation für effizientes Löschen
+      final batch = _firestore.batch();
+      for (var doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      print(
+          '${querySnapshot.docs.length} Trainingseinheiten für Plan $planId gelöscht');
+
+      return true;
+    } catch (e) {
+      print('Fehler beim Löschen der Trainingshistorie für Plan $planId: $e');
+      return false;
+    }
+  }
+
+  // NEUE METHODE: Übung aus allen Trainingssessions entfernen oder bereinigen
+  Future<bool> cleanupExerciseFromSessions(String exerciseId) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        print('Kann Sessions nicht aktualisieren, Benutzer nicht angemeldet');
+        return false;
+      }
+
+      print('Suche nach Trainingseinheiten mit Übung $exerciseId...');
+
+      // Alle Sessions abrufen - wir können nicht direkt nach Übungen filtern,
+      // da diese in einer Unterliste sind
+      final querySnapshot = await _getTrainingHistoryCollection().get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print('Keine Trainingseinheiten gefunden.');
+        return true;
+      }
+
+      // Zählen, wie viele Sessions betroffen sind
+      int affectedSessions = 0;
+      final batch = _firestore.batch();
+
+      for (var doc in querySnapshot.docs) {
+        final session =
+            TrainingSessionModel.fromMap(doc.data() as Map<String, dynamic>);
+
+        // Prüfen, ob diese Session die zu löschende Übung enthält
+        final originalExercisesCount = session.exercises.length;
+        final updatedExercises = session.exercises
+            .where((exercise) => exercise.exerciseId != exerciseId)
+            .toList();
+
+        // Wenn sich die Anzahl der Übungen geändert hat, Session aktualisieren
+        if (updatedExercises.length != originalExercisesCount) {
+          affectedSessions++;
+
+          // Wenn keine Übungen mehr vorhanden sind, Session löschen
+          if (updatedExercises.isEmpty) {
+            batch.delete(doc.reference);
+          } else {
+            // Ansonsten Session aktualisieren
+            final updatedSession = session.copyWith(
+              exercises: updatedExercises,
+              // Aktualisiere auch isCompleted, wenn alle verbleibenden Übungen abgeschlossen sind
+              isCompleted:
+                  updatedExercises.every((exercise) => exercise.isCompleted),
+            );
+            batch.update(doc.reference, updatedSession.toMap());
+          }
+        }
+      }
+
+      if (affectedSessions > 0) {
+        await batch.commit();
+        print(
+            'Übung $exerciseId aus $affectedSessions Trainingseinheiten entfernt');
+      } else {
+        print('Keine Trainingseinheiten mit Übung $exerciseId gefunden.');
+      }
+
+      return true;
+    } catch (e) {
+      print(
+          'Fehler beim Bereinigen der Übung $exerciseId aus Trainingseinheiten: $e');
+      return false;
+    }
+  }
 }

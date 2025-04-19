@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
+import '../../services/training_plan_screen/training_plan_service.dart'; // Neu importiert
 
 class CreateTrainingPlanProvider extends ChangeNotifier {
+  // Service für Löschoperationen
+  final TrainingPlanService _trainingPlanService =
+      TrainingPlanService(); // Neu hinzugefügt
+
   // Zustand für den ersten Screen
   String _planName = '';
   int _frequency = 3; // Standardwert: 3 Tage
@@ -21,6 +26,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   // Modus-Tracking - neu hinzugefügt
   bool _isEditMode = false;
   String? _editingPlanId;
+
+  // Neu: Set zum Verfolgen von gelöschten Übungs-IDs
+  final Set<String> _deletedExerciseIds = {};
 
   // Getter
   String get planName => _planName;
@@ -173,12 +181,19 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
+  // GEÄNDERT: Übung entfernen ohne sofortiges Löschen der Historie
   void removeExercise(int exerciseIndex) {
     if (_draftPlan != null) {
       final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
       final currentDay = updatedDays[_selectedDayIndex];
 
       if (exerciseIndex >= 0 && exerciseIndex < currentDay.exercises.length) {
+        // Übungs-ID speichern, bevor die Übung entfernt wird
+        final exerciseId = currentDay.exercises[exerciseIndex].id;
+
+        // Übungs-ID zur Liste der zu löschenden Übungen hinzufügen
+        _deletedExerciseIds.add(exerciseId);
+
         final updatedExercises = List<ExerciseModel>.from(currentDay.exercises);
         updatedExercises.removeAt(exerciseIndex);
 
@@ -193,6 +208,17 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
+  // NEU: Gelöschte Übungen aus der Datenbank entfernen
+  Future<void> cleanupDeletedExercises() async {
+    // Lösche alle Übungen, die seit dem letzten Speichern entfernt wurden
+    for (final exerciseId in _deletedExerciseIds) {
+      await _trainingPlanService.deleteExercise(exerciseId);
+    }
+
+    // Liste der gelöschten Übungen zurücksetzen
+    _deletedExerciseIds.clear();
+  }
+
   // Zustand zurücksetzen, wenn fertig
   void reset() {
     _planName = '';
@@ -202,6 +228,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _selectedDayIndex = 0;
     _isEditMode = false;
     _editingPlanId = null;
+    _deletedExerciseIds.clear(); // Neu: Leere die Liste der gelöschten Übungen
     notifyListeners();
   }
 }

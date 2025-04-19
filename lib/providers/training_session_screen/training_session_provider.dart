@@ -508,6 +508,39 @@ class TrainingSessionProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Wendet benutzerdefinierte Werte vom Kraftrechner auf einen bestimmten Satz an
+  void applyCustomValues(
+    int exerciseIndex,
+    int setId,
+    double weight,
+    int reps,
+    int rir,
+  ) {
+    try {
+      final sets = _exerciseSets[exerciseIndex];
+      if (sets == null) return;
+
+      final setIndex = setId - 1; // setId beginnt bei 1, Index bei 0
+      if (setIndex < 0 || setIndex >= sets.length) return;
+
+      // Aktualisiere die Werte des Sets
+      final updatedSets = List<TrainingSetModel>.from(sets);
+      final currentSet = updatedSets[setIndex];
+
+      updatedSets[setIndex] = currentSet.copyWith(
+        kg: weight,
+        wiederholungen: reps,
+        rir: rir,
+      );
+
+      _exerciseSets[exerciseIndex] = updatedSets;
+
+      notifyListeners();
+    } catch (e) {
+      print('Fehler beim Anwenden der Kraftrechner-Werte: $e');
+    }
+  }
+
   // Getter für die standardIncrease des aktuellen Exercises
   double get currentExerciseStandardIncrease {
     return currentExercise?.standardIncrease ?? 2.5;

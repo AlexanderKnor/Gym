@@ -109,8 +109,21 @@ class TrainingDayTabWidget extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             title: Text(exercise.name),
-            subtitle: Text(
-                '${exercise.primaryMuscleGroup} / ${exercise.secondaryMuscleGroup}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' / ${exercise.secondaryMuscleGroup}' : ''}',
+                ),
+                // Zeige die Anzahl der Sätze an
+                Text(
+                  '${exercise.numberOfSets} ${exercise.numberOfSets == 1 ? "Satz" : "Sätze"} • ${exercise.restPeriodSeconds}s Pause',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

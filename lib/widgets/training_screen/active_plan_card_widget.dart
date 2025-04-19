@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
+import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../screens/create_training_plan_screen/training_day_editor_screen.dart';
+import '../../screens/training_session_screen/training_session_screen.dart';
 
 class ActivePlanCardWidget extends StatelessWidget {
   final TrainingPlanModel plan;
@@ -68,6 +70,13 @@ class ActivePlanCardWidget extends StatelessWidget {
             itemCount: plan.days.length,
             itemBuilder: (context, index) {
               final day = plan.days[index];
+
+              // Zähle die Gesamtzahl der Sätze für diesen Tag
+              int totalSets = 0;
+              for (var exercise in day.exercises) {
+                totalSets += exercise.numberOfSets;
+              }
+
               return ListTile(
                 leading: Container(
                   width: 32,
@@ -87,19 +96,18 @@ class ActivePlanCardWidget extends StatelessWidget {
                   ),
                 ),
                 title: Text(day.name),
-                subtitle: Text('${day.exercises.length} Übungen'),
+                // Zeige die Anzahl der Übungen und die Gesamtzahl der Sätze an
+                subtitle: Text(
+                    '${day.exercises.length} ${day.exercises.length == 1 ? "Übung" : "Übungen"} • $totalSets ${totalSets == 1 ? "Satz" : "Sätze"}'),
                 trailing: ElevatedButton(
-                  onPressed: () {
-                    // Start-Button-Funktionalität ohne Meldung
-                    // Hier könnte später die eigentliche Navigation zum Training stattfinden
-                  },
+                  onPressed: day.exercises.isEmpty
+                      ? null // Deaktivieren, wenn keine Übungen vorhanden sind
+                      : () => _startTraining(context, index),
                   child: const Text('Start'),
                 ),
               );
             },
           ),
-
-          // Footer mit Statistiken wurde entfernt
         ],
       ),
     );
@@ -120,6 +128,37 @@ class ActivePlanCardWidget extends StatelessWidget {
           value: createProvider,
           child: const TrainingDayEditorScreen(),
         ),
+      ),
+    );
+  }
+
+  // Methode zum Starten des Trainings - GEÄNDERT
+  void _startTraining(BuildContext context, int dayIndex) {
+    // Prüfen, ob der Tag Übungen enthält
+    if (plan.days[dayIndex].exercises.isEmpty) {
+      // Falls keine Übungen vorhanden sind, Meldung anzeigen
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Keine Übungen für diesen Tag definiert.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // GEÄNDERT: Immer einen NEUEN Provider erstellen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          // Immer einen neuen Provider erstellen, um Zustandsprobleme zu vermeiden
+          return ChangeNotifierProvider(
+            create: (context) => TrainingSessionProvider(),
+            child: TrainingSessionScreen(
+              trainingPlan: plan,
+              dayIndex: dayIndex,
+            ),
+          );
+        },
       ),
     );
   }

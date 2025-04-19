@@ -6,6 +6,7 @@ class ExerciseModel {
   String secondaryMuscleGroup;
   double standardIncrease;
   int restPeriodSeconds;
+  int numberOfSets; // Neues Feld für die Anzahl der Sätze
   String? progressionProfileId; // Neues Feld für das Progressionsprofil
 
   ExerciseModel({
@@ -15,6 +16,7 @@ class ExerciseModel {
     required this.secondaryMuscleGroup,
     required this.standardIncrease,
     required this.restPeriodSeconds,
+    this.numberOfSets = 3, // Standardmäßig 3 Sätze
     this.progressionProfileId, // Optional, kann null sein
   });
 
@@ -26,6 +28,7 @@ class ExerciseModel {
     String? secondaryMuscleGroup,
     double? standardIncrease,
     int? restPeriodSeconds,
+    int? numberOfSets,
     String? progressionProfileId,
   }) {
     return ExerciseModel(
@@ -35,6 +38,7 @@ class ExerciseModel {
       secondaryMuscleGroup: secondaryMuscleGroup ?? this.secondaryMuscleGroup,
       standardIncrease: standardIncrease ?? this.standardIncrease,
       restPeriodSeconds: restPeriodSeconds ?? this.restPeriodSeconds,
+      numberOfSets: numberOfSets ?? this.numberOfSets,
       progressionProfileId: progressionProfileId ?? this.progressionProfileId,
     );
   }

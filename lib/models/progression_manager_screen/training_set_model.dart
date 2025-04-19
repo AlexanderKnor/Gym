@@ -1,3 +1,4 @@
+// lib/models/progression_manager_screen/training_set_model.dart
 class TrainingSetModel {
   final int id;
   double kg;
@@ -5,7 +6,7 @@ class TrainingSetModel {
   int rir;
   bool abgeschlossen;
 
-  // Neue Felder für die Empfehlungswerte
+  // Felder für die Empfehlungswerte
   double? empfKg;
   int? empfWiederholungen;
   int? empfRir;

@@ -26,6 +26,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   late TextEditingController _secondaryMuscleController;
   late TextEditingController _standardIncreaseController;
   late TextEditingController _restPeriodController;
+  late TextEditingController _numberOfSetsController; // Neuer Controller
   String? _selectedProfileId; // Für die Profilauswahl
 
   @override
@@ -53,6 +54,11 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
       text: widget.initialExercise?.restPeriodSeconds.toString() ?? '90',
     );
 
+    // Neuer Controller für die Anzahl der Sätze
+    _numberOfSetsController = TextEditingController(
+      text: widget.initialExercise?.numberOfSets.toString() ?? '3',
+    );
+
     // Profil-ID initialisieren
     _selectedProfileId = widget.initialExercise?.progressionProfileId;
   }
@@ -64,6 +70,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     _secondaryMuscleController.dispose();
     _standardIncreaseController.dispose();
     _restPeriodController.dispose();
+    _numberOfSetsController.dispose(); // Neuen Controller freigeben
     super.dispose();
   }
 
@@ -136,6 +143,28 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                   border: OutlineInputBorder(),
                   hintText: 'z.B. Schultern, Trizeps',
                 ),
+              ),
+              const SizedBox(height: 12),
+
+              // NEUE EINGABE: Anzahl der Sätze
+              TextFormField(
+                controller: _numberOfSetsController,
+                decoration: const InputDecoration(
+                  labelText: 'Anzahl Sätze',
+                  border: OutlineInputBorder(),
+                  hintText: 'z.B. 3, 4, 5',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Bitte gib die Anzahl der Sätze ein';
+                  }
+                  final sets = int.tryParse(value);
+                  if (sets == null || sets < 1) {
+                    return 'Bitte gib eine gültige Zahl ein (mindestens 1)';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
 
@@ -309,6 +338,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         standardIncrease:
             double.tryParse(_standardIncreaseController.text) ?? 2.5,
         restPeriodSeconds: int.tryParse(_restPeriodController.text) ?? 90,
+        numberOfSets: int.tryParse(_numberOfSetsController.text) ??
+            3, // Setze die Anzahl der Sätze
         progressionProfileId:
             _selectedProfileId, // Das ausgewählte Profil speichern
       );

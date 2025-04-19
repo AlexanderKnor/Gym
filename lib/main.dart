@@ -7,7 +7,8 @@ import 'providers/shared/navigation_provider.dart';
 import 'providers/create_training_plan_screen/create_training_plan_provider.dart';
 import 'providers/auth/auth_provider.dart';
 import 'providers/training_plans_screen/training_plans_screen_provider.dart';
-import 'providers/progression_manager_screen/progression_manager_provider.dart'; // Aktualisiert
+import 'providers/progression_manager_screen/progression_manager_provider.dart';
+import 'providers/training_session_screen/training_session_provider.dart'; // NEU
 import 'screens/auth/auth_checker_screen.dart';
 
 void main() async {
@@ -42,6 +43,10 @@ class MyApp extends StatelessWidget {
         // Aktualisiert - dieser Provider hält nun Sub-Provider
         ChangeNotifierProvider(
           create: (context) => ProgressionManagerProvider(),
+        ),
+        // NEU: Training Session Provider
+        ChangeNotifierProvider(
+          create: (context) => TrainingSessionProvider(),
         ),
       ],
       child: MaterialApp(

@@ -26,7 +26,7 @@ class TrainingPlanService {
         .collection('training_plans');
   }
 
-  // TrainingsplÃƒÂ¤ne laden
+  // TrainingsplãÂ¤ne laden
   Future<List<TrainingPlanModel>> loadTrainingPlans() async {
     try {
       final userId = _getUserId();
@@ -49,13 +49,13 @@ class TrainingPlanService {
 
       return plans;
     } catch (e) {
-      print('Fehler beim Laden der TrainingsplÃƒÂ¤ne aus Firestore: $e');
+      print('Fehler beim Laden der TrainingsplãÂ¤ne aus Firestore: $e');
       // Fallback auf lokalen Speicher
       return await _loadFromLocalStorage();
     }
   }
 
-  // TrainingsplÃƒÂ¤ne speichern
+  // TrainingsplãÂ¤ne speichern
   Future<bool> saveTrainingPlans(List<TrainingPlanModel> plans) async {
     try {
       final userId = _getUserId();
@@ -65,7 +65,7 @@ class TrainingPlanService {
         return await _saveToLocalStorage(plans);
       }
 
-      print('Beginne das Speichern von ${plans.length} TrainingsplÃ¤nen...');
+      print('Beginne das Speichern von ${plans.length} TrainingsplãÂ¤nen...');
 
       try {
         // Jeden Plan einzeln speichern statt als Batch
@@ -76,7 +76,7 @@ class TrainingPlanService {
           print('Plan ${plan.id} erfolgreich gespeichert');
         }
 
-        print('Alle PlÃ¤ne gespeichert, speichere jetzt lokal als Backup');
+        print('Alle PlãÂ¤ne gespeichert, speichere jetzt lokal als Backup');
         // Auch im lokalen Speicher als Backup speichern
         await _saveToLocalStorage(plans);
 
@@ -87,7 +87,7 @@ class TrainingPlanService {
         return await _saveToLocalStorage(plans);
       }
     } catch (e) {
-      print('Allgemeiner Fehler beim Speichern der TrainingsplÃƒÂ¤ne: $e');
+      print('Allgemeiner Fehler beim Speichern der TrainingsplãÂ¤ne: $e');
       // Fallback auf lokalen Speicher
       return await _saveToLocalStorage(plans);
     }
@@ -116,7 +116,7 @@ class TrainingPlanService {
     }
   }
 
-  // Methoden fÃƒÂ¼r lokalen Speicher
+  // Methoden fãÂ¼r lokalen Speicher
   Future<List<TrainingPlanModel>> _loadFromLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -133,24 +133,24 @@ class TrainingPlanService {
           .toList();
     } catch (e) {
       print(
-          'Fehler beim Laden der TrainingsplÃƒÂ¤ne aus dem lokalen Speicher: $e');
+          'Fehler beim Laden der TrainingsplãÂ¤ne aus dem lokalen Speicher: $e');
       return [];
     }
   }
 
   Future<bool> _saveToLocalStorage(List<TrainingPlanModel> plans) async {
     try {
-      print('Speichere ${plans.length} PlÃ¤ne im lokalen Speicher');
+      print('Speichere ${plans.length} PlãÂ¤ne im lokalen Speicher');
       final prefs = await SharedPreferences.getInstance();
       final plansJson =
           jsonEncode(plans.map((p) => _encodePlanToJson(p)).toList());
 
       await prefs.setString('training_plans', plansJson);
-      print('PlÃ¤ne erfolgreich im lokalen Speicher gespeichert');
+      print('PlãÂ¤ne erfolgreich im lokalen Speicher gespeichert');
       return true;
     } catch (e) {
       print(
-          'Fehler beim Speichern der TrainingsplÃƒÂ¤ne im lokalen Speicher: $e');
+          'Fehler beim Speichern der TrainingsplãÂ¤ne im lokalen Speicher: $e');
       return false;
     }
   }
@@ -173,6 +173,8 @@ class TrainingPlanService {
                           'secondaryMuscleGroup': exercise.secondaryMuscleGroup,
                           'standardIncrease': exercise.standardIncrease,
                           'restPeriodSeconds': exercise.restPeriodSeconds,
+                          'numberOfSets':
+                              exercise.numberOfSets, // Neues Feld hinzugefügt
                           'progressionProfileId':
                               exercise.progressionProfileId, // Neu hinzugefügt
                         })
@@ -196,6 +198,8 @@ class TrainingPlanService {
           secondaryMuscleGroup: exerciseJson['secondaryMuscleGroup'],
           standardIncrease: exerciseJson['standardIncrease'].toDouble(),
           restPeriodSeconds: exerciseJson['restPeriodSeconds'],
+          numberOfSets:
+              exerciseJson['numberOfSets'] ?? 3, // Neues Feld mit Standardwert
           progressionProfileId:
               exerciseJson['progressionProfileId'], // Neu hinzugefügt
         );

@@ -1,3 +1,4 @@
+// lib/providers/progression_manager_screen/progression_training_provider.dart
 import 'package:flutter/foundation.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import '../../models/progression_manager_screen/progression_profile_model.dart';
@@ -25,6 +26,12 @@ class ProgressionTrainingProvider with ChangeNotifier {
   bool get trainingAbgeschlossen => _trainingAbgeschlossen;
 
   // ===== METHODEN =====
+
+  // NEUE METHODE: Aktualisiert die Sätze-Liste
+  void updateSaetze(List<TrainingSetModel> newSaetze) {
+    _saetze = newSaetze;
+    notifyListeners();
+  }
 
   void handleChange(int id, String feld, dynamic wert) {
     if (id != _aktiverSatz) return;

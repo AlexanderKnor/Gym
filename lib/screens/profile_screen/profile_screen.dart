@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
+import '../auth/auth_checker_screen.dart'; // Importieren für die Navigation
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -48,9 +49,21 @@ class ProfileScreen extends StatelessWidget {
                             child: const Text('Abbrechen'),
                           ),
                           TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              authProvider.signOut();
+                            onPressed: () async {
+                              Navigator.pop(context); // Dialog schließen
+                              await authProvider.signOut(); // Abmelden
+
+                              // Nach dem Abmelden direkt zur AuthCheckerScreen navigieren
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AuthCheckerScreen(),
+                                  ),
+                                  (route) =>
+                                      false, // Alle vorherigen Routen entfernen
+                                );
+                              }
                             },
                             child: const Text('Abmelden'),
                             style: TextButton.styleFrom(

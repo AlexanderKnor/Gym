@@ -144,7 +144,7 @@ class TrainingHistoryService {
     }
   }
 
-  // NEUE METHODE: Trainingseinheiten für einen bestimmten Plan löschen
+  // Trainingseinheiten für einen bestimmten Plan löschen
   Future<bool> deleteSessionsByPlanId(String planId) async {
     try {
       final userId = _getUserId();
@@ -185,7 +185,7 @@ class TrainingHistoryService {
     }
   }
 
-  // NEUE METHODE: Übung aus allen Trainingssessions entfernen oder bereinigen
+  // Übung aus allen Trainingssessions entfernen oder bereinigen
   Future<bool> cleanupExerciseFromSessions(String exerciseId) async {
     try {
       final userId = _getUserId();

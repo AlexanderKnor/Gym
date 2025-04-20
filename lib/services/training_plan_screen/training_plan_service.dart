@@ -1,18 +1,15 @@
 // lib/services/training_plan_screen/training_plan_service.dart
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
-import '../training_history/training_history_service.dart'; // Importiere TrainingHistoryService
+import '../training_history/training_history_service.dart';
 
 class TrainingPlanService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TrainingHistoryService _historyService =
-      TrainingHistoryService(); // Neue Instanz
+  final TrainingHistoryService _historyService = TrainingHistoryService();
 
   // Hilfsmethoden
   String? _getUserId() {
@@ -34,8 +31,9 @@ class TrainingPlanService {
     try {
       final userId = _getUserId();
       if (userId == null) {
-        // Wenn nicht angemeldet, aus lokalem Speicher laden
-        return await _loadFromLocalStorage();
+        // Wenn nicht angemeldet, leere Liste zurückgeben
+        print('Kein Benutzer angemeldet, kann keine Trainingspläne laden');
+        return [];
       }
 
       final snapshot = await _getTrainingPlansCollection().get();
@@ -52,23 +50,21 @@ class TrainingPlanService {
 
       return plans;
     } catch (e) {
-      print('Fehler beim Laden der TrainingsplãÂ¤ne aus Firestore: $e');
-      // Fallback auf lokalen Speicher
-      return await _loadFromLocalStorage();
+      print('Fehler beim Laden der Trainingspläne aus Firestore: $e');
+      return [];
     }
   }
 
-  // TrainingsplãÂ¤ne speichern
+  // Trainingsplan speichern
   Future<bool> saveTrainingPlans(List<TrainingPlanModel> plans) async {
     try {
       final userId = _getUserId();
       if (userId == null) {
-        // Wenn nicht angemeldet, im lokalen Speicher speichern
-        print('Kein User angemeldet, speichere lokal');
-        return await _saveToLocalStorage(plans);
+        print('Kein User angemeldet, kann Trainingspläne nicht speichern');
+        return false;
       }
 
-      print('Beginne das Speichern von ${plans.length} TrainingsplãÂ¤nen...');
+      print('Beginne das Speichern von ${plans.length} Trainingsplänen...');
 
       try {
         // Jeden Plan einzeln speichern statt als Batch
@@ -79,32 +75,25 @@ class TrainingPlanService {
           print('Plan ${plan.id} erfolgreich gespeichert');
         }
 
-        print('Alle PlãÂ¤ne gespeichert, speichere jetzt lokal als Backup');
-        // Auch im lokalen Speicher als Backup speichern
-        await _saveToLocalStorage(plans);
-
+        print('Alle Pläne gespeichert');
         return true;
       } catch (firestoreError) {
         print('Fehler bei der Firestore-Operation: $firestoreError');
-        // Bei Firestore-Fehler trotzdem versuchen, lokal zu speichern
-        return await _saveToLocalStorage(plans);
+        return false;
       }
     } catch (e) {
-      print('Allgemeiner Fehler beim Speichern der TrainingsplãÂ¤ne: $e');
-      // Fallback auf lokalen Speicher
-      return await _saveToLocalStorage(plans);
+      print('Allgemeiner Fehler beim Speichern der Trainingspläne: $e');
+      return false;
     }
   }
 
-  // Trainingsplan aus Firestore löschen - AKTUALISIERT
+  // Trainingsplan aus Firestore löschen
   Future<bool> deletePlan(String planId) async {
     try {
       final userId = _getUserId();
       if (userId == null) {
-        // Wenn nicht angemeldet, kann nur lokal gelöscht werden
-        print('Kein User angemeldet, lösche nur lokal');
-        // Wir geben true zurück, da die lokale Löschung im Provider erfolgt
-        return true;
+        print('Kein User angemeldet, kann Plan nicht löschen');
+        return false;
       }
 
       print('Lösche Plan mit ID: $planId aus Firestore...');
@@ -129,9 +118,8 @@ class TrainingPlanService {
     try {
       final userId = _getUserId();
       if (userId == null) {
-        // Wenn nicht angemeldet, kann nur lokal gelöscht werden
-        print('Kein User angemeldet, lösche nur lokal');
-        return true;
+        print('Kein User angemeldet, kann Übung nicht löschen');
+        return false;
       }
 
       print('Lösche Übung mit ID: $exerciseId aus Trainingshistorie...');
@@ -143,45 +131,6 @@ class TrainingPlanService {
       return true;
     } catch (e) {
       print('Fehler beim Löschen der Übung aus Firestore: $e');
-      return false;
-    }
-  }
-
-  // Methoden fãÂ¼r lokalen Speicher
-  Future<List<TrainingPlanModel>> _loadFromLocalStorage() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final plansJson = prefs.getString('training_plans');
-
-      if (plansJson == null || plansJson.isEmpty) {
-        return [];
-      }
-
-      final List<dynamic> decodedPlans = jsonDecode(plansJson);
-      return decodedPlans
-          .map((planJson) =>
-              _decodePlanFromJson(Map<String, dynamic>.from(planJson)))
-          .toList();
-    } catch (e) {
-      print(
-          'Fehler beim Laden der TrainingsplãÂ¤ne aus dem lokalen Speicher: $e');
-      return [];
-    }
-  }
-
-  Future<bool> _saveToLocalStorage(List<TrainingPlanModel> plans) async {
-    try {
-      print('Speichere ${plans.length} PlãÂ¤ne im lokalen Speicher');
-      final prefs = await SharedPreferences.getInstance();
-      final plansJson =
-          jsonEncode(plans.map((p) => _encodePlanToJson(p)).toList());
-
-      await prefs.setString('training_plans', plansJson);
-      print('PlãÂ¤ne erfolgreich im lokalen Speicher gespeichert');
-      return true;
-    } catch (e) {
-      print(
-          'Fehler beim Speichern der TrainingsplãÂ¤ne im lokalen Speicher: $e');
       return false;
     }
   }
@@ -204,10 +153,8 @@ class TrainingPlanService {
                           'secondaryMuscleGroup': exercise.secondaryMuscleGroup,
                           'standardIncrease': exercise.standardIncrease,
                           'restPeriodSeconds': exercise.restPeriodSeconds,
-                          'numberOfSets':
-                              exercise.numberOfSets, // Neues Feld hinzugefügt
-                          'progressionProfileId':
-                              exercise.progressionProfileId, // Neu hinzugefügt
+                          'numberOfSets': exercise.numberOfSets,
+                          'progressionProfileId': exercise.progressionProfileId,
                         })
                     .toList(),
               })
@@ -229,10 +176,8 @@ class TrainingPlanService {
           secondaryMuscleGroup: exerciseJson['secondaryMuscleGroup'],
           standardIncrease: exerciseJson['standardIncrease'].toDouble(),
           restPeriodSeconds: exerciseJson['restPeriodSeconds'],
-          numberOfSets:
-              exerciseJson['numberOfSets'] ?? 3, // Neues Feld mit Standardwert
-          progressionProfileId:
-              exerciseJson['progressionProfileId'], // Neu hinzugefügt
+          numberOfSets: exerciseJson['numberOfSets'] ?? 3,
+          progressionProfileId: exerciseJson['progressionProfileId'],
         );
       }).toList();
 

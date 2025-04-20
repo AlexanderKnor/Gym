@@ -1,6 +1,8 @@
+// lib/providers/auth/auth_provider.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth/auth_service.dart';
+import '../../models/auth/user_model.dart';
 
 enum AuthStatus {
   uninitialized, // Initial state
@@ -11,12 +13,14 @@ enum AuthStatus {
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   User? _user;
+  UserModel? _userData;
   AuthStatus _status = AuthStatus.uninitialized;
   String? _error;
   bool _isLoading = false;
 
   // Getters
   User? get user => _user;
+  UserModel? get userData => _userData;
   AuthStatus get status => _status;
   String? get error => _error;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
@@ -25,24 +29,29 @@ class AuthProvider with ChangeNotifier {
   // Constructor with auth state monitoring
   AuthProvider() {
     // Listen to authentication state changes
-    _authService.authStateChanges.listen((User? user) {
+    _authService.authStateChanges.listen((User? user) async {
       if (user == null) {
         _status = AuthStatus.unauthenticated;
         _user = null;
+        _userData = null;
       } else {
         _status = AuthStatus.authenticated;
         _user = user;
+
+        // Lade Benutzerdaten aus Firestore
+        _userData = await _authService.getCurrentUserData();
       }
       notifyListeners();
     });
   }
 
-  // Registration with email and password
+  // Registration with email, password and username
   Future<bool> registerWithEmailAndPassword(
-      String email, String password) async {
+      String email, String password, String username) async {
     try {
       _setLoading(true);
-      await _authService.registerWithEmailAndPassword(email, password);
+      await _authService.registerWithEmailAndPassword(
+          email, password, username);
       _error = null;
       return true;
     } catch (e) {

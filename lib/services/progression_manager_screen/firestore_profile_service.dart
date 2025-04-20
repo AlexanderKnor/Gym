@@ -1,6 +1,6 @@
+// lib/services/progression_manager_screen/firestore_profile_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:convert';
 import '../../models/progression_manager_screen/progression_profile_model.dart';
 import '../../models/progression_manager_screen/progression_rule_model.dart';
 import '../../models/progression_manager_screen/progression_condition_model.dart';

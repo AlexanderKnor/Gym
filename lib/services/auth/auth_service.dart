@@ -1,7 +1,11 @@
+// lib/services/auth/auth_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../models/auth/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Aktueller Benutzer
   User? get currentUser => _auth.currentUser;
@@ -9,14 +13,27 @@ class AuthService {
   // Authentifizierungsstatus-Stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Registrierung mit E-Mail und Passwort
+  // Registrierung mit E-Mail, Passwort und Benutzername
   Future<UserCredential> registerWithEmailAndPassword(
-      String email, String password) async {
+      String email, String password, String username) async {
     try {
-      return await _auth.createUserWithEmailAndPassword(
+      // Benutzer in Firebase Auth erstellen
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Benutzerprofil in Firestore erstellen
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'username': username,
+          'email': email,
+          'uid': userCredential.user!.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       // Log firebase auth exceptions for debugging
       print(
@@ -42,6 +59,23 @@ class AuthService {
     } catch (e) {
       print('Allgemeiner Fehler bei Anmeldung: $e');
       rethrow;
+    }
+  }
+
+  // Benutzerdaten abrufen
+  Future<UserModel?> getCurrentUserData() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid == null) return null;
+
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      print('Fehler beim Abrufen der Benutzerdaten: $e');
+      return null;
     }
   }
 

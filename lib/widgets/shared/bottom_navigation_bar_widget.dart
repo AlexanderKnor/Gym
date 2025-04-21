@@ -13,6 +13,23 @@ class BottomNavigationBarWidget extends StatelessWidget {
     // FriendshipProvider hinzufügen, um auf offene Anfragen zugreifen zu können
     final friendshipProvider = Provider.of<FriendshipProvider>(context);
 
+    // Wenn der Provider noch nicht initialisiert ist, initialisieren
+    if (!friendshipProvider.isInitialized) {
+      // Wenn wir hier sind und der Provider nicht initialisiert ist,
+      // stellen wir sicher, dass die Initialisierung läuft
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        print('BottomNavigationBarWidget: Initialisiere FriendshipProvider');
+        friendshipProvider.init();
+      });
+    }
+
+    // Prüfen, ob wir Anfragen haben
+    final hasRequests = friendshipProvider.isInitialized &&
+        friendshipProvider.hasReceivedRequests;
+
+    // Anzahl der Anfragen für das Badge
+    final requestCount = friendshipProvider.receivedRequests.length;
+
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
       notchMargin: 8.0,
@@ -53,11 +70,16 @@ class BottomNavigationBarWidget extends StatelessWidget {
                 color: navigationProvider.currentIndex == 3
                     ? Theme.of(context).primaryColor
                     : Colors.grey,
-                onPressed: () => navigationProvider.setCurrentIndex(3),
+                onPressed: () {
+                  // Bei Klick zum Profil auch sicherstellen, dass Daten aktuell sind
+                  navigationProvider.setCurrentIndex(3);
+                  if (friendshipProvider.isInitialized) {
+                    friendshipProvider.refreshFriendData();
+                  }
+                },
               ),
-              // Badge anzeigen, wenn Anfragen vorhanden sind und Provider initialisiert ist
-              if (friendshipProvider.isInitialized &&
-                  friendshipProvider.hasReceivedRequests)
+              // Badge anzeigen, wenn Anfragen vorhanden sind
+              if (hasRequests)
                 Positioned(
                   right: 0,
                   top: 0,
@@ -72,7 +94,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
                       minHeight: 16,
                     ),
                     child: Text(
-                      '${friendshipProvider.receivedRequests.length}',
+                      '$requestCount',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,

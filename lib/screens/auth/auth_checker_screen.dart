@@ -19,17 +19,24 @@ class AuthCheckerScreen extends StatelessWidget {
     switch (authProvider.status) {
       case AuthStatus.authenticated:
         // Initialisiere den FriendshipProvider, wenn der Benutzer angemeldet ist
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
           // Navigation zum ersten Tab (Training) setzen
           Provider.of<NavigationProvider>(context, listen: false)
               .setCurrentIndex(0);
 
-          // Freundschaftsdaten initialisieren
+          // Freundschaftsdaten initialisieren und Laden sofort starten
           final friendshipProvider =
               Provider.of<FriendshipProvider>(context, listen: false);
+
           if (!friendshipProvider.isInitialized) {
             print('AuthCheckerScreen: Initialisiere FriendshipProvider');
-            friendshipProvider.init();
+            // Auf die vollständige Initialisierung warten
+            await friendshipProvider.init();
+          } else {
+            // Auch wenn bereits initialisiert, Daten aktualisieren
+            print(
+                'AuthCheckerScreen: FriendshipProvider bereits initialisiert, aktualisiere Daten');
+            await friendshipProvider.refreshFriendData();
           }
         });
         return const MainScreen();

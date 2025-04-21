@@ -1,6 +1,5 @@
 // lib/screens/profile_screen/profile_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
 import '../../providers/profile_screen/profile_screen_provider.dart';
@@ -58,53 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil'),
-        actions: [
-          // Badge für Freundschaftsanfragen
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  profileProvider.setSelectedTab(1); // Wechsel zum Anfragen-Tab
-                },
-              ),
-              if (friendshipProvider.hasReceivedRequests)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${friendshipProvider.receivedRequests.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          // Refresh-Button hinzufügen
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Daten werden aktualisiert...')));
-              friendshipProvider.refreshFriendData();
-            },
-          ),
-        ],
+        // Alle actions wurden entfernt (Glocke und Refresh-Button)
       ),
       floatingActionButton: profileProvider.selectedTabIndex == 0
           ? FloatingActionButton(
@@ -298,27 +251,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildTabContent(int index, FriendshipProvider friendshipProvider) {
     if (index == 1) {
-      // Anfragen-Tab mit Debug-Button
-      return Column(
-        children: [
-          Expanded(child: const FriendRequestWidget()),
-          // Debug-Button nur im Debug-Modus anzeigen
-          if (kDebugMode)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  // Debug-Anfragen
-                  friendshipProvider.debugReceivedRequests();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey,
-                ),
-                child: const Text('Debug Anfragen'),
-              ),
-            ),
-        ],
-      );
+      // Anfragen-Tab
+      return const FriendRequestWidget();
     } else {
       return const FriendListWidget();
     }

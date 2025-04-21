@@ -16,6 +16,7 @@ class FriendshipProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isInitialized = false;
+  bool _isInitializing = false;
 
   // Abonnements
   StreamSubscription<List<FriendshipModel>>? _friendsSubscription;
@@ -41,17 +42,70 @@ class FriendshipProvider with ChangeNotifier {
     print('FriendshipProvider: Initialisiere Provider nach Anmeldung');
 
     if (_isInitialized) {
-      print('FriendshipProvider: Provider bereits initialisiert, überspringe');
+      print(
+          'FriendshipProvider: Provider bereits initialisiert, aktualisiere Daten');
+      return refreshFriendData();
+    }
+
+    if (_isInitializing) {
+      print('FriendshipProvider: Initialisierung läuft bereits, überspringe');
       return;
     }
 
-    _isInitialized = true;
+    _isInitializing = true;
+    _isInitialized = false;
+    _setLoading(true);
 
-    // Streams abonnieren
-    _subscribeToStreams();
+    try {
+      // Alte Abonnements bereinigen, falls vorhanden
+      _cancelSubscriptions();
 
-    // Daten laden
-    await refreshFriendData();
+      // Streams abonnieren
+      _subscribeToStreams();
+
+      // Daten initial laden
+      print('FriendshipProvider: Lade initiale Daten');
+
+      await Future.wait(
+          [_loadReceivedRequests(), _loadSentRequests(), _loadFriends()]);
+
+      print('FriendshipProvider: Initialisierung abgeschlossen');
+      _isInitialized = true;
+    } catch (e) {
+      print('FriendshipProvider: Fehler bei der Initialisierung: $e');
+      _errorMessage = 'Fehler beim Laden der Freundschaftsdaten: $e';
+    } finally {
+      _isInitializing = false;
+      _setLoading(false);
+    }
+  }
+
+  // Spezifische Lade-Methoden für bessere Nachverfolgung
+  Future<void> _loadReceivedRequests() async {
+    print('FriendshipProvider: Lade empfangene Anfragen...');
+    final receivedRequestsResult =
+        await _friendshipService.getReceivedRequests();
+    print(
+        'FriendshipProvider: ${receivedRequestsResult.length} empfangene Anfragen geladen');
+    _receivedRequests = receivedRequestsResult;
+    notifyListeners();
+  }
+
+  Future<void> _loadSentRequests() async {
+    print('FriendshipProvider: Lade gesendete Anfragen...');
+    final sentRequestsResult = await _friendshipService.getSentRequests();
+    print(
+        'FriendshipProvider: ${sentRequestsResult.length} gesendete Anfragen geladen');
+    _sentRequests = sentRequestsResult;
+    notifyListeners();
+  }
+
+  Future<void> _loadFriends() async {
+    print('FriendshipProvider: Lade Freundesliste...');
+    final friendsResult = await _friendshipService.getFriends();
+    print('FriendshipProvider: ${friendsResult.length} Freunde geladen');
+    _friends = friendsResult;
+    notifyListeners();
   }
 
   // Stream-Abonnements
@@ -119,29 +173,29 @@ class FriendshipProvider with ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _isInitialized = false;
+    _isInitializing = false;
     notifyListeners();
   }
 
   // Laden der Freunde und Anfragen
   Future<void> refreshFriendData() async {
+    if (!_isInitialized && !_isInitializing) {
+      return init();
+    }
+
     _setLoading(true);
     _errorMessage = null;
 
     try {
       print('FriendshipProvider: Lade Freundschaftsdaten neu');
-      final friendsResult = await _friendshipService.getFriends();
-      final receivedRequestsResult =
-          await _friendshipService.getReceivedRequests();
-      final sentRequestsResult = await _friendshipService.getSentRequests();
 
-      print(
-          'Freundschaftsdaten aktualisiert: ${friendsResult.length} Freunde, ' +
-              '${receivedRequestsResult.length} empfangene Anfragen, ' +
-              '${sentRequestsResult.length} gesendete Anfragen');
+      // Alle Daten parallel neu laden
+      await Future.wait(
+          [_loadReceivedRequests(), _loadSentRequests(), _loadFriends()]);
 
-      _friends = friendsResult;
-      _receivedRequests = receivedRequestsResult;
-      _sentRequests = sentRequestsResult;
+      print('Freundschaftsdaten aktualisiert: ${_friends.length} Freunde, ' +
+          '${_receivedRequests.length} empfangene Anfragen, ' +
+          '${_sentRequests.length} gesendete Anfragen');
     } catch (e) {
       _errorMessage = 'Fehler beim Laden der Freundschaftsdaten: $e';
       print(_errorMessage);
@@ -192,8 +246,7 @@ class FriendshipProvider with ChangeNotifier {
 
       if (result) {
         // Bei Erfolg die gesendeten Anfragen aktualisieren
-        final updatedSentRequests = await _friendshipService.getSentRequests();
-        _sentRequests = updatedSentRequests;
+        await _loadSentRequests();
       }
 
       return result;
@@ -239,8 +292,7 @@ class FriendshipProvider with ChangeNotifier {
 
       if (result) {
         // Bei Erfolg die empfangenen Anfragen aktualisieren
-        _receivedRequests =
-            _receivedRequests.where((r) => r.id != request.id).toList();
+        await _loadReceivedRequests();
       }
 
       return result;
@@ -266,9 +318,7 @@ class FriendshipProvider with ChangeNotifier {
         // Bei Erfolg die lokale Freundesliste aktualisieren
         print(
             'FriendshipProvider: Freund erfolgreich entfernt, aktualisiere lokale Liste');
-        _friends = _friends.where((f) => f.friendId != friendId).toList();
-        // Optional: Lade alle Daten neu, um sicherzustellen, dass alles synchron ist
-        await refreshFriendData();
+        await _loadFriends();
       } else {
         print('FriendshipProvider: Fehler beim Entfernen des Freundes');
       }

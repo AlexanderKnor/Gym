@@ -22,9 +22,26 @@ class FriendshipService {
     return _firestore.collection('users').doc(userId).collection('friends');
   }
 
-  // Referenz zur Anfragen-Sammlung
-  CollectionReference _getRequestsCollection() {
-    return _firestore.collection('friend_requests');
+  // Referenz zur eingehenden Anfragen-Sammlung eines Benutzers
+  CollectionReference _getIncomingRequestsCollection() {
+    final userId = _getUserId();
+    if (userId == null) throw Exception('Benutzer ist nicht angemeldet');
+
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('friend_requests');
+  }
+
+  // Referenz zur ausgehenden Anfragen-Sammlung eines Benutzers
+  CollectionReference _getOutgoingRequestsCollection(String receiverId) {
+    final userId = _getUserId();
+    if (userId == null) throw Exception('Benutzer ist nicht angemeldet');
+
+    return _firestore
+        .collection('users')
+        .doc(receiverId)
+        .collection('friend_requests');
   }
 
   // Hilfsmethode zum Abrufen der aktuellen Benutzerdaten
@@ -89,8 +106,7 @@ class FriendshipService {
       return Stream.value([]);
     }
 
-    return _getRequestsCollection()
-        .where('receiverId', isEqualTo: userId)
+    return _getIncomingRequestsCollection()
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map((snapshot) {
@@ -122,8 +138,7 @@ class FriendshipService {
         return [];
       }
 
-      final snapshot = await _getRequestsCollection()
-          .where('receiverId', isEqualTo: userId)
+      final snapshot = await _getIncomingRequestsCollection()
           .where('status', isEqualTo: 'pending')
           .get();
 
@@ -147,7 +162,9 @@ class FriendshipService {
       return Stream.value([]);
     }
 
-    return _getRequestsCollection()
+    // Diese Abfrage ist komplexer, da wir alle Anfragen von verschiedenen Empfängern finden müssen
+    return _firestore
+        .collectionGroup('friend_requests')
         .where('senderId', isEqualTo: userId)
         .where('status', isEqualTo: 'pending')
         .snapshots()
@@ -170,7 +187,9 @@ class FriendshipService {
         return [];
       }
 
-      final snapshot = await _getRequestsCollection()
+      // Sammlung mit allen friend_requests-Subsammlungen durchsuchen
+      final snapshot = await _firestore
+          .collectionGroup('friend_requests')
           .where('senderId', isEqualTo: userId)
           .where('status', isEqualTo: 'pending')
           .get();
@@ -287,9 +306,11 @@ class FriendshipService {
       final senderUsername = currentUserData?.username ?? 'Unbekannt';
 
       // Prüfen, ob bereits eine Anfrage existiert
-      final existingRequests = await _getRequestsCollection()
+      final existingRequests = await _firestore
+          .collection('users')
+          .doc(receiver.uid)
+          .collection('friend_requests')
           .where('senderId', isEqualTo: userId)
-          .where('receiverId', isEqualTo: receiver.uid)
           .get();
 
       if (existingRequests.docs.isNotEmpty) {
@@ -307,8 +328,14 @@ class FriendshipService {
         return false;
       }
 
-      // Neue Anfrage erstellen
-      final requestId = _getRequestsCollection().doc().id;
+      // Neue Anfrage erstellen - jetzt als Unterdokument des Empfängers
+      final requestId = _firestore
+          .collection('users')
+          .doc(receiver.uid)
+          .collection('friend_requests')
+          .doc()
+          .id;
+
       final request = FriendRequestModel(
         id: requestId,
         senderId: userId,
@@ -318,7 +345,13 @@ class FriendshipService {
         createdAt: DateTime.now(),
       );
 
-      await _getRequestsCollection().doc(requestId).set(request.toMap());
+      await _firestore
+          .collection('users')
+          .doc(receiver.uid)
+          .collection('friend_requests')
+          .doc(requestId)
+          .set(request.toMap());
+
       print('Freundschaftsanfrage erfolgreich gesendet');
       return true;
     } catch (e) {
@@ -327,7 +360,7 @@ class FriendshipService {
     }
   }
 
-  // Anfrage akzeptieren - VERBESSERTE VERSION
+  // Anfrage akzeptieren
   Future<bool> acceptFriendRequest(FriendRequestModel request) async {
     try {
       final userId = _getUserId();
@@ -403,14 +436,18 @@ class FriendshipService {
           .collection('friends')
           .doc(friendship2.id);
 
-      // Referenz auf das Anfragedokument
-      final requestRef = _getRequestsCollection().doc(request.id);
+      // Referenz auf das Anfragedokument im neuen Pfad
+      final requestRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('friend_requests')
+          .doc(request.id);
 
       // Batch-Operationen hinzufügen
       batch.set(friendship1Ref, friendship1.toMap());
       batch.set(friendship2Ref, friendship2.toMap());
 
-      // WICHTIGE ÄNDERUNG: Anfrage löschen statt zu aktualisieren
+      // Anfrage löschen
       batch.delete(requestRef);
 
       // Batch ausführen
@@ -435,8 +472,13 @@ class FriendshipService {
         return false;
       }
 
-      // Anfrage löschen statt nur den Status zu aktualisieren
-      await _getRequestsCollection().doc(request.id).delete();
+      // Anfrage im neuen Pfad löschen
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('friend_requests')
+          .doc(request.id)
+          .delete();
 
       print('Freundschaftsanfrage erfolgreich abgelehnt und gelöscht');
       return true;

@@ -99,12 +99,19 @@ class ProfileScreen extends StatelessWidget {
                       context, authProvider);
 
                   if (shouldSignOut && context.mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const AuthCheckerScreen(),
-                      ),
-                      (route) => false, // Alle vorherigen Routen entfernen
-                    );
+                    print('PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
+
+                    // Vor dem Abmelden den FriendshipProvider zurücksetzen
+                    Provider.of<FriendshipProvider>(context, listen: false)
+                        .reset();
+                    print('PROFILE SCREEN: FriendshipProvider zurückgesetzt');
+
+                    // Dann abmelden (dadurch wird der Auth-Status geändert)
+                    await authProvider.signOut();
+                    print('PROFILE SCREEN: Benutzer abgemeldet');
+
+                    // Wir brauchen keinen manuellen Navigator.push, da der AuthCheckerScreen
+                    // automatisch zum LoginScreen weiterleitet
                   }
                 },
                 icon: const Icon(Icons.logout),

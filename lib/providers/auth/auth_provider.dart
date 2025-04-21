@@ -31,10 +31,14 @@ class AuthProvider with ChangeNotifier {
     // Listen to authentication state changes
     _authService.authStateChanges.listen((User? user) async {
       if (user == null) {
+        print(
+            'AUTH PROVIDER: Benutzer abgemeldet, setze Status auf unauthenticated');
         _status = AuthStatus.unauthenticated;
         _user = null;
         _userData = null;
       } else {
+        print(
+            'AUTH PROVIDER: Benutzer angemeldet, setze Status auf authenticated');
         _status = AuthStatus.authenticated;
         _user = user;
 
@@ -95,10 +99,17 @@ class AuthProvider with ChangeNotifier {
   // Sign out
   Future<void> signOut() async {
     try {
+      print('AUTH PROVIDER: Starte Abmeldeprozess');
       _setLoading(true);
+
+      // Wir rufen hier keine Provider-Reset-Methoden auf, da das in der UI-Schicht
+      // vor dem Aufruf von signOut() geschehen sollte
+
       await _authService.signOut();
+      print('AUTH PROVIDER: Abmeldevorgang abgeschlossen');
     } catch (e) {
       _error = _handleAuthError(e);
+      print('AUTH PROVIDER: Fehler beim Abmelden: $_error');
     } finally {
       _setLoading(false);
     }

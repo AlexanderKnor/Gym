@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
 import '../../providers/shared/navigation_provider.dart';
+import '../../providers/profile_screen/friendship_provider.dart';
 import '../main_screen.dart';
 import 'login_screen.dart';
 
@@ -12,16 +13,28 @@ class AuthCheckerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
+    print('AuthCheckerScreen: Auth-Status ist ${authProvider.status}');
+
     // Based on auth status, show the appropriate screen
     switch (authProvider.status) {
       case AuthStatus.authenticated:
-        // Stelle sicher, dass Navigation auf den ersten Tab (Training) gesetzt ist
+        // Initialisiere den FriendshipProvider, wenn der Benutzer angemeldet ist
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Navigation zum ersten Tab (Training) setzen
           Provider.of<NavigationProvider>(context, listen: false)
               .setCurrentIndex(0);
+
+          // Freundschaftsdaten initialisieren
+          final friendshipProvider =
+              Provider.of<FriendshipProvider>(context, listen: false);
+          if (!friendshipProvider.isInitialized) {
+            print('AuthCheckerScreen: Initialisiere FriendshipProvider');
+            friendshipProvider.init();
+          }
         });
         return const MainScreen();
       case AuthStatus.unauthenticated:
+        print('AuthCheckerScreen: Zeige LoginScreen');
         return const LoginScreen();
       case AuthStatus.uninitialized:
       default:

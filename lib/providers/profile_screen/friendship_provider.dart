@@ -15,6 +15,7 @@ class FriendshipProvider with ChangeNotifier {
   List<FriendRequestModel> _sentRequests = [];
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isInitialized = false;
 
   // Abonnements
   StreamSubscription<List<FriendshipModel>>? _friendsSubscription;
@@ -28,24 +29,44 @@ class FriendshipProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get hasReceivedRequests => _receivedRequests.isNotEmpty;
+  bool get isInitialized => _isInitialized;
 
   // Konstruktor
   FriendshipProvider() {
+    // Die Initialisierung erfolgt durch die init()-Methode
+  }
+
+  // Initialisierung nach dem Anmelden
+  Future<void> init() async {
+    print('FriendshipProvider: Initialisiere Provider nach Anmeldung');
+
+    if (_isInitialized) {
+      print('FriendshipProvider: Provider bereits initialisiert, überspringe');
+      return;
+    }
+
+    _isInitialized = true;
+
     // Streams abonnieren
     _subscribeToStreams();
 
-    // Einmalige Initialisierung
-    refreshFriendData();
+    // Daten laden
+    await refreshFriendData();
   }
 
   // Stream-Abonnements
   void _subscribeToStreams() {
+    print('FriendshipProvider: Abonniere Streams');
+
     // Freunde-Stream abonnieren
     _friendsSubscription?.cancel();
     _friendsSubscription =
         _friendshipService.getFriendsStream().listen((friends) {
       _friends = friends;
+      print('PROVIDER: Freundesliste aktualisiert: ${friends.length} Freunde');
       notifyListeners();
+    }, onError: (e) {
+      print('Fehler im Freunde-Stream: $e');
     });
 
     // Empfangene Anfragen abonnieren
@@ -55,6 +76,8 @@ class FriendshipProvider with ChangeNotifier {
       print('PROVIDER: Empfangene Anfragen aktualisiert: ${requests.length}');
       _receivedRequests = requests;
       notifyListeners();
+    }, onError: (e) {
+      print('Fehler im Empfangene-Anfragen-Stream: $e');
     });
 
     // Gesendete Anfragen abonnieren
@@ -62,16 +85,41 @@ class FriendshipProvider with ChangeNotifier {
     _sentRequestsSubscription =
         _friendshipService.getSentRequestsStream().listen((requests) {
       _sentRequests = requests;
+      print('PROVIDER: Gesendete Anfragen aktualisiert: ${requests.length}');
       notifyListeners();
+    }, onError: (e) {
+      print('Fehler im Gesendete-Anfragen-Stream: $e');
     });
   }
 
   @override
   void dispose() {
-    _friendsSubscription?.cancel();
-    _receivedRequestsSubscription?.cancel();
-    _sentRequestsSubscription?.cancel();
+    _cancelSubscriptions();
     super.dispose();
+  }
+
+  // Abonnements beenden
+  void _cancelSubscriptions() {
+    print('Beende alle Freundschafts-Stream-Abonnements');
+    _friendsSubscription?.cancel();
+    _friendsSubscription = null;
+    _receivedRequestsSubscription?.cancel();
+    _receivedRequestsSubscription = null;
+    _sentRequestsSubscription?.cancel();
+    _sentRequestsSubscription = null;
+  }
+
+  // Zurücksetzen des Providers beim Abmelden
+  void reset() {
+    print('Setze FriendshipProvider zurück');
+    _cancelSubscriptions();
+    _friends = [];
+    _receivedRequests = [];
+    _sentRequests = [];
+    _isLoading = false;
+    _errorMessage = null;
+    _isInitialized = false;
+    notifyListeners();
   }
 
   // Laden der Freunde und Anfragen
@@ -80,10 +128,16 @@ class FriendshipProvider with ChangeNotifier {
     _errorMessage = null;
 
     try {
+      print('FriendshipProvider: Lade Freundschaftsdaten neu');
       final friendsResult = await _friendshipService.getFriends();
       final receivedRequestsResult =
           await _friendshipService.getReceivedRequests();
       final sentRequestsResult = await _friendshipService.getSentRequests();
+
+      print(
+          'Freundschaftsdaten aktualisiert: ${friendsResult.length} Freunde, ' +
+              '${receivedRequestsResult.length} empfangene Anfragen, ' +
+              '${sentRequestsResult.length} gesendete Anfragen');
 
       _friends = friendsResult;
       _receivedRequests = receivedRequestsResult;
@@ -205,11 +259,18 @@ class FriendshipProvider with ChangeNotifier {
     _errorMessage = null;
 
     try {
+      print('FriendshipProvider: Starte Entfernen des Freundes $friendId');
       final result = await _friendshipService.removeFriend(friendId);
 
       if (result) {
-        // Bei Erfolg die Freundesliste aktualisieren
+        // Bei Erfolg die lokale Freundesliste aktualisieren
+        print(
+            'FriendshipProvider: Freund erfolgreich entfernt, aktualisiere lokale Liste');
         _friends = _friends.where((f) => f.friendId != friendId).toList();
+        // Optional: Lade alle Daten neu, um sicherzustellen, dass alles synchron ist
+        await refreshFriendData();
+      } else {
+        print('FriendshipProvider: Fehler beim Entfernen des Freundes');
       }
 
       return result;
@@ -238,8 +299,9 @@ class FriendshipProvider with ChangeNotifier {
       }
 
       // Gefilterte Anfragen (nur ausstehende)
-      final pendingRequests =
-          requests.where((r) => r.status == 'pending').toList();
+      final pendingRequests = requests
+          .where((r) => r.status == FriendRequestStatus.pending)
+          .toList();
       print('Ausstehende Anfragen: ${pendingRequests.length}');
 
       // Lokale Daten

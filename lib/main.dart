@@ -8,7 +8,9 @@ import 'providers/create_training_plan_screen/create_training_plan_provider.dart
 import 'providers/auth/auth_provider.dart';
 import 'providers/training_plans_screen/training_plans_screen_provider.dart';
 import 'providers/progression_manager_screen/progression_manager_provider.dart';
-import 'providers/training_session_screen/training_session_provider.dart'; // NEU
+import 'providers/training_session_screen/training_session_provider.dart';
+import 'providers/profile_screen/profile_screen_provider.dart';
+import 'providers/profile_screen/friendship_provider.dart';
 import 'screens/auth/auth_checker_screen.dart';
 
 void main() async {
@@ -40,13 +42,19 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => TrainingPlansProvider(),
         ),
-        // Aktualisiert - dieser Provider hält nun Sub-Provider
         ChangeNotifierProvider(
           create: (context) => ProgressionManagerProvider(),
         ),
-        // NEU: Training Session Provider
         ChangeNotifierProvider(
           create: (context) => TrainingSessionProvider(),
+        ),
+        // Provider für das Profil-Bildschirm
+        ChangeNotifierProvider(
+          create: (context) => ProfileProvider(),
+        ),
+        // Provider für die Freundschaftsfunktion
+        ChangeNotifierProvider(
+          create: (context) => FriendshipProvider(),
         ),
       ],
       child: MaterialApp(

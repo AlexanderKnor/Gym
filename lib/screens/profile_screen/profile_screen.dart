@@ -1,86 +1,241 @@
+// lib/screens/profile_screen/profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
-import '../auth/auth_checker_screen.dart'; // Importieren für die Navigation
+import '../../providers/profile_screen/profile_screen_provider.dart';
+import '../../providers/profile_screen/friendship_provider.dart';
+import '../auth/auth_checker_screen.dart';
+import '../../widgets/profile_screen/components/friend_list_widget.dart';
+import '../../widgets/profile_screen/components/add_friend_dialog_widget.dart';
+import '../../widgets/profile_screen/components/friend_request_widget.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final profileProvider = Provider.of<ProfileProvider>(context);
+    final friendshipProvider = Provider.of<FriendshipProvider>(context);
+    final userData = authProvider.userData;
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(
+        title: const Text('Profil'),
+        actions: [
+          // Badge für Freundschaftsanfragen
+          Stack(
+            alignment: Alignment.center,
             children: [
-              // Bildschirmtitel
-              const Text(
-                'Profil',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () {
+                  profileProvider.setSelectedTab(1); // Wechsel zum Anfragen-Tab
+                },
+              ),
+              if (friendshipProvider.hasReceivedRequests)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '${friendshipProvider.receivedRequests.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+      floatingActionButton: profileProvider.selectedTabIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const AddFriendDialogWidget(),
+                );
+              },
+              child: const Icon(Icons.person_add),
+            )
+          : null,
+      body: Column(
+        children: [
+          // Profil-Header
+          _buildProfileHeader(
+              context, userData?.username ?? 'Benutzer', userData?.email ?? ''),
+
+          // Tab-Navigation
+          _buildTabBar(context, profileProvider),
+
+          // Tab-Inhalt
+          Expanded(
+            child: _buildTabContent(
+                profileProvider.selectedTabIndex, friendshipProvider),
+          ),
+
+          // Abmelden-Button
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final shouldSignOut = await profileProvider.confirmSignOut(
+                      context, authProvider);
+
+                  if (shouldSignOut && context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const AuthCheckerScreen(),
+                      ),
+                      (route) => false, // Alle vorherigen Routen entfernen
+                    );
+                  }
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text('Abmelden'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
-              const SizedBox(height: 32),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              // Hier könnten weitere Profil-Informationen angezeigt werden
-              // ...
+  Widget _buildProfileHeader(
+      BuildContext context, String username, String email) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          // Profilbild
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.blue,
+            child: Text(
+              username.isNotEmpty
+                  ? username.substring(0, 1).toUpperCase()
+                  : '?',
+              style: const TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
 
-              // Logout-Button am Ende der Seite
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // Dialog zum Bestätigen des Abmeldens anzeigen
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Abmelden'),
-                        content:
-                            const Text('Möchtest du dich wirklich abmelden?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Abbrechen'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              Navigator.pop(context); // Dialog schließen
-                              await authProvider.signOut(); // Abmelden
-
-                              // Nach dem Abmelden direkt zur AuthCheckerScreen navigieren
-                              if (context.mounted) {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const AuthCheckerScreen(),
-                                  ),
-                                  (route) =>
-                                      false, // Alle vorherigen Routen entfernen
-                                );
-                              }
-                            },
-                            child: const Text('Abmelden'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Abmelden'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+          // Benutzerdaten
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabBar(BuildContext context, ProfileProvider provider) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildTabButton(
+            context,
+            'Freunde',
+            Icons.people,
+            0,
+            provider.selectedTabIndex == 0,
+            () => provider.setSelectedTab(0),
+          ),
+          _buildTabButton(
+            context,
+            'Anfragen',
+            Icons.person_add,
+            1,
+            provider.selectedTabIndex == 1,
+            () => provider.setSelectedTab(1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    int index,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isSelected ? Colors.blue : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? Colors.blue : Colors.grey,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.blue : Colors.grey,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ],
@@ -88,5 +243,33 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildTabContent(int index, FriendshipProvider friendshipProvider) {
+    if (index == 1) {
+      // Anfragen-Tab mit Debug-Button
+      return Column(
+        children: [
+          Expanded(child: const FriendRequestWidget()),
+          // Debug-Button nur im Debug-Modus anzeigen
+          if (kDebugMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  // Debug-Anfragen
+                  friendshipProvider.debugReceivedRequests();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey,
+                ),
+                child: const Text('Debug Anfragen'),
+              ),
+            ),
+        ],
+      );
+    } else {
+      return const FriendListWidget();
+    }
   }
 }

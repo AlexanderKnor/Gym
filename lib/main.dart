@@ -11,6 +11,7 @@ import 'providers/progression_manager_screen/progression_manager_provider.dart';
 import 'providers/training_session_screen/training_session_provider.dart';
 import 'providers/profile_screen/profile_screen_provider.dart';
 import 'providers/profile_screen/friendship_provider.dart';
+import 'providers/friend_profile_screen/friend_profile_provider.dart'; // Neuer Import
 import 'screens/auth/auth_checker_screen.dart';
 
 void main() async {
@@ -55,6 +56,10 @@ class MyApp extends StatelessWidget {
         // Provider für die Freundschaftsfunktion
         ChangeNotifierProvider(
           create: (context) => FriendshipProvider(),
+        ),
+        // NEU: Provider für die Freundesprofil-Anzeige
+        ChangeNotifierProvider(
+          create: (context) => FriendProfileProvider(),
         ),
       ],
       child: MaterialApp(

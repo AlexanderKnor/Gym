@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/profile_screen/friendship_model.dart';
 import '../../../providers/profile_screen/friendship_provider.dart';
+import '../../../screens/friend_profile_screen/friend_profile_screen.dart';
 
 class FriendListWidget extends StatelessWidget {
   const FriendListWidget({Key? key}) : super(key: key);
@@ -83,14 +84,40 @@ class FriendListWidget extends StatelessWidget {
           ),
         ),
         subtitle: Text(friend.friendEmail),
-        trailing: IconButton(
-          icon: const Icon(
-            Icons.delete,
-            color: Colors.red,
-          ),
-          onPressed: () =>
-              _confirmRemoveFriend(context, friend, friendshipProvider),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // NEU: Profil anzeigen Button
+            IconButton(
+              icon: const Icon(
+                Icons.visibility,
+                color: Colors.blue,
+              ),
+              onPressed: () => _openFriendProfile(context, friend),
+              tooltip: 'Profil ansehen',
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.delete,
+                color: Colors.red,
+              ),
+              onPressed: () =>
+                  _confirmRemoveFriend(context, friend, friendshipProvider),
+              tooltip: 'Freund entfernen',
+            ),
+          ],
         ),
+        onTap: () => _openFriendProfile(context, friend),
+      ),
+    );
+  }
+
+  // NEU: Methode zum Öffnen des Freundesprofils
+  void _openFriendProfile(BuildContext context, FriendshipModel friend) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FriendProfileScreen(friendship: friend),
       ),
     );
   }

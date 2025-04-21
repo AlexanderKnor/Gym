@@ -253,45 +253,30 @@ class FriendshipProvider with ChangeNotifier {
     }
   }
 
-  // Freund entfernen - VERBESSERTE VERSION
+  // Freund entfernen
   Future<bool> removeFriend(String friendId) async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
       print('FriendshipProvider: Starte Entfernen des Freundes $friendId');
-
-      // Lokale Kopie der Freundesliste für UI-Update
-      final updatedFriends =
-          _friends.where((f) => f.friendId != friendId).toList();
-
-      // Service-Aufruf zur Datenbankaktualisierung
       final result = await _friendshipService.removeFriend(friendId);
 
       if (result) {
+        // Bei Erfolg die lokale Freundesliste aktualisieren
         print(
             'FriendshipProvider: Freund erfolgreich entfernt, aktualisiere lokale Liste');
-        // Sofortiges lokales UI-Update, unabhängig vom Stream
-        _friends = updatedFriends;
-        notifyListeners();
-
-        // Zusätzlich alle Daten neu laden, um sicherzustellen, dass alles synchron ist
-        await Future.delayed(const Duration(milliseconds: 500));
+        _friends = _friends.where((f) => f.friendId != friendId).toList();
+        // Optional: Lade alle Daten neu, um sicherzustellen, dass alles synchron ist
         await refreshFriendData();
       } else {
-        print(
-            'FriendshipProvider: Fehler beim Entfernen des Freundes, versuche Daten neu zu laden');
-        // Auch bei Fehlern die Daten neu laden, um den aktuellen Zustand zu erhalten
-        await refreshFriendData();
+        print('FriendshipProvider: Fehler beim Entfernen des Freundes');
       }
 
       return result;
     } catch (e) {
       _errorMessage = 'Fehler beim Entfernen des Freundes: $e';
       print(_errorMessage);
-
-      // Bei Fehlern trotzdem versuchen, Daten neu zu laden
-      await refreshFriendData();
       return false;
     } finally {
       _setLoading(false);

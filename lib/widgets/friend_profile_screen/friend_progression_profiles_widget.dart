@@ -1,3 +1,4 @@
+// lib/widgets/friend_profile_screen/friend_progression_profiles_widget.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/friend_profile_screen/friend_profile_provider.dart';
@@ -128,15 +129,132 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        trailing: ElevatedButton(
-          onPressed: () => _showProfileDetails(context, profile),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isActive ? Colors.purple : Colors.grey[200],
-            foregroundColor: isActive ? Colors.white : Colors.black87,
-          ),
-          child: const Text('Details'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // NEU: Kopier-Button
+            ElevatedButton.icon(
+              onPressed: () => _copyProfile(context, profile),
+              icon: const Icon(Icons.copy, size: 16),
+              label: const Text('Kopieren'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () => _showProfileDetails(context, profile),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isActive ? Colors.purple : Colors.grey[200],
+                foregroundColor: isActive ? Colors.white : Colors.black87,
+              ),
+              child: const Text('Details'),
+            ),
+          ],
         ),
         onTap: () => _showProfileDetails(context, profile),
+      ),
+    );
+  }
+
+  // NEU: Funktion zum Kopieren eines Profils
+  void _copyProfile(
+      BuildContext context, ProgressionProfileModel profile) async {
+    final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+
+    // Zeige Ladeanzeige
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Profil wird kopiert...'),
+          ],
+        ),
+      ),
+    );
+
+    // Versuche, das Profil zu kopieren
+    final success = await provider.copyProfileToOwnCollection(profile);
+
+    // Dialog schließen
+    Navigator.of(context).pop();
+
+    if (success) {
+      // Erfolg
+      _showSuccessDialog(context, profile);
+    } else {
+      // Fehler
+      _showErrorDialog(context, provider.errorMessage ?? 'Unbekannter Fehler');
+    }
+  }
+
+  // NEU: Erfolgs-Dialog anzeigen
+  void _showSuccessDialog(
+      BuildContext context, ProgressionProfileModel profile) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erfolgreich kopiert'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Das Progressionsprofil "${profile.name}" wurde erfolgreich in deine Sammlung kopiert.',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEU: Fehler-Dialog anzeigen
+  void _showErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Fehler'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error,
+              color: Colors.red,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Beim Kopieren ist ein Fehler aufgetreten:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(errorMessage),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -209,6 +327,27 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
                       fontStyle: FontStyle.italic,
                       color: Colors.grey[700],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  // NEU: Kopier-Button im Detail-Bereich
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context); // Schließe Details
+                            _copyProfile(
+                                context, profile); // Starte Kopier-Prozess
+                          },
+                          icon: const Icon(Icons.copy),
+                          label: const Text('In meine Sammlung kopieren'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   const Divider(),

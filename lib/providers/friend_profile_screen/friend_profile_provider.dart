@@ -1,3 +1,4 @@
+// lib/providers/friend_profile_screen/friend_profile_provider.dart
 import 'package:flutter/material.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/progression_manager_screen/progression_profile_model.dart';
@@ -74,6 +75,87 @@ class FriendProfileProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Fehler beim Laden der Freundesdaten: $e';
       print(_errorMessage);
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // NEU: Profil in die eigene Sammlung kopieren
+  Future<bool> copyProfileToOwnCollection(
+      ProgressionProfileModel profile) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final result =
+          await _friendProfileService.copyProgressionProfile(profile);
+
+      if (result) {
+        return true;
+      } else {
+        _errorMessage = 'Fehler beim Kopieren des Profils';
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Fehler beim Kopieren des Profils: $e';
+      print(_errorMessage);
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // NEU: Trainingsplan in die eigene Sammlung kopieren
+  Future<Map<String, dynamic>> copyTrainingPlanToOwnCollection(
+      TrainingPlanModel plan) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final result = await _friendProfileService.copyTrainingPlan(
+          plan, _progressionProfiles);
+
+      if (result['success'] == true) {
+        return result;
+      } else {
+        _errorMessage =
+            'Fehler beim Kopieren des Trainingsplans: ${result['error']}';
+        return {
+          'success': false,
+          'error': _errorMessage,
+        };
+      }
+    } catch (e) {
+      _errorMessage = 'Fehler beim Kopieren des Trainingsplans: $e';
+      print(_errorMessage);
+      return {
+        'success': false,
+        'error': _errorMessage,
+      };
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // NEU: Fehlende Profile kopieren
+  Future<bool> copyMissingProfiles(List<String> profileIds) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final copiedIds = await _friendProfileService.copySpecificProfiles(
+          profileIds, _progressionProfiles);
+
+      if (copiedIds.length == profileIds.length) {
+        return true;
+      } else {
+        _errorMessage = 'Nicht alle Profile konnten kopiert werden';
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Fehler beim Kopieren der fehlenden Profile: $e';
+      print(_errorMessage);
+      return false;
     } finally {
       _setLoading(false);
     }

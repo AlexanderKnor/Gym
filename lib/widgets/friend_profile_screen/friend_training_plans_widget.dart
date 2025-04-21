@@ -1,3 +1,4 @@
+// lib/widgets/friend_profile_screen/friend_training_plans_widget.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/friend_profile_screen/friend_profile_provider.dart';
@@ -124,13 +125,29 @@ class FriendTrainingPlansWidget extends StatelessWidget {
             '${plan.days.length} Trainingstage • ${_getTotalExercises(plan)} Übungen',
           ),
         ),
-        trailing: ElevatedButton(
-          onPressed: () => _showTrainingPlanDetails(context, plan),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isActive ? Colors.blue : Colors.grey[200],
-            foregroundColor: isActive ? Colors.white : Colors.black87,
-          ),
-          child: const Text('Details'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // NEU: Kopier-Button
+            ElevatedButton.icon(
+              onPressed: () => _copyTrainingPlan(context, plan),
+              icon: const Icon(Icons.copy, size: 16),
+              label: const Text('Kopieren'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () => _showTrainingPlanDetails(context, plan),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isActive ? Colors.blue : Colors.grey[200],
+                foregroundColor: isActive ? Colors.white : Colors.black87,
+              ),
+              child: const Text('Details'),
+            ),
+          ],
         ),
         onTap: () => _showTrainingPlanDetails(context, plan),
       ),
@@ -143,6 +160,223 @@ class FriendTrainingPlansWidget extends StatelessWidget {
       total += day.exercises.length;
     }
     return total;
+  }
+
+  // NEU: Funktion zum Kopieren eines Trainingsplans
+  void _copyTrainingPlan(BuildContext context, TrainingPlanModel plan) async {
+    final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+
+    // Zeige Ladeanzeige
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Trainingsplan wird kopiert...'),
+          ],
+        ),
+      ),
+    );
+
+    // Versuche, den Plan zu kopieren
+    final result = await provider.copyTrainingPlanToOwnCollection(plan);
+
+    // Dialog schließen
+    Navigator.of(context).pop();
+
+    if (result['success'] == true) {
+      final missingProfileIds = result['missingProfileIds'] as List;
+
+      if (missingProfileIds.isNotEmpty) {
+        // Es gibt fehlende Profile, frage Benutzer, ob diese kopiert werden sollen
+        _showMissingProfilesDialog(
+            context, missingProfileIds, plan, result['plan']);
+      } else {
+        // Erfolg ohne fehlende Profile
+        _showSuccessDialog(context, plan);
+      }
+    } else {
+      // Fehler beim Kopieren
+      _showErrorDialog(context, result['error'] ?? 'Unbekannter Fehler');
+    }
+  }
+
+  // NEU: Dialog für fehlende Profile anzeigen
+  void _showMissingProfilesDialog(BuildContext context, List missingProfileIds,
+      TrainingPlanModel originalPlan, TrainingPlanModel copiedPlan) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Fehlende Progressionsprofile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Der Trainingsplan verwendet Progressionsprofile, die in deiner Sammlung fehlen:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: missingProfileIds.length,
+                itemBuilder: (context, index) {
+                  final profileId = missingProfileIds[index];
+                  return ListTile(
+                    leading: const Icon(Icons.warning, color: Colors.orange),
+                    title: Text('Profil ID: $profileId'),
+                    dense: true,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Möchtest du diese Profile ebenfalls kopieren?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showSuccessDialog(context, originalPlan,
+                  withWarning:
+                      'Einige Übungen verwenden Profile, die du nicht kopiert hast.');
+            },
+            child: const Text('Nein, nur Plan kopieren'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              // Zeige Ladeanzeige
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const AlertDialog(
+                  content: Row(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 20),
+                      Text('Profile werden kopiert...'),
+                    ],
+                  ),
+                ),
+              );
+
+              // Kopiere fehlende Profile
+              final provider =
+                  Provider.of<FriendProfileProvider>(context, listen: false);
+              final success = await provider.copyMissingProfiles(
+                  missingProfileIds.map((id) => id.toString()).toList());
+
+              // Dialog schließen
+              Navigator.of(context).pop();
+
+              if (success) {
+                _showSuccessDialog(context, originalPlan, withProfiles: true);
+              } else {
+                _showErrorDialog(context, 'Fehler beim Kopieren der Profile');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Ja, alle kopieren'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEU: Erfolgs-Dialog anzeigen
+  void _showSuccessDialog(BuildContext context, TrainingPlanModel plan,
+      {String? withWarning, bool withProfiles = false}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erfolgreich kopiert'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Der Trainingsplan "${plan.name}" wurde erfolgreich in deine Sammlung kopiert.',
+              textAlign: TextAlign.center,
+            ),
+            if (withProfiles) ...[
+              const SizedBox(height: 12),
+              const Text(
+                'Alle benötigten Progressionsprofile wurden ebenfalls kopiert.',
+                textAlign: TextAlign.center,
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+              ),
+            ],
+            if (withWarning != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                withWarning,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.orange),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEU: Fehler-Dialog anzeigen
+  void _showErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Fehler'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error,
+              color: Colors.red,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Beim Kopieren ist ein Fehler aufgetreten:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(errorMessage),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showTrainingPlanDetails(BuildContext context, TrainingPlanModel plan) {
@@ -204,6 +438,27 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                             ),
                           ),
                         ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // NEU: Kopier-Button im Detail-Bereich
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context); // Schließe Details
+                            _copyTrainingPlan(
+                                context, plan); // Starte Kopier-Prozess
+                          },
+                          icon: const Icon(Icons.copy),
+                          label: const Text('In meine Sammlung kopieren'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -304,6 +559,21 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                               ),
                             ),
                           ),
+                          // NEU: Zeige Warnung für zugeordnetes Profil
+                          if (day.exercises[i].progressionProfileId != null &&
+                              day.exercises[i].progressionProfileId!
+                                  .isNotEmpty) ...[
+                            const SizedBox(width: 4),
+                            Tooltip(
+                              message:
+                                  'Verwendet Progressionsprofil: ${day.exercises[i].progressionProfileId}',
+                              child: Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       if (day.exercises[i].primaryMuscleGroup.isNotEmpty ||

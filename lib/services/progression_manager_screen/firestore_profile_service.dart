@@ -300,4 +300,24 @@ class FirestoreProfileService {
       return false;
     }
   }
+
+  // Einzelnes Profil in Firestore speichern
+  Future<bool> saveProfileToFirestore(ProgressionProfileModel profile) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        print('Kann Profil nicht speichern, Benutzer nicht angemeldet');
+        return false;
+      }
+
+      final profileJson = _encodeProfileToJson(profile);
+      await _getProfilesCollection().doc(profile.id).set(profileJson);
+
+      print('Profil erfolgreich gespeichert: ${profile.id}');
+      return true;
+    } catch (e) {
+      print('Fehler beim Speichern des Profils: $e');
+      return false;
+    }
+  }
 }

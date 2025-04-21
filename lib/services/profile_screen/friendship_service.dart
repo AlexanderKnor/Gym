@@ -327,7 +327,7 @@ class FriendshipService {
     }
   }
 
-  // Anfrage akzeptieren
+  // Anfrage akzeptieren - VERBESSERTE VERSION
   Future<bool> acceptFriendRequest(FriendRequestModel request) async {
     try {
       final userId = _getUserId();
@@ -338,17 +338,6 @@ class FriendshipService {
 
       print(
           'Beginne, Freundschaftsanfrage von ${request.senderId} an $userId zu akzeptieren');
-
-      // Status der Anfrage aktualisieren
-      final updatedRequest = request.copyWith(
-        status: FriendRequestStatus.accepted,
-      );
-
-      await _getRequestsCollection()
-          .doc(request.id)
-          .update(updatedRequest.toMap());
-
-      print('Anfragestatus auf "accepted" aktualisiert');
 
       // Freundschaft für beide Benutzer speichern
       // 1. Freundschaft für den aktuellen Benutzer
@@ -414,13 +403,20 @@ class FriendshipService {
           .collection('friends')
           .doc(friendship2.id);
 
+      // Referenz auf das Anfragedokument
+      final requestRef = _getRequestsCollection().doc(request.id);
+
       // Batch-Operationen hinzufügen
       batch.set(friendship1Ref, friendship1.toMap());
       batch.set(friendship2Ref, friendship2.toMap());
 
+      // WICHTIGE ÄNDERUNG: Anfrage löschen statt zu aktualisieren
+      batch.delete(requestRef);
+
       // Batch ausführen
       await batch.commit();
       print('Beide Freundschaftseinträge erfolgreich gespeichert');
+      print('Freundschaftsanfrage erfolgreich gelöscht');
 
       print('Freundschaftsanfrage erfolgreich akzeptiert');
       return true;
@@ -439,16 +435,10 @@ class FriendshipService {
         return false;
       }
 
-      // Status der Anfrage aktualisieren
-      final updatedRequest = request.copyWith(
-        status: FriendRequestStatus.rejected,
-      );
+      // Anfrage löschen statt nur den Status zu aktualisieren
+      await _getRequestsCollection().doc(request.id).delete();
 
-      await _getRequestsCollection()
-          .doc(request.id)
-          .update(updatedRequest.toMap());
-
-      print('Freundschaftsanfrage erfolgreich abgelehnt');
+      print('Freundschaftsanfrage erfolgreich abgelehnt und gelöscht');
       return true;
     } catch (e) {
       print('Fehler beim Ablehnen der Freundschaftsanfrage: $e');
@@ -456,7 +446,7 @@ class FriendshipService {
     }
   }
 
-  // Freund entfernen - Verbesserte Version
+  // Freund entfernen
   Future<bool> removeFriend(String friendId) async {
     try {
       final userId = _getUserId();
@@ -479,49 +469,47 @@ class FriendshipService {
           .doc(myFriendshipId)
           .get();
 
-      final theirFriendshipDoc = await _firestore
-          .collection('users')
-          .doc(friendId)
-          .collection('friends')
-          .doc(theirFriendshipId)
-          .get();
-
       print('Mein Freundschaftsdokument existiert: ${myFriendshipDoc.exists}');
-      print(
-          'Ihr Freundschaftsdokument existiert: ${theirFriendshipDoc.exists}');
 
-      // Batch-Vorgang erstellen
-      final batch = _firestore.batch();
-
-      // Mein Freundschaftsdokument löschen, wenn es existiert
+      // 1. Eigenes Freundschaftsdokument löschen
+      bool friendshipRemoved = false;
       if (myFriendshipDoc.exists) {
-        print('Lösche mein Freundschaftsdokument: $myFriendshipId');
-        batch.delete(_firestore
-            .collection('users')
-            .doc(userId)
-            .collection('friends')
-            .doc(myFriendshipId));
+        try {
+          print('Lösche mein Freundschaftsdokument: $myFriendshipId');
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('friends')
+              .doc(myFriendshipId)
+              .delete();
+
+          print('Mein Freundschaftsdokument erfolgreich gelöscht');
+          friendshipRemoved = true;
+        } catch (e) {
+          print('Fehler beim Löschen meines Freundschaftsdokuments: $e');
+        }
       }
 
-      // Ihr Freundschaftsdokument löschen, wenn es existiert
-      if (theirFriendshipDoc.exists) {
-        print('Lösche ihr Freundschaftsdokument: $theirFriendshipId');
-        batch.delete(_firestore
+      // 2. Freundschaftsdokument des anderen Benutzers löschen
+      try {
+        print(
+            'Versuche, Freundschaftsdokument des anderen Benutzers zu löschen: $theirFriendshipId');
+        await _firestore
             .collection('users')
             .doc(friendId)
             .collection('friends')
-            .doc(theirFriendshipId));
+            .doc(theirFriendshipId)
+            .delete();
+
+        print(
+            'Freundschaftsdokument des anderen Benutzers erfolgreich gelöscht');
+        friendshipRemoved = true;
+      } catch (e) {
+        print(
+            'Fehler beim Löschen des Freundschaftsdokuments des anderen Benutzers: $e');
       }
 
-      // Batch ausführen (nur wenn mindestens ein Dokument existiert)
-      if (myFriendshipDoc.exists || theirFriendshipDoc.exists) {
-        await batch.commit();
-        print('Freundschaftsdokumente erfolgreich gelöscht');
-        return true;
-      } else {
-        print('Keine Freundschaftsdokumente gefunden, nichts zu löschen');
-        return false;
-      }
+      return friendshipRemoved;
     } catch (e) {
       print('Fehler beim Entfernen des Freundes: $e');
       return false;

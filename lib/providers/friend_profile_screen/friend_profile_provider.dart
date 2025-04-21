@@ -17,6 +17,9 @@ class FriendProfileProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isTabViewEnabled = false;
+  bool _isCopyingProfile = false;
+  bool _isCopyingTrainingPlan = false;
+  bool _isCopyingMissingProfiles = false;
 
   // Getters
   FriendshipModel? get friendship => _friendship;
@@ -27,6 +30,9 @@ class FriendProfileProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isTabViewEnabled => _isTabViewEnabled;
+  bool get isCopyingProfile => _isCopyingProfile;
+  bool get isCopyingTrainingPlan => _isCopyingTrainingPlan;
+  bool get isCopyingMissingProfiles => _isCopyingMissingProfiles;
 
   // Tab-Steuerung
   void enableTabView() {
@@ -41,6 +47,8 @@ class FriendProfileProvider with ChangeNotifier {
 
   // Daten laden
   Future<void> loadFriendData(FriendshipModel friendship) async {
+    if (_isLoading) return; // Verhindere parallele Ladeoperationen
+
     _setLoading(true);
     _errorMessage = null;
     _friendship = friendship;
@@ -80,10 +88,13 @@ class FriendProfileProvider with ChangeNotifier {
     }
   }
 
-  // NEU: Profil in die eigene Sammlung kopieren
+  // Progressionsprofil eines Freundes kopieren
   Future<bool> copyProfileToOwnCollection(
       ProgressionProfileModel profile) async {
-    _setLoading(true);
+    if (_isCopyingProfile)
+      return false; // Verhindere parallele Kopieroperationen
+
+    _isCopyingProfile = true;
     _errorMessage = null;
 
     try {
@@ -101,14 +112,18 @@ class FriendProfileProvider with ChangeNotifier {
       print(_errorMessage);
       return false;
     } finally {
-      _setLoading(false);
+      _isCopyingProfile = false;
+      notifyListeners(); // Aktualisiere die UI nach dem Kopieren
     }
   }
 
-  // NEU: Trainingsplan in die eigene Sammlung kopieren
+  // Trainingsplan in die eigene Sammlung kopieren
   Future<Map<String, dynamic>> copyTrainingPlanToOwnCollection(
       TrainingPlanModel plan) async {
-    _setLoading(true);
+    if (_isCopyingTrainingPlan)
+      return {'success': false, 'error': 'Bereits ein Kopiervorgang aktiv'};
+
+    _isCopyingTrainingPlan = true;
     _errorMessage = null;
 
     try {
@@ -133,13 +148,17 @@ class FriendProfileProvider with ChangeNotifier {
         'error': _errorMessage,
       };
     } finally {
-      _setLoading(false);
+      _isCopyingTrainingPlan = false;
+      notifyListeners(); // Aktualisiere die UI nach dem Kopieren
     }
   }
 
-  // NEU: Fehlende Profile kopieren
+  // Fehlende Profile kopieren
   Future<bool> copyMissingProfiles(List<String> profileIds) async {
-    _setLoading(true);
+    if (_isCopyingMissingProfiles)
+      return false; // Verhindere parallele Kopieroperationen
+
+    _isCopyingMissingProfiles = true;
     _errorMessage = null;
 
     try {
@@ -157,7 +176,8 @@ class FriendProfileProvider with ChangeNotifier {
       print(_errorMessage);
       return false;
     } finally {
-      _setLoading(false);
+      _isCopyingMissingProfiles = false;
+      notifyListeners(); // Aktualisiere die UI nach dem Kopieren
     }
   }
 
@@ -177,6 +197,9 @@ class FriendProfileProvider with ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _isTabViewEnabled = false;
+    _isCopyingProfile = false;
+    _isCopyingTrainingPlan = false;
+    _isCopyingMissingProfiles = false;
     notifyListeners();
   }
 }

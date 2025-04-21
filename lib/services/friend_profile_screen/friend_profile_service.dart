@@ -230,14 +230,29 @@ class FriendProfileService {
     }
   }
 
-  // NEU: Progressionsprofil eines Freundes kopieren
+  // Progressionsprofil eines Freundes kopieren
   Future<bool> copyProgressionProfile(ProgressionProfileModel profile) async {
     try {
       final userId = _getUserId();
       if (userId == null) throw Exception('Nicht angemeldet');
 
+      // Prüfen, ob das Profil bereits existiert
+      final existingProfile = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('profiles')
+          .doc(profile.id)
+          .get();
+
       // Neue ID für das kopierte Profil generieren
-      final newProfileId = 'profile_${DateTime.now().millisecondsSinceEpoch}';
+      final String newProfileId;
+      if (existingProfile.exists) {
+        // Wenn bereits ein Profil mit dieser ID existiert, generiere eine neue ID
+        newProfileId = 'profile_${DateTime.now().millisecondsSinceEpoch}';
+      } else {
+        // Sonst verwende die originale ID, damit Verknüpfungen in Trainingsplänen funktionieren
+        newProfileId = profile.id;
+      }
 
       // Kopie des Profils mit neuer ID erstellen
       final copiedProfile = ProgressionProfileModel(
@@ -259,7 +274,7 @@ class FriendProfileService {
     }
   }
 
-  // NEU: Prüfen, welche Profile in einem Trainingsplan verwendet werden
+  // Prüfen, welche Profile in einem Trainingsplan verwendet werden
   Set<String> getRequiredProfileIds(TrainingPlanModel plan) {
     final Set<String> profileIds = {};
 
@@ -275,7 +290,7 @@ class FriendProfileService {
     return profileIds;
   }
 
-  // NEU: Fehlende Profile ermitteln
+  // Fehlende Profile ermitteln
   Future<Set<String>> getMissingProfileIds(
       Set<String> requiredProfileIds) async {
     try {
@@ -299,7 +314,7 @@ class FriendProfileService {
     }
   }
 
-  // NEU: Trainingsplan eines Freundes kopieren
+  // Trainingsplan eines Freundes kopieren
   Future<Map<String, dynamic>> copyTrainingPlan(TrainingPlanModel plan,
       List<ProgressionProfileModel> friendProfiles) async {
     try {
@@ -370,24 +385,41 @@ class FriendProfileService {
     }
   }
 
-  // NEU: Spezifische Profile kopieren
+  // Spezifische Profile kopieren
   Future<List<String>> copySpecificProfiles(List<String> profileIds,
       List<ProgressionProfileModel> friendProfiles) async {
     final List<String> copiedProfileIds = [];
 
     try {
+      if (profileIds.isEmpty) {
+        return copiedProfileIds;
+      }
+
+      // Mehrere Profile parallel kopieren, um den Vorgang zu beschleunigen
+      final futures = <Future<bool>>[];
+
       // Für jede Profil-ID das entsprechende Profil finden und kopieren
       for (var profileId in profileIds) {
-        final profileToCopy = friendProfiles.firstWhere(
-          (p) => p.id == profileId,
-          orElse: () => throw Exception('Profil nicht gefunden: $profileId'),
-        );
+        try {
+          final profileToCopy = friendProfiles.firstWhere(
+            (p) => p.id == profileId,
+            orElse: () => throw Exception('Profil nicht gefunden: $profileId'),
+          );
 
-        final success = await copyProgressionProfile(profileToCopy);
-        if (success) {
-          copiedProfileIds.add(profileId);
+          // Kopieren in die Future-Liste hinzufügen
+          futures.add(copyProgressionProfile(profileToCopy).then((success) {
+            if (success) {
+              copiedProfileIds.add(profileId);
+            }
+            return success;
+          }));
+        } catch (e) {
+          print('Fehler beim Vorbereiten des Profils $profileId: $e');
         }
       }
+
+      // Auf alle Kopiervorgänge warten
+      await Future.wait(futures);
 
       return copiedProfileIds;
     } catch (e) {

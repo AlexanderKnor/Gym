@@ -128,7 +128,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // NEU: Kopier-Button
+            // Kopier-Button
             ElevatedButton.icon(
               onPressed: () => _copyTrainingPlan(context, plan),
               icon: const Icon(Icons.copy, size: 16),
@@ -162,55 +162,73 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     return total;
   }
 
-  // NEU: Funktion zum Kopieren eines Trainingsplans
+  // Überarbeitete Kopier-Funktion mit besserer Dialog-Verwaltung
   void _copyTrainingPlan(BuildContext context, TrainingPlanModel plan) async {
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
 
-    // Zeige Ladeanzeige
+    // Zeige Ladeanzeige mit Barrier
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
-            Text('Trainingsplan wird kopiert...'),
-          ],
+      barrierDismissible:
+          false, // Verhindert, dass der Nutzer den Dialog abbricht
+      builder: (dialogContext) => WillPopScope(
+        // Verhindert Zurück-Navigation während des Ladens
+        onWillPop: () async => false,
+        child: const AlertDialog(
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Trainingsplan wird kopiert...'),
+            ],
+          ),
         ),
       ),
     );
 
-    // Versuche, den Plan zu kopieren
-    final result = await provider.copyTrainingPlanToOwnCollection(plan);
+    try {
+      // Versuche, den Plan zu kopieren
+      final result = await provider.copyTrainingPlanToOwnCollection(plan);
 
-    // Dialog schließen
-    Navigator.of(context).pop();
-
-    if (result['success'] == true) {
-      final missingProfileIds = result['missingProfileIds'] as List;
-
-      if (missingProfileIds.isNotEmpty) {
-        // Es gibt fehlende Profile, frage Benutzer, ob diese kopiert werden sollen
-        _showMissingProfilesDialog(
-            context, missingProfileIds, plan, result['plan']);
-      } else {
-        // Erfolg ohne fehlende Profile
-        _showSuccessDialog(context, plan);
+      // Nur den Dialog schließen, wenn der Kontext noch gültig ist
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
       }
-    } else {
-      // Fehler beim Kopieren
-      _showErrorDialog(context, result['error'] ?? 'Unbekannter Fehler');
+
+      // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
+      if (context.mounted) {
+        if (result['success'] == true) {
+          final missingProfileIds = result['missingProfileIds'] as List;
+
+          if (missingProfileIds.isNotEmpty) {
+            // Es gibt fehlende Profile, frage Benutzer, ob diese kopiert werden sollen
+            _showMissingProfilesDialog(
+                context, missingProfileIds, plan, result['plan']);
+          } else {
+            // Erfolg ohne fehlende Profile
+            _showSuccessDialog(context, plan);
+          }
+        } else {
+          // Fehler beim Kopieren
+          _showErrorDialog(context, result['error'] ?? 'Unbekannter Fehler');
+        }
+      }
+    } catch (e) {
+      // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _showErrorDialog(context, e.toString());
+      }
     }
   }
 
-  // NEU: Dialog für fehlende Profile anzeigen
+  // Dialog für fehlende Profile anzeigen mit verbesserter Fehlerbehandlung
   void _showMissingProfilesDialog(BuildContext context, List missingProfileIds,
       TrainingPlanModel originalPlan, TrainingPlanModel copiedPlan) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Fehlende Progressionsprofile'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -245,7 +263,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               _showSuccessDialog(context, originalPlan,
                   withWarning:
                       'Einige Übungen verwenden Profile, die du nicht kopiert hast.');
@@ -254,36 +272,57 @@ class FriendTrainingPlansWidget extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.of(context).pop();
+              // Dialog schließen, bevor der Kopiervorgang startet
+              Navigator.of(dialogContext).pop();
 
-              // Zeige Ladeanzeige
+              // Zeige Ladeanzeige mit Barrier
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const AlertDialog(
-                  content: Row(
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(width: 20),
-                      Text('Profile werden kopiert...'),
-                    ],
+                builder: (loadingContext) => WillPopScope(
+                  onWillPop: () async => false,
+                  child: const AlertDialog(
+                    content: Row(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(width: 20),
+                        Text('Profile werden kopiert...'),
+                      ],
+                    ),
                   ),
                 ),
               );
 
-              // Kopiere fehlende Profile
-              final provider =
-                  Provider.of<FriendProfileProvider>(context, listen: false);
-              final success = await provider.copyMissingProfiles(
-                  missingProfileIds.map((id) => id.toString()).toList());
+              try {
+                // Kopiere fehlende Profile
+                final provider =
+                    Provider.of<FriendProfileProvider>(context, listen: false);
+                final success = await provider.copyMissingProfiles(
+                    missingProfileIds.map((id) => id.toString()).toList());
 
-              // Dialog schließen
-              Navigator.of(context).pop();
+                // Dialog schließen, wenn Kontext noch gültig ist
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).pop();
+                }
 
-              if (success) {
-                _showSuccessDialog(context, originalPlan, withProfiles: true);
-              } else {
-                _showErrorDialog(context, 'Fehler beim Kopieren der Profile');
+                // Erfolgs- oder Fehlermeldung anzeigen
+                if (context.mounted) {
+                  if (success) {
+                    _showSuccessDialog(context, originalPlan,
+                        withProfiles: true);
+                  } else {
+                    _showErrorDialog(
+                        context,
+                        provider.errorMessage ??
+                            'Fehler beim Kopieren der Profile');
+                  }
+                }
+              } catch (e) {
+                // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  _showErrorDialog(context, e.toString());
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -296,12 +335,12 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     );
   }
 
-  // NEU: Erfolgs-Dialog anzeigen
+  // Erfolgs-Dialog anzeigen
   void _showSuccessDialog(BuildContext context, TrainingPlanModel plan,
       {String? withWarning, bool withProfiles = false}) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Erfolgreich kopiert'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -338,7 +377,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('OK'),
           ),
         ],
@@ -346,11 +385,11 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     );
   }
 
-  // NEU: Fehler-Dialog anzeigen
+  // Fehler-Dialog anzeigen
   void _showErrorDialog(BuildContext context, String errorMessage) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Fehler'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -371,7 +410,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('OK'),
           ),
         ],
@@ -441,7 +480,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // NEU: Kopier-Button im Detail-Bereich
+                  // Kopier-Button im Detail-Bereich
                   Row(
                     children: [
                       Expanded(
@@ -559,7 +598,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // NEU: Zeige Warnung für zugeordnetes Profil
+                          // Zeige Warnung für zugeordnetes Profil
                           if (day.exercises[i].progressionProfileId != null &&
                               day.exercises[i].progressionProfileId!
                                   .isNotEmpty) ...[

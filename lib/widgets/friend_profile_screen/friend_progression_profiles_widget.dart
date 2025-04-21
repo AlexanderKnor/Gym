@@ -132,7 +132,7 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // NEU: Kopier-Button
+            // Kopier-Button
             ElevatedButton.icon(
               onPressed: () => _copyProfile(context, profile),
               icon: const Icon(Icons.copy, size: 16),
@@ -158,48 +158,67 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     );
   }
 
-  // NEU: Funktion zum Kopieren eines Profils
+  // Überarbeitete Kopier-Funktion mit besserer Dialog-Verwaltung
   void _copyProfile(
       BuildContext context, ProgressionProfileModel profile) async {
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
 
-    // Zeige Ladeanzeige
+    // Zeige Ladeanzeige mit Barrier
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
-            Text('Profil wird kopiert...'),
-          ],
+      barrierDismissible:
+          false, // Verhindert, dass der Nutzer den Dialog abbricht
+      builder: (dialogContext) => WillPopScope(
+        // Verhindert Zurück-Navigation während des Ladens
+        onWillPop: () async => false,
+        child: const AlertDialog(
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Profil wird kopiert...'),
+            ],
+          ),
         ),
       ),
     );
 
-    // Versuche, das Profil zu kopieren
-    final success = await provider.copyProfileToOwnCollection(profile);
+    try {
+      // Versuche, das Profil zu kopieren
+      final success = await provider.copyProfileToOwnCollection(profile);
 
-    // Dialog schließen
-    Navigator.of(context).pop();
+      // Nur den Dialog schließen, wenn der Kontext noch gültig ist
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
 
-    if (success) {
-      // Erfolg
-      _showSuccessDialog(context, profile);
-    } else {
-      // Fehler
-      _showErrorDialog(context, provider.errorMessage ?? 'Unbekannter Fehler');
+      // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
+      if (context.mounted) {
+        if (success) {
+          // Erfolg
+          _showSuccessDialog(context, profile);
+        } else {
+          // Fehler
+          _showErrorDialog(
+              context, provider.errorMessage ?? 'Unbekannter Fehler');
+        }
+      }
+    } catch (e) {
+      // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _showErrorDialog(context, e.toString());
+      }
     }
   }
 
-  // NEU: Erfolgs-Dialog anzeigen
+  // Erfolgs-Dialog anzeigen
   void _showSuccessDialog(
       BuildContext context, ProgressionProfileModel profile) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Erfolgreich kopiert'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -218,7 +237,7 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('OK'),
           ),
         ],
@@ -226,11 +245,11 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     );
   }
 
-  // NEU: Fehler-Dialog anzeigen
+  // Fehler-Dialog anzeigen
   void _showErrorDialog(BuildContext context, String errorMessage) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Fehler'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -251,7 +270,7 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('OK'),
           ),
         ],
@@ -329,7 +348,7 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // NEU: Kopier-Button im Detail-Bereich
+                  // Kopier-Button im Detail-Bereich
                   Row(
                     children: [
                       Expanded(

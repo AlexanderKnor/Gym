@@ -176,6 +176,28 @@ class TrainingPlanService {
     }
   }
 
+  // NEU: Trainingstag löschen
+  Future<bool> deleteTrainingDay(String dayId) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        print('Kein User angemeldet, kann Trainingstag nicht löschen');
+        return false;
+      }
+
+      print('Lösche Trainingstag mit ID: $dayId aus Trainingshistorie...');
+
+      // Lösche den Trainingstag aus der Trainingshistorie
+      await _historyService.cleanupTrainingDayFromSessions(dayId);
+
+      print('Trainingstag $dayId erfolgreich aus Trainingshistorie bereinigt');
+      return true;
+    } catch (e) {
+      print('Fehler beim Löschen des Trainingstags aus Firestore: $e');
+      return false;
+    }
+  }
+
   // NEUE METHODE: Aktualisiert alle Übungen nach Löschen eines Progressionsprofils
   Future<bool> updateExercisesAfterProfileDeletion(String profileId) async {
     try {

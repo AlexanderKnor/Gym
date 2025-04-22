@@ -254,4 +254,48 @@ class TrainingHistoryService {
       return false;
     }
   }
+
+  // NEU: Trainingstag aus allen Trainingssessions entfernen oder bereinigen
+  Future<bool> cleanupTrainingDayFromSessions(String dayId) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        print('Kann Sessions nicht aktualisieren, Benutzer nicht angemeldet');
+        return false;
+      }
+
+      print('Suche nach Trainingseinheiten für Tag $dayId...');
+
+      // Alle Sessions abrufen, die mit diesem Trainingstag verknüpft sind
+      final querySnapshot = await _getTrainingHistoryCollection()
+          .where('trainingDayId', isEqualTo: dayId)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print('Keine Trainingseinheiten für Tag $dayId gefunden.');
+        return true;
+      }
+
+      print(
+          '${querySnapshot.docs.length} Trainingseinheiten für Tag $dayId gefunden.');
+
+      // Batch-Operation für effizientes Löschen oder Aktualisieren
+      final batch = _firestore.batch();
+
+      // Bei Trainingssessions mit diesem Tag ID löschen wir die gesamte Session
+      for (var doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      print(
+          '${querySnapshot.docs.length} Trainingseinheiten für Tag $dayId gelöscht');
+
+      return true;
+    } catch (e) {
+      print(
+          'Fehler beim Bereinigen des Tags $dayId aus Trainingseinheiten: $e');
+      return false;
+    }
+  }
 }

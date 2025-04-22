@@ -30,6 +30,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   // Neu: Set zum Verfolgen von gelöschten Übungs-IDs
   final Set<String> _deletedExerciseIds = {};
 
+  // Neu: Set zum Verfolgen von gelöschten Trainingstag-IDs
+  final Set<String> _deletedDayIds = {};
+
   // Getter
   String get planName => _planName;
   int get frequency => _frequency;
@@ -208,6 +211,74 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
+  // NEU: Trainingstag hinzufügen
+  void addTrainingDay(String dayName) {
+    if (_draftPlan != null) {
+      final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
+
+      final newDayId = 'day_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Neuen Trainingstag erstellen
+      final newDay = TrainingDayModel(
+        id: newDayId,
+        name: dayName.isNotEmpty ? dayName : 'Tag ${updatedDays.length + 1}',
+        exercises: [],
+      );
+
+      // Tag zur Tagesliste hinzufügen
+      updatedDays.add(newDay);
+
+      // Aktualisiere Entwurfsplan
+      _draftPlan = _draftPlan!.copyWith(days: updatedDays);
+
+      // Aktualisiere _frequency und _dayNames
+      _frequency = updatedDays.length;
+      _dayNames = updatedDays.map((day) => day.name).toList();
+
+      // Optional: Gleich zum neuen Tag wechseln
+      _selectedDayIndex = updatedDays.length - 1;
+
+      notifyListeners();
+    }
+  }
+
+  // NEU: Trainingstag entfernen
+  void removeTrainingDay(int dayIndex) {
+    if (_draftPlan != null && _draftPlan!.days.length > 1) {
+      final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
+
+      if (dayIndex >= 0 && dayIndex < updatedDays.length) {
+        // Tag-ID speichern, bevor der Tag entfernt wird
+        final dayId = updatedDays[dayIndex].id;
+
+        // Tag-ID zur Liste der zu löschenden Tage hinzufügen
+        _deletedDayIds.add(dayId);
+
+        // Für alle Übungen in diesem Tag die IDs zur Löschliste hinzufügen
+        for (final exercise in updatedDays[dayIndex].exercises) {
+          _deletedExerciseIds.add(exercise.id);
+        }
+
+        // Tag entfernen
+        updatedDays.removeAt(dayIndex);
+
+        // Falls der ausgewählte Tag gelöscht wurde, wähle den vorherigen aus
+        if (_selectedDayIndex >= updatedDays.length) {
+          _selectedDayIndex = updatedDays.length - 1;
+        }
+
+        // Aktualisiere Entwurfsplan
+        _draftPlan = _draftPlan!.copyWith(days: updatedDays);
+
+        // Aktualisiere _frequency und _dayNames
+        _frequency = updatedDays.length;
+        _dayNames = updatedDays.map((day) => day.name).toList();
+
+        notifyListeners();
+      }
+    }
+  }
+
   // NEU: Gelöschte Übungen aus der Datenbank entfernen
   Future<void> cleanupDeletedExercises() async {
     // Lösche alle Übungen, die seit dem letzten Speichern entfernt wurden
@@ -219,6 +290,23 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _deletedExerciseIds.clear();
   }
 
+  // NEU: Gelöschte Trainingstage aus der Datenbank entfernen
+  Future<void> cleanupDeletedDays() async {
+    // Lösche alle Trainingstage, die seit dem letzten Speichern entfernt wurden
+    for (final dayId in _deletedDayIds) {
+      await _trainingPlanService.deleteTrainingDay(dayId);
+    }
+
+    // Liste der gelöschten Trainingstage zurücksetzen
+    _deletedDayIds.clear();
+  }
+
+  // NEU: Kombinierte Cleanup-Methode für vereinfachten Aufruf
+  Future<void> cleanupDeletedItems() async {
+    await cleanupDeletedExercises();
+    await cleanupDeletedDays();
+  }
+
   // Zustand zurücksetzen, wenn fertig
   void reset() {
     _planName = '';
@@ -228,7 +316,8 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _selectedDayIndex = 0;
     _isEditMode = false;
     _editingPlanId = null;
-    _deletedExerciseIds.clear(); // Neu: Leere die Liste der gelöschten Übungen
+    _deletedExerciseIds.clear(); // Leere die Liste der gelöschten Übungen
+    _deletedDayIds.clear(); // Leere die Liste der gelöschten Trainingstage
     notifyListeners();
   }
 }

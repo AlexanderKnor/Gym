@@ -50,6 +50,7 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
 
     return DefaultTabController(
       length: plan.days.length,
+      initialIndex: createProvider.selectedDayIndex,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -57,13 +58,37 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
           bottom: TabBar(
             isScrollable: true,
             tabs: plan.days.map((day) {
-              return Tab(text: day.name);
+              return Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(day.name),
+                    // Button zum Löschen des Tages nur anzeigen, wenn mehr als ein Tag vorhanden ist
+                    if (plan.days.length > 1)
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () {
+                          _confirmDeleteDay(context, plan.days.indexOf(day));
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        splashRadius: 16,
+                      ),
+                  ],
+                ),
+              );
             }).toList(),
             onTap: (index) {
               createProvider.setSelectedDayIndex(index);
             },
           ),
           actions: [
+            // Button zum Hinzufügen eines neuen Tages
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Trainingstag hinzufügen',
+              onPressed: () => _showAddDayDialog(context),
+            ),
             // Zeige Ladeindikator während des Speicherns
             _isSaving
                 ? const Padding(
@@ -92,6 +117,84 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
             (index) => TrainingDayTabWidget(dayIndex: index),
           ),
         ),
+      ),
+    );
+  }
+
+  // NEU: Dialog zum Hinzufügen eines Trainingstages anzeigen
+  void _showAddDayDialog(BuildContext context) {
+    final TextEditingController controller = TextEditingController();
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+
+    // Vorschlag für den neuen Tagesnamen generieren (Tag X+1)
+    if (createProvider.draftPlan != null) {
+      controller.text = 'Tag ${createProvider.draftPlan!.days.length + 1}';
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Neuen Trainingstag hinzufügen'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Name des Trainingstags',
+            hintText: 'z.B. Brust & Trizeps, Beine, ...',
+          ),
+          autofocus: true,
+          onSubmitted: (value) {
+            Navigator.pop(context);
+            createProvider.addTrainingDay(value);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              createProvider.addTrainingDay(controller.text);
+            },
+            child: const Text('Hinzufügen'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      controller
+          .dispose(); // Controller aufräumen, wenn der Dialog geschlossen wird
+    });
+  }
+
+  // NEU: Bestätigungsdialog zum Löschen eines Trainingstages
+  void _confirmDeleteDay(BuildContext context, int dayIndex) {
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    final dayName =
+        createProvider.draftPlan?.days[dayIndex].name ?? 'Trainingstag';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Trainingstag löschen'),
+        content: Text(
+            'Möchtest du den Trainingstag "$dayName" wirklich löschen? Alle Übungen dieses Tages werden ebenfalls gelöscht.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(context);
+              createProvider.removeTrainingDay(dayIndex);
+            },
+            child: const Text('Löschen'),
+          ),
+        ],
       ),
     );
   }
@@ -161,8 +264,8 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
       // Speichere Plan
       await plansProvider.saveTrainingPlan(planToSave, activate);
 
-      // GEÄNDERT: Jetzt gelöschte Übungen aus der Datenbank entfernen
-      await createProvider.cleanupDeletedExercises();
+      // GEÄNDERT: Jetzt gelöschte Übungen und Trainingstage aus der Datenbank entfernen
+      await createProvider.cleanupDeletedItems();
 
       // Provider zurücksetzen
       createProvider.reset();

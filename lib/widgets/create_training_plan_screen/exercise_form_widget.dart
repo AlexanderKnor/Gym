@@ -28,6 +28,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   late TextEditingController _restPeriodController;
   late TextEditingController _numberOfSetsController; // Neuer Controller
   String? _selectedProfileId; // Für die Profilauswahl
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -61,6 +62,36 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
 
     // Profil-ID initialisieren
     _selectedProfileId = widget.initialExercise?.progressionProfileId;
+
+    // Profile laden, aber verzögert, um Widget-Aufbau abzuwarten
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProfiles();
+    });
+  }
+
+  // Methode zum Laden der Profile
+  Future<void> _loadProfiles() async {
+    try {
+      final provider =
+          Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+      // Die refreshProfiles Methode verwenden statt direkt auf profileProvider zuzugreifen
+      await provider.refreshProfiles();
+
+      // UI aktualisieren, nachdem Profile geladen wurden
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Fehler beim Laden der Profile: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -79,6 +110,22 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     // ProgressionManagerProvider für die verfügbaren Profile
     final progressionProvider =
         Provider.of<ProgressionManagerProvider>(context);
+
+    // Zeige Ladeindikator während Profile geladen werden
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Profile werden geladen...'),
+          ],
+        ),
+      );
+    }
+
+    // Wenn Profile geladen sind, zeige das Formular an
     final progressionProfiles = progressionProvider.progressionsProfile;
 
     return Container(
@@ -226,15 +273,16 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
               ),
               const SizedBox(height: 8),
 
-              // Dropdown für die Profil-Auswahl
+              // Dropdown für die Profil-Auswahl mit Anzahl der Profile anzeigen
               DropdownButtonFormField<String?>(
                 value: _selectedProfileId,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
                   contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  hintText: 'Kein Profil (Standard)',
+                  helperText: '${progressionProfiles.length} Profile verfügbar',
                 ),
-                hint: const Text('Kein Profil (Standard)'),
                 items: [
                   // "Kein Profil" Option
                   const DropdownMenuItem<String?>(
@@ -255,8 +303,17 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                 },
               ),
 
+              // Debug-Info: Anzeige der verfügbaren Profile
+              const SizedBox(height: 4),
+              Text(
+                'Verfügbare Profile: ${progressionProfiles.map((p) => p.name).join(", ")}',
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+
               // Zeige Details zum ausgewählten Profil an
-              if (_selectedProfileId != null) ...[
+              if (_selectedProfileId != null &&
+                  progressionProfiles
+                      .any((p) => p.id == _selectedProfileId)) ...[
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(8),

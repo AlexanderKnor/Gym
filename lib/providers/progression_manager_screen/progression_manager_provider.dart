@@ -18,7 +18,8 @@ import '../../services/progression_manager_screen/progression_calculator_service
 class ProgressionManagerProvider with ChangeNotifier {
   // Sub-Provider
   final ProgressionTrainingProvider _trainingProvider;
-  final ProgressionProfileProvider _profileProvider;
+  // Mit late als nicht-null deklarieren, wird im Konstruktor immer initialisiert
+  late final ProgressionProfileProvider profileProvider;
   final ProgressionRuleProvider _ruleProvider;
   final ProgressionUIProvider _uiProvider;
 
@@ -32,14 +33,16 @@ class ProgressionManagerProvider with ChangeNotifier {
     ProgressionRuleProvider? ruleProvider,
     ProgressionUIProvider? uiProvider,
   })  : _trainingProvider = trainingProvider ?? ProgressionTrainingProvider(),
-        _profileProvider = profileProvider ?? ProgressionProfileProvider(),
         _ruleProvider = ruleProvider ?? ProgressionRuleProvider(),
         _uiProvider = uiProvider ?? ProgressionUIProvider() {
+    // Initialisierung von profileProvider innerhalb des Konstruktors
+    this.profileProvider = profileProvider ?? ProgressionProfileProvider();
+
     _initializeListeners();
 
     // Profile laden und erste Empfehlung berechnen
     Future.microtask(() async {
-      await _profileProvider.loadSavedProfiles();
+      await this.profileProvider.loadSavedProfiles();
       _trainingProvider.berechneEmpfehlungFuerAktivenSatz(
           aktuellesProfil: aktuellesProfil);
     });
@@ -47,14 +50,14 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   void _initializeListeners() {
     // Verbinde die Sub-Provider miteinander
-    _profileProvider.addListener(notifyListeners);
+    profileProvider.addListener(notifyListeners);
     _trainingProvider.addListener(notifyListeners);
     _ruleProvider.addListener(notifyListeners);
     _uiProvider.addListener(notifyListeners);
 
     // Auch bei Profiländerungen Empfehlung neu berechnen
-    _profileProvider.addListener(() {
-      if (_profileProvider.profilWurdeGewechselt) {
+    profileProvider.addListener(() {
+      if (profileProvider.profilWurdeGewechselt) {
         _trainingProvider.berechneEmpfehlungFuerAktivenSatz(
             aktuellesProfil: aktuellesProfil);
       }
@@ -63,17 +66,19 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    _profileProvider.removeListener(notifyListeners);
+    profileProvider.removeListener(notifyListeners);
     _trainingProvider.removeListener(notifyListeners);
     _ruleProvider.removeListener(notifyListeners);
     _uiProvider.removeListener(notifyListeners);
 
-    _profileProvider.dispose();
+    profileProvider.dispose();
     _trainingProvider.dispose();
     _ruleProvider.dispose();
     _uiProvider.dispose();
     super.dispose();
   }
+
+  // Rest des Codes bleibt unverändert...
 
   // ===== DELEGIERTE GETTERS =====
 
@@ -84,15 +89,15 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   // Profile Provider Getters
   String get aktivesProgressionsProfil =>
-      _profileProvider.aktivesProgressionsProfil;
+      profileProvider.aktivesProgressionsProfil;
   Map<String, dynamic> get progressionsConfig =>
-      _profileProvider.progressionsConfig;
+      profileProvider.progressionsConfig;
   List<ProgressionProfileModel> get progressionsProfile =>
-      _profileProvider.progressionsProfile;
+      profileProvider.progressionsProfile;
   ProgressionProfileModel? get aktuellesProfil =>
-      _profileProvider.aktuellesProfil;
+      profileProvider.aktuellesProfil;
   ProgressionProfileModel? get bearbeitetesProfil =>
-      _profileProvider.bearbeitetesProfil;
+      profileProvider.bearbeitetesProfil;
 
   // Rule Provider Getters
   ProgressionRuleModel? get bearbeiteteRegel => _ruleProvider.bearbeiteteRegel;
@@ -120,13 +125,13 @@ class ProgressionManagerProvider with ChangeNotifier {
   /// Markiert den Beginn einer Trainings-Session und speichert den ursprünglichen Zustand
   void beginTrainingSession() {
     _isInTrainingSession = true;
-    _originalActiveProfileId = _profileProvider.aktivesProgressionsProfil;
+    _originalActiveProfileId = profileProvider.aktivesProgressionsProfil;
   }
 
   /// Beendet die Trainings-Session und stellt den ursprünglichen Zustand wieder her
   void endTrainingSession() {
     if (_isInTrainingSession && _originalActiveProfileId != null) {
-      _profileProvider.wechsleProgressionsProfil(_originalActiveProfileId!);
+      profileProvider.wechsleProgressionsProfil(_originalActiveProfileId!);
       _trainingProvider.berechneEmpfehlungFuerAktivenSatz(
           aktuellesProfil: aktuellesProfil);
     }
@@ -139,18 +144,18 @@ class ProgressionManagerProvider with ChangeNotifier {
       TrainingSetModel satz, String profilId, List<TrainingSetModel> alleSaetze,
       {double? customIncrement}) {
     // Speichere das aktuelle Profil
-    final originalProfileId = _profileProvider.aktivesProgressionsProfil;
+    final originalProfileId = profileProvider.aktivesProgressionsProfil;
 
     // Wechsle temporär zum gewünschten Profil
-    _profileProvider.wechsleProgressionsProfil(profilId);
+    profileProvider.wechsleProgressionsProfil(profilId);
 
     // Berechne die Empfehlung
-    final profil = _profileProvider.aktuellesProfil;
+    final profil = profileProvider.aktuellesProfil;
     final empfehlung = berechneProgression(satz, profil, alleSaetze,
         customIncrement: customIncrement);
 
     // Stelle das ursprüngliche Profil wieder her
-    _profileProvider.wechsleProgressionsProfil(originalProfileId);
+    profileProvider.wechsleProgressionsProfil(originalProfileId);
 
     return empfehlung;
   }
@@ -164,10 +169,10 @@ class ProgressionManagerProvider with ChangeNotifier {
   void toggleProgressionManager() => _uiProvider.toggleProgressionManager();
 
   void wechsleProgressionsProfil(String profilId) =>
-      _profileProvider.wechsleProgressionsProfil(profilId);
+      profileProvider.wechsleProgressionsProfil(profilId);
 
   void handleConfigChange(String key, dynamic value) =>
-      _profileProvider.handleConfigChange(key, value, aktuellesProfil);
+      profileProvider.handleConfigChange(key, value, aktuellesProfil);
 
   double berechne1RM(double gewicht, int wiederholungen, int rir) =>
       _trainingProvider.berechne1RM(gewicht, wiederholungen, rir);
@@ -181,7 +186,7 @@ class ProgressionManagerProvider with ChangeNotifier {
     // Wenn kein Profil übergeben wurde und auch kein aktuelles Profil existiert,
     // geben wir einen Standardwert zurück
     ProgressionProfileModel? profilToUse =
-        aktuellesProfilParam ?? _profileProvider.aktuellesProfil;
+        aktuellesProfilParam ?? profileProvider.aktuellesProfil;
 
     if (profilToUse == null) {
       // Wenn kein Profil verfügbar ist, direkt Standardwerte zurückgeben
@@ -286,20 +291,20 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   // Profile Methoden
   void openProfileEditor(ProgressionProfileModel? profil) =>
-      _profileProvider.openProfileEditor(profil, _uiProvider);
+      profileProvider.openProfileEditor(profil, _uiProvider);
 
-  void closeProfileEditor() => _profileProvider.closeProfileEditor(_uiProvider);
+  void closeProfileEditor() => profileProvider.closeProfileEditor(_uiProvider);
 
   void updateProfile(String feld, dynamic wert) =>
-      _profileProvider.updateProfile(feld, wert);
+      profileProvider.updateProfile(feld, wert);
 
-  void saveProfile() => _profileProvider.saveProfile(_uiProvider);
+  void saveProfile() => profileProvider.saveProfile(_uiProvider);
 
   void duplicateProfile(String profilId) =>
-      _profileProvider.duplicateProfile(profilId, _uiProvider);
+      profileProvider.duplicateProfile(profilId, _uiProvider);
 
   Future<void> deleteProfile(String profileId) =>
-      _profileProvider.deleteProfile(profileId);
+      profileProvider.deleteProfile(profileId);
 
   // Regel Methoden
   void setRegelTyp(String typ) => _ruleProvider.setRegelTyp(typ);
@@ -329,7 +334,7 @@ class ProgressionManagerProvider with ChangeNotifier {
   void saveRule() => _ruleProvider.saveRule(
       aktivesProgressionsProfil,
       progressionsProfile,
-      _profileProvider.saveProfiles,
+      profileProvider.saveProfiles,
       _trainingProvider,
       aktuellesProfil,
       _uiProvider);
@@ -338,7 +343,7 @@ class ProgressionManagerProvider with ChangeNotifier {
       ruleId,
       aktivesProgressionsProfil,
       progressionsProfile,
-      _profileProvider.saveProfiles,
+      profileProvider.saveProfiles,
       _trainingProvider,
       aktuellesProfil);
 
@@ -353,7 +358,7 @@ class ProgressionManagerProvider with ChangeNotifier {
       targetRuleId,
       aktivesProgressionsProfil,
       progressionsProfile,
-      _profileProvider.saveProfiles,
+      profileProvider.saveProfiles,
       _trainingProvider,
       aktuellesProfil);
 
@@ -369,4 +374,11 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   String renderValueNode(Map<String, dynamic> node) =>
       _ruleProvider.renderValueNode(node);
+
+  /// Lädt die gespeicherten Profile explizit neu
+  /// Diese Methode kann verwendet werden, um sicherzustellen, dass aktuelle Profile verfügbar sind
+  Future<void> refreshProfiles() async {
+    await profileProvider.loadSavedProfiles();
+    notifyListeners();
+  }
 }

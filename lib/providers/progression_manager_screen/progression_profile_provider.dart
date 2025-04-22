@@ -4,6 +4,7 @@ import '../../models/progression_manager_screen/progression_rule_model.dart';
 import '../../models/progression_manager_screen/progression_condition_model.dart';
 import '../../models/progression_manager_screen/progression_action_model.dart';
 import '../../services/progression_manager_screen/firestore_profile_service.dart';
+import '../../services/training_plan_screen/training_plan_service.dart'; // Neu importiert
 import 'progression_ui_provider.dart';
 
 /// Provider für Progressionsprofile
@@ -32,6 +33,9 @@ class ProgressionProfileProvider with ChangeNotifier {
   // Firebase-Service für Profilspeicherung
   final FirestoreProfileService _profileStorageService =
       FirestoreProfileService();
+
+  // Trainingsplan-Service für die Aktualisierung von Übungsreferenzen
+  final TrainingPlanService _trainingPlanService = TrainingPlanService();
 
   // ===== KONSTRUKTOR =====
 
@@ -681,36 +685,46 @@ class ProgressionProfileProvider with ChangeNotifier {
     openProfileEditor(copy, uiProvider);
   }
 
-  // Methode zum Löschen eines Profils
+  // Methode zum Löschen eines Profils - ÜBERARBEITET
   Future<void> deleteProfile(String profileId) async {
-    // Standard-Profile können nicht gelöscht werden
-    if (profileId == 'double-progression' ||
-        profileId == 'linear-periodization' ||
-        profileId == 'rir-based' ||
-        profileId == 'set-consistency') {
-      return;
+    try {
+      // Standard-Profile können nicht gelöscht werden
+      if (profileId == 'double-progression' ||
+          profileId == 'linear-periodization' ||
+          profileId == 'rir-based' ||
+          profileId == 'set-consistency') {
+        return;
+      }
+
+      final profilIndex =
+          _progressionsProfile.indexWhere((p) => p.id == profileId);
+      if (profilIndex == -1) return;
+
+      // NEUER CODE: Zuerst alle Übungen aktualisieren, die dieses Profil verwenden
+      print('Aktualisiere Übungen, die Profil $profileId verwenden...');
+      await _trainingPlanService.updateExercisesAfterProfileDeletion(profileId);
+
+      // Profil aus der Liste entfernen
+      _progressionsProfile.removeAt(profilIndex);
+
+      // Wenn das aktive Profil gelöscht wurde, zum ersten Profil wechseln
+      if (profileId == _aktivesProgressionsProfil) {
+        _aktivesProgressionsProfil = _progressionsProfile.first.id;
+        _progressionsConfig = Map.from(_progressionsProfile.first.config);
+        _profilWurdeGewechselt = true;
+      }
+
+      // Änderungen speichern
+      await saveProfiles();
+
+      notifyListeners();
+
+      // Flag zurücksetzen
+      _profilWurdeGewechselt = false;
+
+      print('Profil erfolgreich gelöscht und Übungen aktualisiert');
+    } catch (e) {
+      print('Fehler beim Löschen des Profils: $e');
     }
-
-    final profilIndex =
-        _progressionsProfile.indexWhere((p) => p.id == profileId);
-    if (profilIndex == -1) return;
-
-    // Profil aus der Liste entfernen
-    _progressionsProfile.removeAt(profilIndex);
-
-    // Wenn das aktive Profil gelöscht wurde, zum ersten Profil wechseln
-    if (profileId == _aktivesProgressionsProfil) {
-      _aktivesProgressionsProfil = _progressionsProfile.first.id;
-      _progressionsConfig = Map.from(_progressionsProfile.first.config);
-      _profilWurdeGewechselt = true;
-    }
-
-    // Änderungen speichern
-    await saveProfiles();
-
-    notifyListeners();
-
-    // Flag zurücksetzen
-    _profilWurdeGewechselt = false;
   }
 }

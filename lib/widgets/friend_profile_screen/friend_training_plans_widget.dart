@@ -154,6 +154,21 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     );
   }
 
+  // Hilfsmethode, um den Profilnamen basierend auf der ID zu erhalten
+  String _getProfileNameById(BuildContext context, String profileId) {
+    final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+
+    try {
+      final profile = provider.progressionProfiles.firstWhere(
+        (profile) => profile.id == profileId,
+      );
+      return profile.name;
+    } catch (e) {
+      // Wenn kein Profil gefunden wird, geben wir die ID zurück
+      return 'Profil: $profileId';
+    }
+  }
+
   int _getTotalExercises(TrainingPlanModel plan) {
     int total = 0;
     for (var day in plan.days) {
@@ -538,7 +553,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
 
                   // Trainingstage und Übungen anzeigen
                   for (int i = 0; i < plan.days.length; i++) ...[
-                    _buildDayDetails(plan.days[i], i),
+                    _buildDayDetails(context, plan.days[i], i),
                     if (i < plan.days.length - 1) const Divider(),
                   ],
                 ],
@@ -550,7 +565,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDayDetails(day, int index) {
+  Widget _buildDayDetails(BuildContext context, day, int index) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -630,18 +645,38 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Zeige Warnung für zugeordnetes Profil
+                          // Zeige Profil-Information an
                           if (day.exercises[i].progressionProfileId != null &&
                               day.exercises[i].progressionProfileId!
                                   .isNotEmpty) ...[
                             const SizedBox(width: 4),
-                            Tooltip(
-                              message:
-                                  'Verwendet Progressionsprofil: ${day.exercises[i].progressionProfileId}',
-                              child: Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: Colors.orange,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.purple[100],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.trending_up,
+                                    size: 12,
+                                    color: Colors.purple[800],
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    _getProfileNameById(context,
+                                        day.exercises[i].progressionProfileId!),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.purple[800],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
                           ],

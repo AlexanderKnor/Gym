@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/friend_profile_screen/friend_profile_provider.dart';
+import '../../providers/progression_manager_screen/progression_manager_provider.dart'; // Neuer Import
 import '../../models/progression_manager_screen/progression_profile_model.dart';
 
 class FriendProgressionProfilesWidget extends StatelessWidget {
@@ -162,6 +163,9 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
   void _copyProfile(
       BuildContext context, ProgressionProfileModel profile) async {
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+    // Zugriff auf den ProgressionManagerProvider für Aktualisierungen
+    final progressionProvider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
 
     // Dialog-Kontext zur späteren Verwendung merken
     BuildContext? dialogContext;
@@ -199,6 +203,9 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
 
       // Kurze Verzögerung, um sicherzustellen, dass der Dialog vollständig geschlossen wurde
       await Future.delayed(const Duration(milliseconds: 200));
+
+      // Aktualisiere die Profilliste im ProgressionManagerProvider
+      await progressionProvider.refreshProfiles();
 
       // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
       if (context.mounted) {

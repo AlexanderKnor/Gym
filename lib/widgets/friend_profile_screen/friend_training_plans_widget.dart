@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/friend_profile_screen/friend_profile_provider.dart';
+import '../../providers/training_plans_screen/training_plans_screen_provider.dart'; // Neuer Import
 import '../../models/training_plan_screen/training_plan_model.dart';
 
 class FriendTrainingPlansWidget extends StatelessWidget {
@@ -181,6 +182,9 @@ class FriendTrainingPlansWidget extends StatelessWidget {
   void _copyTrainingPlan(BuildContext context, TrainingPlanModel plan) async {
     // Holen Sie den Provider nur einmal am Anfang
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+    // Zugriff auf den TrainingPlansProvider, um die Aktualisierung auszulösen
+    final trainingPlansProvider =
+        Provider.of<TrainingPlansProvider>(context, listen: false);
 
     // Dialog-Kontext zur späteren Verwendung merken
     BuildContext? dialogContext;
@@ -230,6 +234,9 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         if (result['success'] == true) {
           final missingProfileIds = result['missingProfileIds'] as List;
 
+          // Aktualisiere die Liste der Trainingspläne
+          await trainingPlansProvider.refreshTrainingPlans();
+
           if (missingProfileIds.isNotEmpty) {
             // Es gibt fehlende Profile, frage Benutzer, ob diese kopiert werden sollen
             await _showMissingProfilesDialog(
@@ -274,6 +281,8 @@ class FriendTrainingPlansWidget extends StatelessWidget {
       TrainingPlanModel copiedPlan) async {
     // Lokalen Provider speichern, um Kontextprobleme zu vermeiden
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+    final trainingPlansProvider =
+        Provider.of<TrainingPlansProvider>(context, listen: false);
 
     // Rückgabewert für die Benutzerwahl
     bool? shouldCopyProfiles;
@@ -414,6 +423,9 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         // Erfolgs- oder Fehlermeldung anzeigen
         if (context.mounted) {
           if (success) {
+            // Aktualisiere die Liste der Trainingspläne noch einmal, um sicherzustellen,
+            // dass die Pläne mit den kopierten Profilen korrekt angezeigt werden
+            await trainingPlansProvider.refreshTrainingPlans();
             await _showSuccessDialog(context, originalPlan, withProfiles: true);
           } else {
             await _showErrorDialog(context,

@@ -308,7 +308,7 @@ class FriendProfileService {
     }
   }
 
-  // Trainingsplan eines Freundes kopieren
+  // Trainingsplan eines Freundes kopieren - AKTUALISIERT
   Future<Map<String, dynamic>> copyTrainingPlan(TrainingPlanModel plan,
       List<ProgressionProfileModel> friendProfiles) async {
     try {
@@ -321,8 +321,9 @@ class FriendProfileService {
       // Prüfen, welche Profile fehlen
       final missingProfileIds = await getMissingProfileIds(requiredProfileIds);
 
-      // Neue ID für den kopierten Plan generieren
-      final newPlanId = 'plan_${DateTime.now().millisecondsSinceEpoch}';
+      // Neue ID für den kopierten Plan generieren - Sicherstellen, dass sie wirklich eindeutig ist
+      final newPlanId =
+          'plan_${DateTime.now().millisecondsSinceEpoch}_${userId.hashCode}';
 
       // Deep Copy des Plans erstellen
       final copiedPlan = TrainingPlanModel(
@@ -331,7 +332,7 @@ class FriendProfileService {
         days: plan.days.map((day) {
           // Neue ID für jeden Tag generieren
           final newDayId =
-              'day_${DateTime.now().millisecondsSinceEpoch}_${day.name.hashCode}';
+              'day_${DateTime.now().millisecondsSinceEpoch}_${day.id.hashCode}';
 
           return TrainingDayModel(
             id: newDayId,
@@ -339,7 +340,7 @@ class FriendProfileService {
             exercises: day.exercises.map((exercise) {
               // Neue ID für jede Übung generieren
               final newExerciseId =
-                  'exercise_${DateTime.now().millisecondsSinceEpoch}_${exercise.name.hashCode}';
+                  'exercise_${DateTime.now().millisecondsSinceEpoch}_${exercise.id.hashCode}';
 
               return ExerciseModel(
                 id: newExerciseId,
@@ -357,9 +358,13 @@ class FriendProfileService {
         isActive: false, // Kopierter Plan ist standardmäßig nicht aktiv
       );
 
-      // Plan in der eigenen Sammlung speichern
-      final List<TrainingPlanModel> updatedPlans = [copiedPlan];
-      await _trainingPlanService.saveTrainingPlans(updatedPlans);
+      // Plan in der eigenen Sammlung speichern (neue Methode nutzen)
+      final success =
+          await _trainingPlanService.addSingleTrainingPlan(copiedPlan);
+
+      if (!success) {
+        throw Exception('Fehler beim Speichern des kopierten Plans');
+      }
 
       print('Trainingsplan erfolgreich kopiert: $newPlanId');
 

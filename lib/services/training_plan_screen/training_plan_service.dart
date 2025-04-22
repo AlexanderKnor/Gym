@@ -55,6 +55,47 @@ class TrainingPlanService {
     }
   }
 
+  // Neu: Methode zum Hinzufügen eines einzelnen neuen Trainingsplans
+  Future<bool> addSingleTrainingPlan(TrainingPlanModel plan) async {
+    try {
+      final userId = _getUserId();
+      if (userId == null) {
+        print('Kein User angemeldet, kann Trainingsplan nicht speichern');
+        return false;
+      }
+
+      print('Speichere neuen Plan: ${plan.id} - ${plan.name}');
+
+      // Prüfen, ob bereits ein Plan mit dieser ID existiert
+      final existingDoc =
+          await _getTrainingPlansCollection().doc(plan.id).get();
+
+      if (existingDoc.exists) {
+        print('Plan mit ID ${plan.id} existiert bereits, generiere neue ID');
+        // Neue eindeutige ID generieren
+        final newId =
+            'plan_${DateTime.now().millisecondsSinceEpoch}_${plan.id.hashCode}';
+        // Neuen Plan mit neuer ID erstellen
+        final updatedPlan = plan.copyWith(id: newId);
+        // JSON für den aktualisierten Plan erhalten
+        final updatedJson = _encodePlanToJson(updatedPlan);
+        // Plan mit der neuen ID speichern
+        await _getTrainingPlansCollection().doc(newId).set(updatedJson);
+        print('Plan mit neuer ID $newId erfolgreich gespeichert');
+      } else {
+        // Der Plan existiert noch nicht, speichere ihn mit der ursprünglichen ID
+        final planJson = _encodePlanToJson(plan);
+        await _getTrainingPlansCollection().doc(plan.id).set(planJson);
+        print('Plan ${plan.id} erfolgreich gespeichert');
+      }
+
+      return true;
+    } catch (e) {
+      print('Fehler beim Speichern des Plans: $e');
+      return false;
+    }
+  }
+
   // Trainingsplan speichern
   Future<bool> saveTrainingPlans(List<TrainingPlanModel> plans) async {
     try {

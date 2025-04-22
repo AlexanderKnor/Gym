@@ -210,7 +210,7 @@ class FriendTrainingPlansWidget extends StatelessWidget {
       // Versuche, den Plan zu kopieren
       final result = await provider.copyTrainingPlanToOwnCollection(plan);
 
-      // Dialog schließen - hier ist der Schlüssel zur Fehlerbehebung
+      // Dialog schließen - hier mit verbesserten Sicherheitschecks
       if (dialogContext != null && Navigator.canPop(dialogContext!)) {
         Navigator.of(dialogContext!).pop();
       }

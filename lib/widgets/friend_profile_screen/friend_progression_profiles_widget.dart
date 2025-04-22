@@ -158,40 +158,47 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     );
   }
 
-  // Überarbeitete Kopier-Funktion mit besserer Dialog-Verwaltung
+  // Überarbeitete Kopier-Funktion mit verbesserter Dialog-Verwaltung
   void _copyProfile(
       BuildContext context, ProgressionProfileModel profile) async {
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
 
+    // Dialog-Kontext zur späteren Verwendung merken
+    BuildContext? dialogContext;
+
     // Zeige Ladeanzeige mit Barrier
     showDialog(
       context: context,
-      barrierDismissible:
-          false, // Verhindert, dass der Nutzer den Dialog abbricht
-      builder: (dialogContext) => WillPopScope(
-        // Verhindert Zurück-Navigation während des Ladens
-        onWillPop: () async => false,
-        child: const AlertDialog(
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text('Profil wird kopiert...'),
-            ],
+      barrierDismissible: false,
+      builder: (context) {
+        dialogContext = context;
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: const AlertDialog(
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text('Profil wird kopiert...'),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
     try {
       // Versuche, das Profil zu kopieren
       final success = await provider.copyProfileToOwnCollection(profile);
 
-      // Nur den Dialog schließen, wenn der Kontext noch gültig ist
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
+      // Dialog schließen - hier mit verbesserten Sicherheitschecks
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!).pop();
       }
+
+      // Kurze Verzögerung, um sicherzustellen, dass der Dialog vollständig geschlossen wurde
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
       if (context.mounted) {
@@ -206,8 +213,13 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
       }
     } catch (e) {
       // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!).pop();
+      }
+
+      await Future.delayed(const Duration(milliseconds: 200));
+
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
         _showErrorDialog(context, e.toString());
       }
     }

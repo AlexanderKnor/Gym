@@ -41,7 +41,7 @@ class FriendProfileService {
     }
   }
 
-  // Trainingspläne eines Freundes laden
+  // Trainingspläne eines Freundes laden - KORRIGIERTE VERSION
   Future<List<TrainingPlanModel>> getTrainingPlansFromFriend(
       String friendId) async {
     try {
@@ -66,43 +66,34 @@ class FriendProfileService {
         try {
           final planData = doc.data();
 
-          // Trainingstage laden
-          final daysSnapshot = await _firestore
-              .collection('users')
-              .doc(friendId)
-              .collection('training_plans')
-              .doc(doc.id)
-              .collection('days')
-              .get();
+          print('Lade Trainingsplan: ${doc.id}, Name: ${planData['name']}');
+
+          // Hier ist der Unterschied: wir extrahieren die Tage direkt aus den Plandaten
+          final List<dynamic> daysData = planData['days'] ?? [];
+          print('Anzahl der Tage im Plan: ${daysData.length}');
 
           List<TrainingDayModel> days = [];
 
-          for (var dayDoc in daysSnapshot.docs) {
-            final dayData = dayDoc.data();
-
-            // Übungen laden
-            final exercisesSnapshot = await _firestore
-                .collection('users')
-                .doc(friendId)
-                .collection('training_plans')
-                .doc(doc.id)
-                .collection('days')
-                .doc(dayDoc.id)
-                .collection('exercises')
-                .get();
+          for (var dayData in daysData) {
+            // Wir extrahieren die Übungen direkt aus den Tagdaten
+            final List<dynamic> exercisesData = dayData['exercises'] ?? [];
+            print(
+                'Tag ${dayData['name']}: ${exercisesData.length} Übungen gefunden');
 
             List<ExerciseModel> exercises = [];
 
-            for (var exerciseDoc in exercisesSnapshot.docs) {
-              final exerciseData = exerciseDoc.data();
+            for (var exerciseData in exercisesData) {
+              print(
+                  'Übung gefunden: ${exerciseData['name']}, ProgressionProfileId: ${exerciseData['progressionProfileId']}');
 
               exercises.add(ExerciseModel(
-                id: exerciseDoc.id,
+                id: exerciseData['id'] ?? '',
                 name: exerciseData['name'] ?? 'Unbekannte Übung',
                 primaryMuscleGroup: exerciseData['primaryMuscleGroup'] ?? '',
                 secondaryMuscleGroup:
                     exerciseData['secondaryMuscleGroup'] ?? '',
-                standardIncrease: exerciseData['standardIncrease'] ?? 2.5,
+                standardIncrease:
+                    exerciseData['standardIncrease']?.toDouble() ?? 2.5,
                 restPeriodSeconds: exerciseData['restPeriodSeconds'] ?? 90,
                 numberOfSets: exerciseData['numberOfSets'] ?? 3,
                 progressionProfileId: exerciseData['progressionProfileId'],
@@ -110,7 +101,7 @@ class FriendProfileService {
             }
 
             days.add(TrainingDayModel(
-              id: dayDoc.id,
+              id: dayData['id'] ?? '',
               name: dayData['name'] ?? 'Tag',
               exercises: exercises,
             ));
@@ -122,6 +113,9 @@ class FriendProfileService {
             days: days,
             isActive: planData['isActive'] ?? false,
           ));
+
+          print(
+              'Trainingsplan komplett geladen: ${doc.id} mit ${days.length} Tagen');
         } catch (e) {
           print('Fehler beim Laden eines Trainingsplans: $e');
         }

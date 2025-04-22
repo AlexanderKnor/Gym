@@ -162,39 +162,46 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     return total;
   }
 
-  // Überarbeitete Kopier-Funktion mit besserer Dialog-Verwaltung
+  // Überarbeitete Kopier-Funktion mit verbesserter Dialog-Verwaltung
   void _copyTrainingPlan(BuildContext context, TrainingPlanModel plan) async {
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+
+    // Dialog-Kontext zur späteren Verwendung merken
+    BuildContext? dialogContext;
 
     // Zeige Ladeanzeige mit Barrier
     showDialog(
       context: context,
-      barrierDismissible:
-          false, // Verhindert, dass der Nutzer den Dialog abbricht
-      builder: (dialogContext) => WillPopScope(
-        // Verhindert Zurück-Navigation während des Ladens
-        onWillPop: () async => false,
-        child: const AlertDialog(
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text('Trainingsplan wird kopiert...'),
-            ],
+      barrierDismissible: false,
+      builder: (context) {
+        dialogContext = context;
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: const AlertDialog(
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text('Trainingsplan wird kopiert...'),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
     try {
       // Versuche, den Plan zu kopieren
       final result = await provider.copyTrainingPlanToOwnCollection(plan);
 
-      // Nur den Dialog schließen, wenn der Kontext noch gültig ist
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
+      // Dialog schließen - hier ist der Schlüssel zur Fehlerbehebung
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!).pop();
       }
+
+      // Kurze Verzögerung, um sicherzustellen, dass der Dialog geschlossen wurde
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
       if (context.mounted) {
@@ -216,14 +223,19 @@ class FriendTrainingPlansWidget extends StatelessWidget {
       }
     } catch (e) {
       // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!).pop();
+      }
+
+      await Future.delayed(const Duration(milliseconds: 200));
+
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
         _showErrorDialog(context, e.toString());
       }
     }
   }
 
-  // Dialog für fehlende Profile anzeigen mit verbesserter Fehlerbehandlung
+  // Dialog für fehlende Profile anzeigen
   void _showMissingProfilesDialog(BuildContext context, List missingProfileIds,
       TrainingPlanModel originalPlan, TrainingPlanModel copiedPlan) {
     showDialog(
@@ -275,23 +287,34 @@ class FriendTrainingPlansWidget extends StatelessWidget {
               // Dialog schließen, bevor der Kopiervorgang startet
               Navigator.of(dialogContext).pop();
 
-              // Zeige Ladeanzeige mit Barrier
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (loadingContext) => WillPopScope(
-                  onWillPop: () async => false,
-                  child: const AlertDialog(
-                    content: Row(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(width: 20),
-                        Text('Profile werden kopiert...'),
-                      ],
-                    ),
-                  ),
-                ),
-              );
+              // Kurze Verzögerung einfügen
+              await Future.delayed(const Duration(milliseconds: 200));
+
+              // Halten des neuen Dialog-Kontexts
+              BuildContext? loadingContext;
+
+              if (context.mounted) {
+                // Zeige Ladeanzeige mit Barrier
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) {
+                    loadingContext = ctx;
+                    return WillPopScope(
+                      onWillPop: () async => false,
+                      child: const AlertDialog(
+                        content: Row(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 20),
+                            Text('Profile werden kopiert...'),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
 
               try {
                 // Kopiere fehlende Profile
@@ -300,10 +323,13 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                 final success = await provider.copyMissingProfiles(
                     missingProfileIds.map((id) => id.toString()).toList());
 
-                // Dialog schließen, wenn Kontext noch gültig ist
-                if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pop();
+                // Dialog schließen
+                if (loadingContext != null &&
+                    Navigator.canPop(loadingContext!)) {
+                  Navigator.of(loadingContext!).pop();
                 }
+
+                await Future.delayed(const Duration(milliseconds: 200));
 
                 // Erfolgs- oder Fehlermeldung anzeigen
                 if (context.mounted) {
@@ -319,8 +345,14 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                 }
               } catch (e) {
                 // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
+                if (loadingContext != null &&
+                    Navigator.canPop(loadingContext!)) {
+                  Navigator.of(loadingContext!).pop();
+                }
+
+                await Future.delayed(const Duration(milliseconds: 200));
+
                 if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pop();
                   _showErrorDialog(context, e.toString());
                 }
               }

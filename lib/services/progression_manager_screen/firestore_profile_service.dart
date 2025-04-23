@@ -92,39 +92,6 @@ class FirestoreProfileService {
     }
   }
 
-  // Aktives Profil laden
-  Future<String> loadActiveProfile() async {
-    try {
-      // Wenn nicht angemeldet, erste Standardprofil-ID zurückgeben
-      final userId = _getUserId();
-      if (userId == null) {
-        print(
-            'Benutzer nicht angemeldet, verwende Standard-ID für aktives Profil');
-        return _standardProfiles.isNotEmpty ? _standardProfiles.first.id : '';
-      }
-
-      print('Lade aktives Profil für Benutzer: $userId');
-      final userDoc = await _getUserDoc().get();
-
-      if (userDoc.exists) {
-        final data = userDoc.data() as Map<String, dynamic>?;
-        if (data != null && data.containsKey('activeProfileId')) {
-          final activeId = data['activeProfileId'] as String;
-          print('Aktive Profil-ID aus Firestore geladen: $activeId');
-          return activeId;
-        }
-      }
-
-      final defaultId =
-          _standardProfiles.isNotEmpty ? _standardProfiles.first.id : '';
-      print('Kein aktives Profil gefunden, verwende Standard-ID: $defaultId');
-      return defaultId;
-    } catch (e) {
-      print('Fehler beim Laden des aktiven Profils: $e');
-      return _standardProfiles.isNotEmpty ? _standardProfiles.first.id : '';
-    }
-  }
-
   // Profile speichern
   Future<bool> saveProfiles(List<ProgressionProfileModel> profiles) async {
     try {
@@ -163,28 +130,6 @@ class FirestoreProfileService {
       return true;
     } catch (e) {
       print('Fehler beim Speichern der Profile: $e');
-      return false;
-    }
-  }
-
-  // Aktives Profil speichern
-  Future<bool> saveActiveProfile(String profileId) async {
-    try {
-      // Wenn nicht angemeldet, nicht speichern
-      final userId = _getUserId();
-      if (userId == null) {
-        print('Kann aktives Profil nicht speichern, Benutzer nicht angemeldet');
-        return false;
-      }
-
-      print('Speichere aktives Profil $profileId für Benutzer $userId');
-      await _getUserDoc()
-          .set({'activeProfileId': profileId}, SetOptions(merge: true));
-
-      print('Aktives Profil erfolgreich gespeichert');
-      return true;
-    } catch (e) {
-      print('Fehler beim Speichern des aktiven Profils: $e');
       return false;
     }
   }

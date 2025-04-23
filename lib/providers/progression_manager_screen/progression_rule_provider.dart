@@ -506,7 +506,7 @@ class ProgressionRuleProvider with ChangeNotifier {
   }
 
   void saveRule(
-      String aktivesProgressionsProfil,
+      String profileId,
       List<ProgressionProfileModel> progressionsProfile,
       Future<bool> Function()
           saveProfiles, // Funktion zum Speichern der Profile
@@ -514,8 +514,8 @@ class ProgressionRuleProvider with ChangeNotifier {
       ProgressionProfileModel? aktuellesProfil,
       ProgressionUIProvider uiProvider) {
     try {
-      final profilIndex = progressionsProfile
-          .indexWhere((p) => p.id == aktivesProgressionsProfil);
+      final profilIndex =
+          progressionsProfile.indexWhere((p) => p.id == profileId);
       if (profilIndex == -1) return;
 
       final aktionen = <ProgressionActionModel>[];
@@ -703,14 +703,14 @@ class ProgressionRuleProvider with ChangeNotifier {
 
   void deleteRule(
       String ruleId,
-      String aktivesProgressionsProfil,
+      String profileId,
       List<ProgressionProfileModel> progressionsProfile,
       Future<bool> Function()
           saveProfiles, // Funktion zum Speichern der Profile
       ProgressionTrainingProvider trainingProvider,
       ProgressionProfileModel? aktuellesProfil) {
-    final profilIndex = progressionsProfile
-        .indexWhere((p) => p.id == aktivesProgressionsProfil);
+    final profilIndex =
+        progressionsProfile.indexWhere((p) => p.id == profileId);
     if (profilIndex == -1) return;
 
     final updatedRules = progressionsProfile[profilIndex]
@@ -753,7 +753,7 @@ class ProgressionRuleProvider with ChangeNotifier {
 
   void handleDrop(
       String targetRuleId,
-      String aktivesProgressionsProfil,
+      String profileId,
       List<ProgressionProfileModel> progressionsProfile,
       Future<bool> Function()
           saveProfiles, // Funktion zum Speichern der Profile
@@ -766,8 +766,8 @@ class ProgressionRuleProvider with ChangeNotifier {
       return;
     }
 
-    final profilIndex = progressionsProfile
-        .indexWhere((p) => p.id == aktivesProgressionsProfil);
+    final profilIndex =
+        progressionsProfile.indexWhere((p) => p.id == profileId);
     if (profilIndex == -1) {
       _draggedRuleId = null;
       _dragOverRuleId = null;

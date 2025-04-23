@@ -42,7 +42,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     });
   }
 
-  // Neue Methode, die die Initialisierung mit Verzögerung durchführt
+  // Methode, die die Initialisierung mit Verzögerung durchführt
   Future<void> _initializeSessionWithDelay() async {
     try {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -55,15 +55,10 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
 
       final sessionProvider =
           Provider.of<TrainingSessionProvider>(context, listen: false);
-      final progressionProvider =
-          Provider.of<ProgressionManagerProvider>(context, listen: false);
 
-      // Starte die Trainingssession (async)
+      // Starte die Trainingssession
       await sessionProvider.startTrainingSession(
           widget.trainingPlan, widget.dayIndex);
-
-      // Markiere den Beginn der Trainings-Session für den ProgressionManager
-      progressionProvider.beginTrainingSession();
 
       // Jetzt können wir den TabController initialisieren
       if (mounted) {
@@ -118,16 +113,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   @override
   void dispose() {
     _tabController?.dispose();
-
-    // Beim Verlassen der Trainings-Session den ursprünglichen Zustand wiederherstellen
-    try {
-      final progressionProvider =
-          Provider.of<ProgressionManagerProvider>(context, listen: false);
-      progressionProvider.endTrainingSession();
-    } catch (e) {
-      print('Fehler beim Beenden der Trainingssession: $e');
-    }
-
     super.dispose();
   }
 
@@ -267,12 +252,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
 
                 // Training als abgeschlossen markieren, auch wenn es nicht vollständig ist
                 sessionProvider.completeTraining();
-
-                // Beim Verlassen unbedingt die Session beenden
-                final progressionProvider =
-                    Provider.of<ProgressionManagerProvider>(context,
-                        listen: false);
-                progressionProvider.endTrainingSession();
               } catch (e) {
                 print('Fehler beim Beenden des Trainings: $e');
               }

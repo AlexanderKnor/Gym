@@ -8,12 +8,13 @@ class ProfileSelectorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
+    final currentDemoProfile = provider.aktuellesProfil;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Aktives Progressionsprofil',
+          'Profil für Demo-Übung',
           style: TextStyle(
             fontWeight: FontWeight.bold,
           ),
@@ -31,10 +32,11 @@ class ProfileSelectorWidget extends StatelessWidget {
           itemCount: provider.progressionsProfile.length,
           itemBuilder: (context, index) {
             final profil = provider.progressionsProfile[index];
-            final isSelected = profil.id == provider.aktivesProgressionsProfil;
+            final isSelected = currentDemoProfile != null &&
+                profil.id == currentDemoProfile.id;
 
             return InkWell(
-              onTap: () => provider.wechsleProgressionsProfil(profil.id),
+              onTap: () => provider.setDemoProfileId(profil.id),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -88,8 +90,10 @@ class ProfileSelectorWidget extends StatelessWidget {
             const SizedBox(width: 8),
             TextButton.icon(
               onPressed: () {
-                final aktivesProfilId = provider.aktivesProgressionsProfil;
-                provider.duplicateProfile(aktivesProfilId);
+                final aktuellesProfil = provider.aktuellesProfil;
+                if (aktuellesProfil != null) {
+                  provider.duplicateProfile(aktuellesProfil.id);
+                }
               },
               icon: const Icon(Icons.copy, size: 16),
               label: const Text('Aktuelles Profil duplizieren'),

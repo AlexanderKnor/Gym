@@ -8,6 +8,7 @@ class ProgressionProfileSelectorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
+    final currentDemoProfile = provider.aktuellesProfil;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,12 +36,12 @@ class ProgressionProfileSelectorWidget extends StatelessWidget {
                 Divider(height: 1, color: Colors.grey[300]),
             itemBuilder: (context, index) {
               final profil = provider.progressionsProfile[index];
-              final isSelected =
-                  profil.id == provider.aktivesProgressionsProfil;
+              final isSelected = currentDemoProfile != null &&
+                  profil.id == currentDemoProfile.id;
               final isStandardProfile = _isStandardProfile(profil.id);
 
               return ListTile(
-                onTap: () => provider.wechsleProgressionsProfil(profil.id),
+                onTap: () => provider.setDemoProfileId(profil.id),
                 selected: isSelected,
                 selectedTileColor: Colors.purple[50],
                 contentPadding:
@@ -99,8 +100,10 @@ class ProgressionProfileSelectorWidget extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () {
-                  final aktivesProfilId = provider.aktivesProgressionsProfil;
-                  provider.duplicateProfile(aktivesProfilId);
+                  final aktuellesProfil = provider.aktuellesProfil;
+                  if (aktuellesProfil != null) {
+                    provider.duplicateProfile(aktuellesProfil.id);
+                  }
                 },
                 icon: const Icon(Icons.copy, size: 16),
                 label: const Text('Duplizieren'),

@@ -80,14 +80,6 @@ class MigrationService {
         if (success) {
           print('Migration der Profile für Benutzer $userId erfolgreich.');
 
-          // Lokales aktives Profil laden und in Firestore speichern
-          final activeProfileId = prefs.getString(ACTIVE_PROFILE_KEY) ?? '';
-          if (activeProfileId.isNotEmpty) {
-            print(
-                'Migriere aktives Profil: $activeProfileId für Benutzer $userId');
-            await firestoreService.saveActiveProfile(activeProfileId);
-          }
-
           // Migration als abgeschlossen markieren - benutzerspezifisch
           await prefs.setBool(userMigrationKey, true);
 

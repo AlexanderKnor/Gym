@@ -32,6 +32,16 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
       vsync: this,
       initialIndex: widget.initialTab,
     );
+
+    // Bei Demo-Tab das aktuelle Profil setzen
+    if (widget.initialTab == 1) {
+      // Nach dem ersten Build das Demo-Profil initialisieren
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final provider =
+            Provider.of<ProgressionManagerProvider>(context, listen: false);
+        provider.setDemoProfileId(widget.profile.id);
+      });
+    }
   }
 
   @override
@@ -218,6 +228,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
   Widget _buildDemoTab(
       BuildContext context, ProgressionManagerProvider provider) {
+    // Im Demo-Tab muss das ausgewählte Profil für die Berechnungen verwendet werden
+    if (_tabController.index == 1) {
+      // Stellen Sie sicher, dass das aktuelle Demo-Profil auf das angezeigte Profil gesetzt ist
+      provider.setDemoProfileId(widget.profile.id);
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(

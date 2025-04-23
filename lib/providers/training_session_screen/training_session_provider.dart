@@ -408,7 +408,7 @@ class TrainingSessionProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // NEUE METHODE: Berechnet die Progression für einen Satz einmalig und speichert sie
+  // Berechnet die Progression für einen Satz einmalig und speichert sie
   void calculateProgressionForSet(int exerciseIndex, int setId,
       String profileId, ProgressionManagerProvider progressionProvider) {
     final sets = _exerciseSets[exerciseIndex];
@@ -425,7 +425,7 @@ class TrainingSessionProvider with ChangeNotifier {
       final exercise = _trainingDay?.exercises[exerciseIndex];
       final customIncrement = exercise?.standardIncrease ?? 2.5;
 
-      // Empfehlung berechnen
+      // Empfehlung berechnen mit der angepassten Methode
       final empfehlung = progressionProvider.berechneEmpfehlungMitProfil(
           set, profileId, sets,
           customIncrement: customIncrement);
@@ -444,7 +444,7 @@ class TrainingSessionProvider with ChangeNotifier {
     }
   }
 
-  // NEUE METHODE: Prüft, ob Empfehlungen angezeigt werden sollen
+  // Prüft, ob Empfehlungen angezeigt werden sollen
   bool shouldShowRecommendation(int exerciseIndex, int setId) {
     final sets = _exerciseSets[exerciseIndex];
     if (sets == null) return false;

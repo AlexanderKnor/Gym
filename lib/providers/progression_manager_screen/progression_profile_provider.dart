@@ -4,7 +4,7 @@ import '../../models/progression_manager_screen/progression_rule_model.dart';
 import '../../models/progression_manager_screen/progression_condition_model.dart';
 import '../../models/progression_manager_screen/progression_action_model.dart';
 import '../../services/progression_manager_screen/firestore_profile_service.dart';
-import '../../services/training_plan_screen/training_plan_service.dart'; // Neu importiert
+import '../../services/training_plan_screen/training_plan_service.dart';
 import 'progression_ui_provider.dart';
 
 /// Provider für Progressionsprofile
@@ -12,23 +12,11 @@ import 'progression_ui_provider.dart';
 class ProgressionProfileProvider with ChangeNotifier {
   // ===== STATE DECLARATIONS =====
 
-  String _aktivesProgressionsProfil = 'double-progression';
-  Map<String, dynamic> _progressionsConfig = {
-    'targetRepsMin': 8,
-    'targetRepsMax': 10,
-    'targetRIRMin': 1,
-    'targetRIRMax': 2,
-    'increment': 2.5,
-  };
-
   // Profileditor-Zustand
   ProgressionProfileModel? _bearbeitetesProfil;
 
   // Progressionsprofile
   List<ProgressionProfileModel> _progressionsProfile = [];
-
-  // Hilfsvariable zum Tracken von Profilwechseln
-  bool _profilWurdeGewechselt = false;
 
   // Firebase-Service für Profilspeicherung
   final FirestoreProfileService _profileStorageService =
@@ -45,16 +33,17 @@ class ProgressionProfileProvider with ChangeNotifier {
 
   // ===== GETTERS =====
 
-  String get aktivesProgressionsProfil => _aktivesProgressionsProfil;
-  Map<String, dynamic> get progressionsConfig => _progressionsConfig;
   ProgressionProfileModel? get bearbeitetesProfil => _bearbeitetesProfil;
   List<ProgressionProfileModel> get progressionsProfile => _progressionsProfile;
-  bool get profilWurdeGewechselt => _profilWurdeGewechselt;
 
-  ProgressionProfileModel? get aktuellesProfil {
+  // ===== METHODEN =====
+
+  // Hilfsmethode, um ein Profil anhand seiner ID zu erhalten
+  ProgressionProfileModel? getProfileById(String? profileId) {
+    if (profileId == null) return null;
+
     try {
-      return _progressionsProfile
-          .firstWhere((p) => p.id == _aktivesProgressionsProfil);
+      return _progressionsProfile.firstWhere((p) => p.id == profileId);
     } catch (e) {
       return _progressionsProfile.isNotEmpty
           ? _progressionsProfile.first
@@ -62,9 +51,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     }
   }
 
-  // ===== METHODEN =====
-
-  // Methode zum Laden gespeicherter Profile - AKTUALISIERT FÜR FIREBASE
+  // Methode zum Laden gespeicherter Profile
   Future<void> loadSavedProfiles() async {
     try {
       print('Starte das Laden von Profilen aus Firestore...');
@@ -78,22 +65,6 @@ class ProgressionProfileProvider with ChangeNotifier {
       _progressionsProfile = savedProfiles;
       print('${savedProfiles.length} Profile aus Firestore geladen');
 
-      // Aktives Profil laden
-      final savedActiveProfileId =
-          await _profileStorageService.loadActiveProfile();
-      if (savedActiveProfileId.isNotEmpty) {
-        _aktivesProgressionsProfil = savedActiveProfileId;
-        print('Aktives Profil gesetzt: $_aktivesProgressionsProfil');
-
-        // Konfiguration des aktiven Profils laden
-        final aktivProfil = _progressionsProfile.firstWhere(
-          (p) => p.id == _aktivesProgressionsProfil,
-          orElse: () => _progressionsProfile.first,
-        );
-        _progressionsConfig = Map.from(aktivProfil.config);
-        print('Profilkonfiguration geladen: $_progressionsConfig');
-      }
-
       notifyListeners();
       print('Profile erfolgreich geladen und UI aktualisiert');
     } catch (e) {
@@ -106,9 +77,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     try {
       print('Starte das Speichern von Profilen in Firestore...');
       await _profileStorageService.saveProfiles(_progressionsProfile);
-      await _profileStorageService
-          .saveActiveProfile(_aktivesProgressionsProfil);
-      print('Profile und aktives Profil erfolgreich in Firestore gespeichert');
+      print('Profile erfolgreich in Firestore gespeichert');
       return true;
     } catch (e) {
       print('Fehler beim Speichern der Profile: $e');
@@ -551,35 +520,15 @@ class ProgressionProfileProvider with ChangeNotifier {
     ];
   }
 
-  void wechsleProgressionsProfil(String profilId) {
-    _aktivesProgressionsProfil = profilId;
-
-    final profil = _progressionsProfile.firstWhere(
-      (p) => p.id == profilId,
-      orElse: () => _progressionsProfile.first,
-    );
-
-    _progressionsConfig = Map.from(profil.config);
-    _profilWurdeGewechselt = true;
-
-    // Profil-Änderung speichern
-    saveProfiles();
-
-    notifyListeners();
-
-    // Flag zurücksetzen
-    _profilWurdeGewechselt = false;
-  }
-
   void handleConfigChange(
       String key, dynamic value, ProgressionProfileModel? aktuellesProfil) {
+    if (aktuellesProfil == null) return;
+
     final newValue = double.tryParse(value.toString());
     if (newValue == null) return;
 
-    _progressionsConfig[key] = newValue;
-
     _progressionsProfile = _progressionsProfile.map((profil) {
-      if (profil.id == _aktivesProgressionsProfil) {
+      if (profil.id == aktuellesProfil.id) {
         final updatedConfig = Map<String, dynamic>.from(profil.config);
         updatedConfig[key] = newValue;
         return profil.copyWith(config: updatedConfig);
@@ -651,19 +600,12 @@ class ProgressionProfileProvider with ChangeNotifier {
       _progressionsProfile.add(_bearbeitetesProfil!);
     }
 
-    _aktivesProgressionsProfil = _bearbeitetesProfil!.id;
-    _progressionsConfig = Map.from(_bearbeitetesProfil!.config);
-    _profilWurdeGewechselt = true;
-
     // Profil-Änderungen speichern
     saveProfiles();
 
     uiProvider.hideProfileEditor();
     _bearbeitetesProfil = null;
     notifyListeners();
-
-    // Flag zurücksetzen
-    _profilWurdeGewechselt = false;
   }
 
   void duplicateProfile(String profilId, ProgressionUIProvider uiProvider) {
@@ -685,7 +627,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     openProfileEditor(copy, uiProvider);
   }
 
-  // Methode zum Löschen eines Profils - VERBESSERT
+  // Methode zum Löschen eines Profils
   Future<void> deleteProfile(String profileId) async {
     try {
       // Standard-Profile können nicht gelöscht werden
@@ -713,20 +655,10 @@ class ProgressionProfileProvider with ChangeNotifier {
       // Profil aus der Liste entfernen
       _progressionsProfile.removeAt(profilIndex);
 
-      // Wenn das aktive Profil gelöscht wurde, zum ersten Profil wechseln
-      if (profileId == _aktivesProgressionsProfil) {
-        _aktivesProgressionsProfil = _progressionsProfile.first.id;
-        _progressionsConfig = Map.from(_progressionsProfile.first.config);
-        _profilWurdeGewechselt = true;
-      }
-
       // Änderungen speichern - SICHERSTELLEN DASS DIES ABGEWARTET WIRD
       await saveProfiles();
 
       notifyListeners();
-
-      // Flag zurücksetzen
-      _profilWurdeGewechselt = false;
 
       print('Profil erfolgreich gelöscht und Übungen aktualisiert');
     } catch (e) {

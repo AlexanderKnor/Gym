@@ -334,7 +334,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         final set = sets[index];
         final isActiveSet = isActiveExercise && set.id == activeSetId;
 
-        // GEÄNDERT: Prüfe, ob die Empfehlung angezeigt werden soll
+        // Prüfe, ob die Empfehlung angezeigt werden soll
         final showRecommendation = isActiveSet &&
             _exerciseProfileId != null &&
             sessionProvider.shouldShowRecommendation(
@@ -347,7 +347,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
           onValueChanged: (field, value) {
             sessionProvider.updateSet(set.id, field, value);
           },
-          // GEÄNDERT: Empfehlungswerte direkt aus dem Set verwenden
+          // Empfehlungswerte direkt aus dem Set verwenden
           recommendation: showRecommendation
               ? {
                   'kg': set.empfKg,
@@ -385,7 +385,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
 
     return Column(
       children: [
-        // Kraftrechner-Button (NEU)
+        // Kraftrechner-Button
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -412,12 +412,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                     ? () {
                         sessionProvider.applyProgressionRecommendation(
                           activeSetId,
-                          recommendation['kg']
-                              as double?, // Typumwandlung hinzugefügt
-                          recommendation['wiederholungen']
-                              as int?, // Typumwandlung hinzugefügt
-                          recommendation['rir']
-                              as int?, // Typumwandlung hinzugefügt
+                          recommendation['kg'] as double?,
+                          recommendation['wiederholungen'] as int?,
+                          recommendation['rir'] as int?,
                         );
                       }
                     : null,

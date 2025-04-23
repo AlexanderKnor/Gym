@@ -182,12 +182,6 @@ class _ProgressionManagerScreenContentState
 
   // Methode zum Öffnen der Demo für ein Profil
   void _openProfileDemo(BuildContext context, dynamic profile) {
-    final provider =
-        Provider.of<ProgressionManagerProvider>(context, listen: false);
-
-    // Profil für die Demo aktivieren
-    provider.wechsleProgressionsProfil(profile.id);
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ProfileDetailScreen(

@@ -66,13 +66,22 @@ class RuleEditorScreen extends StatelessWidget {
           ),
           leading: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: provider.closeRuleEditor,
+            onPressed: () {
+              provider.closeRuleEditor();
+              // Nur zurückgehen, wenn nicht im Dialog-Modus
+              if (!isDialog) {
+                Navigator.of(context).pop();
+              }
+            },
           ),
           actions: [
             TextButton.icon(
               onPressed: () {
                 provider.saveRule();
-                // Automatisch schließen nach dem Speichern
+                // Nur zurückgehen, wenn nicht im Dialog-Modus
+                if (!isDialog) {
+                  Navigator.of(context).pop();
+                }
               },
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(

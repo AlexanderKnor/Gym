@@ -19,7 +19,20 @@ class ProfileEditorScreen extends StatelessWidget {
     final profil = provider.bearbeitetesProfil;
 
     if (profil == null) {
-      return const SizedBox();
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Profil wird geladen...'),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     // Dialog-Modus: Im Stack mit abgedunkeltem Hintergrund
@@ -60,7 +73,7 @@ class ProfileEditorScreen extends StatelessWidget {
     return WillPopScope(
       onWillPop: () async {
         provider.closeProfileEditor();
-        return false;
+        return true;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -71,11 +84,17 @@ class ProfileEditorScreen extends StatelessWidget {
           ),
           leading: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: provider.closeProfileEditor,
+            onPressed: () {
+              provider.closeProfileEditor();
+              Navigator.of(context).pop();
+            },
           ),
           actions: [
             TextButton.icon(
-              onPressed: provider.saveProfile,
+              onPressed: () {
+                provider.saveProfile();
+                Navigator.of(context).pop();
+              },
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(
                 'Speichern',

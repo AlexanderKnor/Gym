@@ -26,66 +26,74 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   late TextEditingController _secondaryMuscleController;
   late TextEditingController _standardIncreaseController;
   late TextEditingController _restPeriodController;
-  late TextEditingController _numberOfSetsController; // Neuer Controller
-  String? _selectedProfileId; // Für die Profilauswahl
+  late TextEditingController _numberOfSetsController;
+  String? _selectedProfileId;
   bool _isLoading = true;
+  // Eigenen Provider erstellen, um Zustandsprobleme zu vermeiden
+  late ProgressionManagerProvider _progressionProvider;
 
   @override
   void initState() {
     super.initState();
 
-    // Controller mit Werten aus initialExercise initialisieren, falls vorhanden
+    // Controller initialisieren
     _nameController = TextEditingController(
       text: widget.initialExercise?.name ?? '',
     );
-
     _primaryMuscleController = TextEditingController(
       text: widget.initialExercise?.primaryMuscleGroup ?? '',
     );
-
     _secondaryMuscleController = TextEditingController(
       text: widget.initialExercise?.secondaryMuscleGroup ?? '',
     );
-
     _standardIncreaseController = TextEditingController(
       text: widget.initialExercise?.standardIncrease.toString() ?? '2.5',
     );
-
     _restPeriodController = TextEditingController(
       text: widget.initialExercise?.restPeriodSeconds.toString() ?? '90',
     );
-
-    // Neuer Controller für die Anzahl der Sätze
     _numberOfSetsController = TextEditingController(
       text: widget.initialExercise?.numberOfSets.toString() ?? '3',
     );
 
-    // Profil-ID initialisieren
-    _selectedProfileId = widget.initialExercise?.progressionProfileId;
+    // WICHTIG: Profil-ID temporär speichern
+    final tempProfileId = widget.initialExercise?.progressionProfileId;
 
-    // Profile laden, aber verzögert, um Widget-Aufbau abzuwarten
+    // Eigenen Provider erstellen
+    _progressionProvider = ProgressionManagerProvider();
+
+    // Profile später laden
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadProfiles();
+      _loadProfilesAndVerifySelection(tempProfileId);
     });
   }
 
-  // Methode zum Laden der Profile
-  Future<void> _loadProfiles() async {
+  // Methode zum Laden der Profile und Überprüfen der Auswahl
+  Future<void> _loadProfilesAndVerifySelection(String? tempProfileId) async {
     try {
-      final provider =
-          Provider.of<ProgressionManagerProvider>(context, listen: false);
+      setState(() {
+        _isLoading = true;
+      });
 
-      // Die refreshProfiles Methode verwenden statt direkt auf profileProvider zuzugreifen
-      await provider.refreshProfiles();
+      // Warten auf das Laden der Profile vom Provider
+      await _progressionProvider.refreshProfiles();
 
-      // UI aktualisieren, nachdem Profile geladen wurden
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      // Nach dem Laden der Profile überprüfen, ob das Profil existiert
+      if (tempProfileId != null) {
+        final profileExists = _progressionProvider.progressionsProfile
+            .any((profile) => profile.id == tempProfileId);
+
+        // Nur wenn das Profil existiert, es setzen
+        _selectedProfileId = profileExists ? tempProfileId : null;
+
+        // Debug-Ausgabe
+        print('Profil überprüft: ID=$tempProfileId, existiert=$profileExists');
+        print(
+            'Verfügbare Profile: ${_progressionProvider.progressionsProfile.map((p) => "${p.id}: ${p.name}").join(', ')}');
       }
     } catch (e) {
       print('Fehler beim Laden der Profile: $e');
+    } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -101,15 +109,14 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     _secondaryMuscleController.dispose();
     _standardIncreaseController.dispose();
     _restPeriodController.dispose();
-    _numberOfSetsController.dispose(); // Neuen Controller freigeben
+    _numberOfSetsController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // ProgressionManagerProvider für die verfügbaren Profile
-    final progressionProvider =
-        Provider.of<ProgressionManagerProvider>(context);
+    // Verwende den lokalen Provider statt des geerbten
+    final progressionProfiles = _progressionProvider.progressionsProfile;
 
     // Zeige Ladeindikator während Profile geladen werden
     if (_isLoading) {
@@ -124,9 +131,6 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         ),
       );
     }
-
-    // Wenn Profile geladen sind, zeige das Formular an
-    final progressionProfiles = progressionProvider.progressionsProfile;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -193,7 +197,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
               ),
               const SizedBox(height: 12),
 
-              // NEUE EINGABE: Anzahl der Sätze
+              // Anzahl der Sätze
               TextFormField(
                 controller: _numberOfSetsController,
                 decoration: const InputDecoration(
@@ -258,7 +262,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
               ),
               const SizedBox(height: 16),
 
-              // NEUER ABSCHNITT: Progressionsprofil-Auswahl
+              // Progressionsprofil-Auswahl
               const Text(
                 'Progressionsprofil (optional)',
                 style: TextStyle(
@@ -273,7 +277,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
               ),
               const SizedBox(height: 8),
 
-              // Dropdown für die Profil-Auswahl mit Anzahl der Profile anzeigen
+              // Dropdown für die Profil-Auswahl
               DropdownButtonFormField<String?>(
                 value: _selectedProfileId,
                 decoration: InputDecoration(
@@ -303,59 +307,55 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                 },
               ),
 
-              // Debug-Info: Anzeige der verfügbaren Profile
+              // Debug-Info
               const SizedBox(height: 4),
               Text(
                 'Verfügbare Profile: ${progressionProfiles.map((p) => p.name).join(", ")}',
                 style: const TextStyle(fontSize: 10, color: Colors.grey),
               ),
 
-              // Zeige Details zum ausgewählten Profil an
-              if (_selectedProfileId != null &&
-                  progressionProfiles
-                      .any((p) => p.id == _selectedProfileId)) ...[
+              // Profildetails
+              if (_selectedProfileId != null) ...[
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.purple[50],
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.purple[200]!),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              size: 16, color: Colors.purple[700]),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              progressionProfiles
-                                  .firstWhere((p) => p.id == _selectedProfileId)
-                                  .name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.purple[700],
-                              ),
-                            ),
+                ...progressionProfiles
+                    .where((p) => p.id == _selectedProfileId)
+                    .map((selectedProfile) => Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.purple[50],
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.purple[200]!),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        progressionProfiles
-                            .firstWhere((p) => p.id == _selectedProfileId)
-                            .description,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.purple[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.info_outline,
+                                      size: 16, color: Colors.purple[700]),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      selectedProfile.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.purple[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                selectedProfile.description,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.purple[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
               ],
 
               const SizedBox(height: 24),
@@ -387,9 +387,6 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
       final exerciseId = widget.initialExercise?.id ??
           'exercise_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Explizit null setzen wenn "Kein Profil" ausgewählt wurde
-      final String? selectedProfileId = _selectedProfileId;
-
       final exercise = ExerciseModel(
         id: exerciseId,
         name: _nameController.text.trim(),
@@ -398,9 +395,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         standardIncrease:
             double.tryParse(_standardIncreaseController.text) ?? 2.5,
         restPeriodSeconds: int.tryParse(_restPeriodController.text) ?? 90,
-        numberOfSets: int.tryParse(_numberOfSetsController.text) ??
-            3, // Setze die Anzahl der Sätze
-        progressionProfileId: selectedProfileId, // Kann explizit null sein
+        numberOfSets: int.tryParse(_numberOfSetsController.text) ?? 3,
+        progressionProfileId: _selectedProfileId,
       );
 
       widget.onSave(exercise);

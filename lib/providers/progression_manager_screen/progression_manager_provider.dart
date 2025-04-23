@@ -288,7 +288,8 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   void empfehlungUebernehmen() => _trainingProvider.empfehlungUebernehmen();
 
-  void satzAbschliessen() => _trainingProvider.satzAbschliessen();
+  void satzAbschliessen() =>
+      _trainingProvider.satzAbschliessen(aktuellesProfil: aktuellesProfil);
 
   void trainingZuruecksetzen({bool resetRecommendations = false}) =>
       _trainingProvider.trainingZuruecksetzen(

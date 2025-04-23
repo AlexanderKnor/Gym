@@ -145,7 +145,9 @@ class TrainingTrackerWidget extends StatelessWidget {
         Row(
           children: [
             ElevatedButton(
-              onPressed: provider.empfehlungUebernehmen,
+              onPressed: provider.sollEmpfehlungAnzeigen(provider.aktiverSatz)
+                  ? provider.empfehlungUebernehmen
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.purple,
                 foregroundColor: Colors.white,

@@ -169,7 +169,7 @@ class ProgressionTrainingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void satzAbschliessen() {
+  void satzAbschliessen({ProgressionProfileModel? aktuellesProfil}) {
     final aktiverSatzDaten = _saetze.firstWhere(
       (satz) => satz.id == _aktiverSatz,
       orElse: () => _saetze.first,
@@ -211,7 +211,7 @@ class ProgressionTrainingProvider with ChangeNotifier {
       // Für neuen aktiven Satz nach kurzem Delay die Empfehlung berechnen
       // Das microtask ist wichtig, damit die Berechnung erst nach dem Rebuild erfolgt
       Future.microtask(() {
-        berechneEmpfehlungFuerAktivenSatz();
+        berechneEmpfehlungFuerAktivenSatz(aktuellesProfil: aktuellesProfil);
       });
     } else {
       _saetze = updatedSaetze;

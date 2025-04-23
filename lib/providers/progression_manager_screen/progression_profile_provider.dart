@@ -685,7 +685,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     openProfileEditor(copy, uiProvider);
   }
 
-  // Methode zum Löschen eines Profils - ÜBERARBEITET
+  // Methode zum Löschen eines Profils - VERBESSERT
   Future<void> deleteProfile(String profileId) async {
     try {
       // Standard-Profile können nicht gelöscht werden
@@ -700,9 +700,15 @@ class ProgressionProfileProvider with ChangeNotifier {
           _progressionsProfile.indexWhere((p) => p.id == profileId);
       if (profilIndex == -1) return;
 
-      // NEUER CODE: Zuerst alle Übungen aktualisieren, die dieses Profil verwenden
+      // VERBESSERT: Zuerst alle Übungen aktualisieren, die dieses Profil verwenden
       print('Aktualisiere Übungen, die Profil $profileId verwenden...');
-      await _trainingPlanService.updateExercisesAfterProfileDeletion(profileId);
+      final success = await _trainingPlanService
+          .updateExercisesAfterProfileDeletion(profileId);
+
+      if (!success) {
+        print('Fehler beim Aktualisieren der Übungen. Vorgang abgebrochen.');
+        return;
+      }
 
       // Profil aus der Liste entfernen
       _progressionsProfile.removeAt(profilIndex);
@@ -714,7 +720,7 @@ class ProgressionProfileProvider with ChangeNotifier {
         _profilWurdeGewechselt = true;
       }
 
-      // Änderungen speichern
+      // Änderungen speichern - SICHERSTELLEN DASS DIES ABGEWARTET WIRD
       await saveProfiles();
 
       notifyListeners();

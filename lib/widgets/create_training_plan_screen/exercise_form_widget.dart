@@ -387,6 +387,9 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
       final exerciseId = widget.initialExercise?.id ??
           'exercise_${DateTime.now().millisecondsSinceEpoch}';
 
+      // Explizit null setzen wenn "Kein Profil" ausgewählt wurde
+      final String? selectedProfileId = _selectedProfileId;
+
       final exercise = ExerciseModel(
         id: exerciseId,
         name: _nameController.text.trim(),
@@ -397,8 +400,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         restPeriodSeconds: int.tryParse(_restPeriodController.text) ?? 90,
         numberOfSets: int.tryParse(_numberOfSetsController.text) ??
             3, // Setze die Anzahl der Sätze
-        progressionProfileId:
-            _selectedProfileId, // Das ausgewählte Profil speichern
+        progressionProfileId: selectedProfileId, // Kann explizit null sein
       );
 
       widget.onSave(exercise);

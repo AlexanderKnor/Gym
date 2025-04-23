@@ -198,7 +198,7 @@ class TrainingPlanService {
     }
   }
 
-  // NEUE METHODE: Aktualisiert alle Übungen nach Löschen eines Progressionsprofils
+  // VERBESSERTE METHODE: Aktualisiert alle Übungen nach Löschen eines Progressionsprofils
   Future<bool> updateExercisesAfterProfileDeletion(String profileId) async {
     try {
       final userId = _getUserId();
@@ -211,26 +211,37 @@ class TrainingPlanService {
 
       // Alle Trainingspläne laden
       final plans = await loadTrainingPlans();
+      print('${plans.length} Trainingspläne gefunden zum Durchsuchen');
+
       bool anyUpdated = false;
+      int totalUpdatedExercises = 0;
 
       // Für jeden Plan...
       for (var plan in plans) {
+        print('Überprüfe Plan: ${plan.name} (${plan.id})');
         bool planUpdated = false;
         final updatedDays = <TrainingDayModel>[];
 
         // Jede Tagesübung durchgehen...
         for (var day in plan.days) {
+          print(
+              'Überprüfe Tag: ${day.name} mit ${day.exercises.length} Übungen');
           final updatedExercises = <ExerciseModel>[];
 
           for (var exercise in day.exercises) {
+            // WICHTIG: Ausführlichere Protokollierung
+            print(
+                'Übung ${exercise.name} (${exercise.id}) - ProfileId: ${exercise.progressionProfileId}');
+
             // Prüfen, ob die Übung das gelöschte Profil verwendet
             if (exercise.progressionProfileId == profileId) {
               // Kopie der Übung mit Profil-ID auf null setzen
               updatedExercises
                   .add(exercise.copyWith(progressionProfileId: null));
               planUpdated = true;
+              totalUpdatedExercises++;
               print(
-                  'Aktualisiere Übung ${exercise.name} (${exercise.id}): Profil entfernt');
+                  '⚠️ Aktualisiere Übung ${exercise.name} (${exercise.id}): Profil entfernt');
             } else {
               // Übung unverändert übernehmen
               updatedExercises.add(exercise);
@@ -244,23 +255,31 @@ class TrainingPlanService {
         // Wenn Übungen im Plan aktualisiert wurden, Plan speichern
         if (planUpdated) {
           final updatedPlan = plan.copyWith(days: updatedDays);
-          final planJson = _encodePlanToJson(updatedPlan);
-          await _getTrainingPlansCollection().doc(plan.id).set(planJson);
-          anyUpdated = true;
-          print('Plan ${plan.name} (${plan.id}) aktualisiert');
+
+          try {
+            // WICHTIG: Neuer Code - Pläne immer einzeln speichern
+            final planJson = _encodePlanToJson(updatedPlan);
+            await _getTrainingPlansCollection().doc(plan.id).set(planJson);
+
+            anyUpdated = true;
+            print('✅ Plan ${plan.name} (${plan.id}) aktualisiert in Firestore');
+          } catch (e) {
+            print('❌ Fehler beim Speichern des Plans: $e');
+            return false; // Bei Fehler sofort abbrechen
+          }
         }
       }
 
       if (anyUpdated) {
         print(
-            'Alle Übungen erfolgreich aktualisiert nach Löschung des Profils');
+            '✅ Alle Übungen erfolgreich aktualisiert: $totalUpdatedExercises Übungen');
       } else {
-        print('Keine Übungen gefunden, die das gelöschte Profil verwenden');
+        print('ℹ️ Keine Übungen gefunden, die das gelöschte Profil verwenden');
       }
 
       return true;
     } catch (e) {
-      print('Fehler beim Aktualisieren der Übungen nach Profilöschung: $e');
+      print('❌ Fehler beim Aktualisieren der Übungen nach Profilöschung: $e');
       return false;
     }
   }

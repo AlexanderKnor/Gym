@@ -20,7 +20,7 @@ class ExerciseModel {
     this.progressionProfileId, // Optional, kann null sein
   });
 
-  // Copy-Methode
+  // Copy-Methode - VERBESSERT FÜR NULL-WERTE
   ExerciseModel copyWith({
     String? id,
     String? name,
@@ -29,7 +29,8 @@ class ExerciseModel {
     double? standardIncrease,
     int? restPeriodSeconds,
     int? numberOfSets,
-    String? progressionProfileId,
+    // Wichtig: Object? statt String? damit null explizit gesetzt werden kann
+    Object? progressionProfileId = const Object(),
   }) {
     return ExerciseModel(
       id: id ?? this.id,
@@ -39,7 +40,10 @@ class ExerciseModel {
       standardIncrease: standardIncrease ?? this.standardIncrease,
       restPeriodSeconds: restPeriodSeconds ?? this.restPeriodSeconds,
       numberOfSets: numberOfSets ?? this.numberOfSets,
-      progressionProfileId: progressionProfileId ?? this.progressionProfileId,
+      // Spezielle Behandlung für progressionProfileId, damit null explizit gesetzt werden kann
+      progressionProfileId: progressionProfileId != const Object()
+          ? progressionProfileId as String?
+          : this.progressionProfileId,
     );
   }
 }

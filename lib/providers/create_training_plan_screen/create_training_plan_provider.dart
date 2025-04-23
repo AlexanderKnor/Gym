@@ -51,21 +51,27 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   // Methoden für den ersten Screen
   void setPlanName(String name) {
     _planName = name;
-    notifyListeners();
+    Future.microtask(() {
+      notifyListeners();
+    });
   }
 
   void setFrequency(int freq) {
     if (freq >= 1 && freq <= 7) {
       _frequency = freq;
       _ensureDayNamesInitialized();
-      notifyListeners();
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   void setDayName(int index, String name) {
     if (index >= 0 && index < _dayNames.length) {
       _dayNames[index] = name;
-      notifyListeners();
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
@@ -114,7 +120,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       isActive: false,
     );
 
-    notifyListeners();
+    Future.microtask(() {
+      notifyListeners();
+    });
   }
 
   // NEU: Methode zum Laden eines existierenden Plans zum Bearbeiten
@@ -130,7 +138,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     // Plan-Kopie als Draft-Plan setzen
     _draftPlan = plan.copyWith();
 
-    notifyListeners();
+    Future.microtask(() {
+      notifyListeners();
+    });
   }
 
   // Methode für direkten Einstieg in den Editor (ohne den ersten Screen)
@@ -142,7 +152,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   void setSelectedDayIndex(int index) {
     if (index >= 0 && index < _draftPlan!.days.length) {
       _selectedDayIndex = index;
-      notifyListeners();
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
@@ -160,7 +172,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
       _draftPlan = _draftPlan!.copyWith(days: updatedDays);
 
-      notifyListeners();
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
@@ -179,7 +193,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
         _draftPlan = _draftPlan!.copyWith(days: updatedDays);
 
-        notifyListeners();
+        Future.microtask(() {
+          notifyListeners();
+        });
       }
     }
   }
@@ -206,7 +222,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
         _draftPlan = _draftPlan!.copyWith(days: updatedDays);
 
-        notifyListeners();
+        Future.microtask(() {
+          notifyListeners();
+        });
       }
     }
   }
@@ -238,7 +256,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       // Optional: Gleich zum neuen Tag wechseln
       _selectedDayIndex = updatedDays.length - 1;
 
-      notifyListeners();
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
@@ -274,7 +294,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
         _frequency = updatedDays.length;
         _dayNames = updatedDays.map((day) => day.name).toList();
 
-        notifyListeners();
+        Future.microtask(() {
+          notifyListeners();
+        });
       }
     }
   }
@@ -318,6 +340,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _editingPlanId = null;
     _deletedExerciseIds.clear(); // Leere die Liste der gelöschten Übungen
     _deletedDayIds.clear(); // Leere die Liste der gelöschten Trainingstage
-    notifyListeners();
+
+    Future.microtask(() {
+      notifyListeners();
+    });
   }
 }

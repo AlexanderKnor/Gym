@@ -101,24 +101,22 @@ class ProgressionTrainingProvider with ChangeNotifier {
 
     final aktiverSatz = _saetze[aktiverSatzIndex];
 
-    // Nur berechnen, wenn noch nicht berechnet wurde
-    if (!aktiverSatz.empfehlungBerechnet) {
-      final empfehlung = ProgressionCalculatorService.berechneProgression(
-          aktiverSatz, aktuellesProfil, _saetze);
+    // GEÄNDERT: Immer neu berechnen, ignorieren ob schon berechnet wurde
+    final empfehlung = ProgressionCalculatorService.berechneProgression(
+        aktiverSatz, aktuellesProfil, _saetze);
 
-      final updatedSaetze = List<TrainingSetModel>.from(_saetze);
-      updatedSaetze[aktiverSatzIndex] = aktiverSatz.copyWith(
-        empfKg: empfehlung['kg'],
-        empfWiederholungen: empfehlung['wiederholungen'],
-        empfRir: empfehlung['rir'],
-        empfehlungBerechnet: true,
-      );
+    final updatedSaetze = List<TrainingSetModel>.from(_saetze);
+    updatedSaetze[aktiverSatzIndex] = aktiverSatz.copyWith(
+      empfKg: empfehlung['kg'],
+      empfWiederholungen: empfehlung['wiederholungen'],
+      empfRir: empfehlung['rir'],
+      empfehlungBerechnet: true,
+    );
 
-      _saetze = updatedSaetze;
+    _saetze = updatedSaetze;
 
-      if (notify) {
-        notifyListeners();
-      }
+    if (notify) {
+      notifyListeners();
     }
   }
 
@@ -223,17 +221,28 @@ class ProgressionTrainingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void trainingZuruecksetzen({ProgressionProfileModel? aktuellesProfil}) {
-    // Sätze zurücksetzen und Empfehlungen löschen
-    _saetze = _saetze
-        .map((satz) => satz.copyWith(
-              abgeschlossen: false,
-              empfehlungBerechnet: false,
-              empfKg: null,
-              empfWiederholungen: null,
-              empfRir: null,
-            ))
-        .toList();
+  // GEÄNDERT: Neue resetRecommendations Parameter ergänzt
+  void trainingZuruecksetzen(
+      {ProgressionProfileModel? aktuellesProfil,
+      bool resetRecommendations = false}) {
+    // Sätze zurücksetzen und ggf. Empfehlungen löschen
+    _saetze = _saetze.map((satz) {
+      var updatedSatz = satz.copyWith(
+        abgeschlossen: false,
+      );
+
+      // Empfehlungen zurücksetzen falls erforderlich oder Profilwechsel
+      if (resetRecommendations) {
+        updatedSatz = updatedSatz.copyWith(
+          empfehlungBerechnet: false,
+          empfKg: null,
+          empfWiederholungen: null,
+          empfRir: null,
+        );
+      }
+
+      return updatedSatz;
+    }).toList();
 
     _aktiverSatz = 1;
     _trainingAbgeschlossen = false;

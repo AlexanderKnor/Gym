@@ -122,11 +122,21 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   // Setter für das Demo-Profil
   void setDemoProfileId(String profileId) {
-    _currentDemoProfileId = profileId;
+    // Wenn wir zu einem anderen Profil wechseln, setzen wir das Training zurück
+    if (_currentDemoProfileId != profileId) {
+      _currentDemoProfileId = profileId;
 
-    // Berechnung neu anstossen
-    _trainingProvider.berechneEmpfehlungFuerAktivenSatz(
-        aktuellesProfil: profileProvider.getProfileById(_currentDemoProfileId));
+      // Training vollständig zurücksetzen, einschließlich aller Empfehlungen
+      _trainingProvider.trainingZuruecksetzen(
+          aktuellesProfil:
+              profileProvider.getProfileById(_currentDemoProfileId),
+          resetRecommendations: true);
+    } else {
+      // Nur Berechnung neu anstoßen
+      _trainingProvider.berechneEmpfehlungFuerAktivenSatz(
+          aktuellesProfil:
+              profileProvider.getProfileById(_currentDemoProfileId));
+    }
 
     notifyListeners();
   }
@@ -239,27 +249,24 @@ class ProgressionManagerProvider with ChangeNotifier {
 
     final aktiverSatz = _trainingProvider.saetze[aktiverSatzIndex];
 
-    // Nur berechnen, wenn noch nicht berechnet wurde oder wenn wir im Training-Modus sind
-    if (!aktiverSatz.empfehlungBerechnet) {
-      final empfehlung = berechneProgression(
-          aktiverSatz, aktuellesProfil, _trainingProvider.saetze,
-          customIncrement: customIncrement);
+    // Neue Berechnung erzwingen, um sicherzustellen, dass die korrekten Regeln angewendet werden
+    final empfehlung = berechneProgression(
+        aktiverSatz, aktuellesProfil, _trainingProvider.saetze,
+        customIncrement: customIncrement);
 
-      final updatedSaetze =
-          List<TrainingSetModel>.from(_trainingProvider.saetze);
-      updatedSaetze[aktiverSatzIndex] = aktiverSatz.copyWith(
-        empfKg: empfehlung['kg'],
-        empfWiederholungen: empfehlung['wiederholungen'],
-        empfRir: empfehlung['rir'],
-        empfehlungBerechnet: true,
-      );
+    final updatedSaetze = List<TrainingSetModel>.from(_trainingProvider.saetze);
+    updatedSaetze[aktiverSatzIndex] = aktiverSatz.copyWith(
+      empfKg: empfehlung['kg'],
+      empfWiederholungen: empfehlung['wiederholungen'],
+      empfRir: empfehlung['rir'],
+      empfehlungBerechnet: true,
+    );
 
-      // Statt direkter Zuweisung die updateSaetze Methode verwenden
-      _trainingProvider.updateSaetze(updatedSaetze);
+    // Statt direkter Zuweisung die updateSaetze Methode verwenden
+    _trainingProvider.updateSaetze(updatedSaetze);
 
-      if (notify) {
-        notifyListeners();
-      }
+    if (notify) {
+      notifyListeners();
     }
   }
 
@@ -283,8 +290,10 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   void satzAbschliessen() => _trainingProvider.satzAbschliessen();
 
-  void trainingZuruecksetzen() =>
-      _trainingProvider.trainingZuruecksetzen(aktuellesProfil: aktuellesProfil);
+  void trainingZuruecksetzen({bool resetRecommendations = false}) =>
+      _trainingProvider.trainingZuruecksetzen(
+          aktuellesProfil: aktuellesProfil,
+          resetRecommendations: resetRecommendations);
 
   void uebungAbschliessen({bool neueUebung = false}) =>
       _trainingProvider.uebungAbschliessen(

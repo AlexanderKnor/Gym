@@ -33,19 +33,39 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
       initialIndex: widget.initialTab,
     );
 
+    // Auf Tab-Wechsel reagieren
+    _tabController.addListener(_handleTabChange);
+
     // Bei Demo-Tab das aktuelle Profil setzen
     if (widget.initialTab == 1) {
       // Nach dem ersten Build das Demo-Profil initialisieren
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final provider =
-            Provider.of<ProgressionManagerProvider>(context, listen: false);
-        provider.setDemoProfileId(widget.profile.id);
+        _initializeDemoProfile();
       });
     }
   }
 
+  void _handleTabChange() {
+    // Wenn der Tab-Wechsel abgeschlossen ist
+    if (!_tabController.indexIsChanging) {
+      // Wenn zu Demo-Tab gewechselt wird
+      if (_tabController.index == 1) {
+        _initializeDemoProfile();
+      }
+    }
+  }
+
+  void _initializeDemoProfile() {
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+    // Profil setzen - dadurch wird auch das Training zurückgesetzt
+    provider.setDemoProfileId(widget.profile.id);
+  }
+
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -228,12 +248,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
   Widget _buildDemoTab(
       BuildContext context, ProgressionManagerProvider provider) {
-    // Im Demo-Tab muss das ausgewählte Profil für die Berechnungen verwendet werden
-    if (_tabController.index == 1) {
-      // Stellen Sie sicher, dass das aktuelle Demo-Profil auf das angezeigte Profil gesetzt ist
-      provider.setDemoProfileId(widget.profile.id);
-    }
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -328,7 +342,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: () => provider.trainingZuruecksetzen(),
+              onPressed: () =>
+                  provider.trainingZuruecksetzen(resetRecommendations: true),
               icon: const Icon(Icons.refresh),
               label: const Text('Demo zurücksetzen'),
               style: ElevatedButton.styleFrom(

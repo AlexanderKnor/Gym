@@ -181,21 +181,42 @@ class ProgressionTrainingProvider with ChangeNotifier {
       return;
     }
 
-    _saetze = _saetze.map((satz) {
-      if (satz.id == _aktiverSatz) {
-        return satz.copyWith(abgeschlossen: true);
-      }
-      return satz;
-    }).toList();
+    // Aktuellen Satz als abgeschlossen markieren
+    final updatedSaetze = List<TrainingSetModel>.from(_saetze);
+    final aktiverSatzIndex =
+        updatedSaetze.indexWhere((satz) => satz.id == _aktiverSatz);
+    if (aktiverSatzIndex != -1) {
+      updatedSaetze[aktiverSatzIndex] =
+          updatedSaetze[aktiverSatzIndex].copyWith(abgeschlossen: true);
+    }
 
     if (_aktiverSatz < 4) {
+      // Zum nächsten Satz wechseln
       _aktiverSatz++;
 
+      // Wichtig: Reset des empfehlungBerechnet-Flags für den neuen aktiven Satz
+      // damit die Empfehlung neu berechnet wird
+      final neuerAktiverSatzIndex =
+          updatedSaetze.indexWhere((satz) => satz.id == _aktiverSatz);
+      if (neuerAktiverSatzIndex != -1) {
+        updatedSaetze[neuerAktiverSatzIndex] =
+            updatedSaetze[neuerAktiverSatzIndex].copyWith(
+          empfehlungBerechnet: false,
+          empfKg: null,
+          empfWiederholungen: null,
+          empfRir: null,
+        );
+      }
+
+      _saetze = updatedSaetze;
+
       // Für neuen aktiven Satz nach kurzem Delay die Empfehlung berechnen
+      // Das microtask ist wichtig, damit die Berechnung erst nach dem Rebuild erfolgt
       Future.microtask(() {
         berechneEmpfehlungFuerAktivenSatz();
       });
     } else {
+      _saetze = updatedSaetze;
       _trainingAbgeschlossen = true;
     }
 

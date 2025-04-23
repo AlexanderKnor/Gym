@@ -10,25 +10,22 @@ class BottomNavigationBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    // FriendshipProvider hinzufügen, um auf offene Anfragen zugreifen zu können
-    final friendshipProvider = Provider.of<FriendshipProvider>(context);
+
+    // FriendshipProvider mit listen: false abrufen, um unnötige Rebuilds zu vermeiden
+    final friendshipProvider =
+        Provider.of<FriendshipProvider>(context, listen: false);
 
     // Wenn der Provider noch nicht initialisiert ist, initialisieren
     if (!friendshipProvider.isInitialized) {
-      // Wenn wir hier sind und der Provider nicht initialisiert ist,
-      // stellen wir sicher, dass die Initialisierung läuft
+      // Initialisierung im nächsten Frame ausführen, um Build-Konflikte zu vermeiden
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        print('BottomNavigationBarWidget: Initialisiere FriendshipProvider');
-        friendshipProvider.init();
+        if (context.mounted) {
+          // Sicherheitscheck, ob der Widget-Baum noch existiert
+          print('BottomNavigationBarWidget: Initialisiere FriendshipProvider');
+          friendshipProvider.init();
+        }
       });
     }
-
-    // Prüfen, ob wir Anfragen haben
-    final hasRequests = friendshipProvider.isInitialized &&
-        friendshipProvider.hasReceivedRequests;
-
-    // Anzahl der Anfragen für das Badge
-    final requestCount = friendshipProvider.receivedRequests.length;
 
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
@@ -63,47 +60,62 @@ class BottomNavigationBarWidget extends StatelessWidget {
             onPressed: () => navigationProvider.setCurrentIndex(2),
           ),
           // Profil mit Badge für Freundschaftsanfragen
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.person),
-                color: navigationProvider.currentIndex == 3
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey,
-                onPressed: () {
-                  // Bei Klick zum Profil auch sicherstellen, dass Daten aktuell sind
-                  navigationProvider.setCurrentIndex(3);
-                  if (friendshipProvider.isInitialized) {
+          // Verwende Consumer nur für das Badge, um Rebuilds zu minimieren
+          Consumer<FriendshipProvider>(
+            builder: (context, provider, child) {
+              // Prüfen, ob wir Anfragen haben
+              final hasRequests =
+                  provider.isInitialized && provider.hasReceivedRequests;
+              final requestCount = provider.receivedRequests.length;
+
+              return Stack(
+                children: [
+                  child!, // Das Icon-Widget aus dem child-Parameter
+                  if (hasRequests)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$requestCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+            // Das IconButton-Widget als child übergeben, damit nur das Badge neu gerendert wird
+            child: IconButton(
+              icon: const Icon(Icons.person),
+              color: navigationProvider.currentIndex == 3
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey,
+              onPressed: () {
+                // Erst Navigation ausführen
+                navigationProvider.setCurrentIndex(3);
+
+                // Dann Daten aktualisieren im nächsten Frame
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (context.mounted && friendshipProvider.isInitialized) {
                     friendshipProvider.refreshFriendData();
                   }
-                },
-              ),
-              // Badge anzeigen, wenn Anfragen vorhanden sind
-              if (hasRequests)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '$requestCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
+                });
+              },
+            ),
           ),
         ],
       ),

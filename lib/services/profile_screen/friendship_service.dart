@@ -154,7 +154,7 @@ class FriendshipService {
     }
   }
 
-  // Stream für gesendete Anfragen
+  // Stream für gesendete Anfragen - GEÄNDERT
   Stream<List<FriendRequestModel>> getSentRequestsStream() {
     final userId = _getUserId();
     if (userId == null) {
@@ -167,6 +167,8 @@ class FriendshipService {
         .collectionGroup('friend_requests')
         .where('senderId', isEqualTo: userId)
         .where('status', isEqualTo: 'pending')
+        // Sortierung nach createdAt statt name
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
       print(
@@ -178,7 +180,7 @@ class FriendshipService {
     });
   }
 
-  // Gesendete Anfragen abrufen (einmalige Abfrage)
+  // Gesendete Anfragen abrufen (einmalige Abfrage) - GEÄNDERT
   Future<List<FriendRequestModel>> getSentRequests() async {
     try {
       final userId = _getUserId();
@@ -192,6 +194,8 @@ class FriendshipService {
           .collectionGroup('friend_requests')
           .where('senderId', isEqualTo: userId)
           .where('status', isEqualTo: 'pending')
+          // Sortierung nach createdAt statt name
+          .orderBy('createdAt', descending: true)
           .get();
 
       return snapshot.docs

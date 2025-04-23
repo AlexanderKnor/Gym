@@ -53,21 +53,32 @@ class FriendshipProvider with ChangeNotifier {
     }
 
     _isInitializing = true;
-    _isInitialized = false;
-    _setLoading(true);
+    _isLoading = true; // Verwende _isLoading direkt statt _setLoading
 
     try {
       // Alte Abonnements bereinigen, falls vorhanden
       _cancelSubscriptions();
 
-      // Streams abonnieren
+      // Streams abonnieren (keine direkten notifyListeners-Aufrufe)
       _subscribeToStreams();
 
       // Daten initial laden
       print('FriendshipProvider: Lade initiale Daten');
 
-      await Future.wait(
-          [_loadReceivedRequests(), _loadSentRequests(), _loadFriends()]);
+      // Daten separat laden, um Typprobleme zu vermeiden
+      final receivedRequests = await _friendshipService.getReceivedRequests();
+      print(
+          'FriendshipProvider: ${receivedRequests.length} empfangene Anfragen geladen');
+      _receivedRequests = receivedRequests;
+
+      final sentRequests = await _friendshipService.getSentRequests();
+      print(
+          'FriendshipProvider: ${sentRequests.length} gesendete Anfragen geladen');
+      _sentRequests = sentRequests;
+
+      final friends = await _friendshipService.getFriends();
+      print('FriendshipProvider: ${friends.length} Freunde geladen');
+      _friends = friends;
 
       print('FriendshipProvider: Initialisierung abgeschlossen');
       _isInitialized = true;
@@ -76,36 +87,13 @@ class FriendshipProvider with ChangeNotifier {
       _errorMessage = 'Fehler beim Laden der Freundschaftsdaten: $e';
     } finally {
       _isInitializing = false;
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung bis nach dem aktuellen Build-Zyklus
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
-  }
-
-  // Spezifische Lade-Methoden für bessere Nachverfolgung
-  Future<void> _loadReceivedRequests() async {
-    print('FriendshipProvider: Lade empfangene Anfragen...');
-    final receivedRequestsResult =
-        await _friendshipService.getReceivedRequests();
-    print(
-        'FriendshipProvider: ${receivedRequestsResult.length} empfangene Anfragen geladen');
-    _receivedRequests = receivedRequestsResult;
-    notifyListeners();
-  }
-
-  Future<void> _loadSentRequests() async {
-    print('FriendshipProvider: Lade gesendete Anfragen...');
-    final sentRequestsResult = await _friendshipService.getSentRequests();
-    print(
-        'FriendshipProvider: ${sentRequestsResult.length} gesendete Anfragen geladen');
-    _sentRequests = sentRequestsResult;
-    notifyListeners();
-  }
-
-  Future<void> _loadFriends() async {
-    print('FriendshipProvider: Lade Freundesliste...');
-    final friendsResult = await _friendshipService.getFriends();
-    print('FriendshipProvider: ${friendsResult.length} Freunde geladen');
-    _friends = friendsResult;
-    notifyListeners();
   }
 
   // Stream-Abonnements
@@ -118,7 +106,11 @@ class FriendshipProvider with ChangeNotifier {
         _friendshipService.getFriendsStream().listen((friends) {
       _friends = friends;
       print('PROVIDER: Freundesliste aktualisiert: ${friends.length} Freunde');
-      notifyListeners();
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }, onError: (e) {
       print('Fehler im Freunde-Stream: $e');
     });
@@ -129,7 +121,11 @@ class FriendshipProvider with ChangeNotifier {
         _friendshipService.getReceivedRequestsStream().listen((requests) {
       print('PROVIDER: Empfangene Anfragen aktualisiert: ${requests.length}');
       _receivedRequests = requests;
-      notifyListeners();
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }, onError: (e) {
       print('Fehler im Empfangene-Anfragen-Stream: $e');
     });
@@ -140,7 +136,11 @@ class FriendshipProvider with ChangeNotifier {
         _friendshipService.getSentRequestsStream().listen((requests) {
       _sentRequests = requests;
       print('PROVIDER: Gesendete Anfragen aktualisiert: ${requests.length}');
-      notifyListeners();
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }, onError: (e) {
       print('Fehler im Gesendete-Anfragen-Stream: $e');
     });
@@ -174,7 +174,11 @@ class FriendshipProvider with ChangeNotifier {
     _errorMessage = null;
     _isInitialized = false;
     _isInitializing = false;
-    notifyListeners();
+
+    // Verzögere die Benachrichtigung
+    Future.microtask(() {
+      notifyListeners();
+    });
   }
 
   // Laden der Freunde und Anfragen
@@ -183,15 +187,21 @@ class FriendshipProvider with ChangeNotifier {
       return init();
     }
 
-    _setLoading(true);
+    _isLoading = true;
     _errorMessage = null;
 
     try {
       print('FriendshipProvider: Lade Freundschaftsdaten neu');
 
-      // Alle Daten parallel neu laden
-      await Future.wait(
-          [_loadReceivedRequests(), _loadSentRequests(), _loadFriends()]);
+      // Daten separat laden statt mit Future.wait
+      final receivedRequests = await _friendshipService.getReceivedRequests();
+      _receivedRequests = receivedRequests;
+
+      final sentRequests = await _friendshipService.getSentRequests();
+      _sentRequests = sentRequests;
+
+      final friends = await _friendshipService.getFriends();
+      _friends = friends;
 
       print('Freundschaftsdaten aktualisiert: ${_friends.length} Freunde, ' +
           '${_receivedRequests.length} empfangene Anfragen, ' +
@@ -200,13 +210,19 @@ class FriendshipProvider with ChangeNotifier {
       _errorMessage = 'Fehler beim Laden der Freundschaftsdaten: $e';
       print(_errorMessage);
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   // Benutzer nach E-Mail suchen
   Future<UserModel?> findUserByEmail(String email) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     _errorMessage = null;
 
     try {
@@ -216,13 +232,19 @@ class FriendshipProvider with ChangeNotifier {
       print(_errorMessage);
       return null;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   // Benutzer nach Benutzername suchen
   Future<List<UserModel>> findUsersByUsername(String username) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     _errorMessage = null;
 
     try {
@@ -232,13 +254,19 @@ class FriendshipProvider with ChangeNotifier {
       print(_errorMessage);
       return [];
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   // Freundschaftsanfrage senden
   Future<bool> sendFriendRequest(UserModel receiver) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     _errorMessage = null;
 
     try {
@@ -246,7 +274,8 @@ class FriendshipProvider with ChangeNotifier {
 
       if (result) {
         // Bei Erfolg die gesendeten Anfragen aktualisieren
-        await _loadSentRequests();
+        final sentRequestsResult = await _friendshipService.getSentRequests();
+        _sentRequests = sentRequestsResult;
       }
 
       return result;
@@ -255,13 +284,19 @@ class FriendshipProvider with ChangeNotifier {
       print(_errorMessage);
       return false;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   // Anfrage akzeptieren
   Future<bool> acceptFriendRequest(FriendRequestModel request) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     _errorMessage = null;
 
     try {
@@ -278,13 +313,19 @@ class FriendshipProvider with ChangeNotifier {
       print(_errorMessage);
       return false;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   // Anfrage ablehnen
   Future<bool> rejectFriendRequest(FriendRequestModel request) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     _errorMessage = null;
 
     try {
@@ -292,7 +333,9 @@ class FriendshipProvider with ChangeNotifier {
 
       if (result) {
         // Bei Erfolg die empfangenen Anfragen aktualisieren
-        await _loadReceivedRequests();
+        final receivedRequestsResult =
+            await _friendshipService.getReceivedRequests();
+        _receivedRequests = receivedRequestsResult;
       }
 
       return result;
@@ -301,13 +344,19 @@ class FriendshipProvider with ChangeNotifier {
       print(_errorMessage);
       return false;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
   // Freund entfernen
   Future<bool> removeFriend(String friendId) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     _errorMessage = null;
 
     try {
@@ -318,7 +367,8 @@ class FriendshipProvider with ChangeNotifier {
         // Bei Erfolg die lokale Freundesliste aktualisieren
         print(
             'FriendshipProvider: Freund erfolgreich entfernt, aktualisiere lokale Liste');
-        await _loadFriends();
+        final friendsResult = await _friendshipService.getFriends();
+        _friends = friendsResult;
       } else {
         print('FriendshipProvider: Fehler beim Entfernen des Freundes');
       }
@@ -329,7 +379,12 @@ class FriendshipProvider with ChangeNotifier {
       print(_errorMessage);
       return false;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+
+      // Verzögere die Benachrichtigung
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
   }
 
@@ -365,11 +420,5 @@ class FriendshipProvider with ChangeNotifier {
       print('Debug-Fehler: $e');
     }
     print('===== ENDE DEBUG =====');
-  }
-
-  // Hilfsmethode: Loading-Zustand aktualisieren
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
   }
 }

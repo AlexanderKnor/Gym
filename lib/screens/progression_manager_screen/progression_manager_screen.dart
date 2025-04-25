@@ -194,16 +194,156 @@ class _ProgressionManagerScreenContentState
 
   // Korrigierte Methode zum Erstellen eines neuen Profils
   void _createNewProfile(BuildContext context) {
-    // Erst zum Screen navigieren
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const NewProfileScreen(),
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+    // Dialog anzeigen, um zwischen leerem Profil und Duplizieren zu wählen
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Neues Profil erstellen'),
+        content: const Text(
+            'Möchtest du ein leeres Profil erstellen oder ein vorhandenes Profil als Vorlage verwenden?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Dialog schließen
+              // Zum Screen für ein leeres Profil navigieren
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const NewProfileScreen(),
+                ),
+              );
+            },
+            child: const Text('Leeres Profil'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Dialog schließen
+              // Dialog zum Auswählen eines Profils anzeigen
+              _showProfileSelectionDialog(context, provider);
+            },
+            child: const Text('Profil duplizieren'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Korrigierte Methode zum Anzeigen des Profil-Auswahl-Dialogs
+  void _showProfileSelectionDialog(
+      BuildContext context, ProgressionManagerProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Profil als Vorlage auswählen'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300, // Begrenzte Höhe für die Liste
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: provider.progressionsProfile.length,
+            itemBuilder: (context, index) {
+              final profile = provider.progressionsProfile[index];
+              return ListTile(
+                title: Text(profile.name),
+                subtitle: Text(
+                  profile.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.of(context).pop(); // Dialog schließen
+
+                  // Zum DuplicateProfileScreen navigieren
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DuplicateProfileScreen(profileId: profile.id),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Dialog schließen
+            },
+            child: const Text('Abbrechen'),
+          ),
+        ],
       ),
     );
   }
 }
 
-// Neuer Hilfsscreen zum Erstellen eines neuen Profils
+// Neuer Screen für das Duplizieren eines Profils
+class DuplicateProfileScreen extends StatefulWidget {
+  final String profileId;
+
+  const DuplicateProfileScreen({
+    Key? key,
+    required this.profileId,
+  }) : super(key: key);
+
+  @override
+  State<DuplicateProfileScreen> createState() => _DuplicateProfileScreenState();
+}
+
+class _DuplicateProfileScreenState extends State<DuplicateProfileScreen> {
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Nach dem ersten Build das Profil duplizieren
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider =
+          Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+      // Profil duplizieren - dies startet automatisch den Editor
+      provider.duplicateProfile(widget.profileId);
+
+      setState(() {
+        _isInitialized = true;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Profil duplizieren'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Profil wird dupliziert...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Erst nachdem die Initialisierung abgeschlossen ist, den Editor anzeigen
+    return const ProfileEditorScreen();
+  }
+}
+
+// Hilfsscreen zum Erstellen eines neuen Profils
 class NewProfileScreen extends StatefulWidget {
   const NewProfileScreen({Key? key}) : super(key: key);
 
@@ -212,6 +352,8 @@ class NewProfileScreen extends StatefulWidget {
 }
 
 class _NewProfileScreenState extends State<NewProfileScreen> {
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -221,16 +363,16 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
       final provider =
           Provider.of<ProgressionManagerProvider>(context, listen: false);
       provider.openProfileEditor(null);
+
+      setState(() {
+        _isInitialized = true;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProgressionManagerProvider>(context);
-    final profil = provider.bearbeitetesProfil;
-
-    // Solange das Profil noch nicht erstellt wurde, zeige einen Ladebildschirm
-    if (profil == null) {
+    if (!_isInitialized) {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Neues Profil'),
@@ -252,7 +394,7 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
       );
     }
 
-    // Sobald das Profil erstellt wurde, zeige den Editor
-    return ProfileEditorScreen();
+    // Erst nachdem die Initialisierung abgeschlossen ist, den Editor anzeigen
+    return const ProfileEditorScreen();
   }
 }

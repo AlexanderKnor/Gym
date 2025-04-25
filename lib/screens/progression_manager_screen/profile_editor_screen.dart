@@ -86,14 +86,14 @@ class ProfileEditorScreen extends StatelessWidget {
             icon: const Icon(Icons.close),
             onPressed: () {
               provider.closeProfileEditor();
-              Navigator.of(context).pop();
+              // Entferne Navigator.pop() hier, damit wir auf der gleichen Seite bleiben
             },
           ),
           actions: [
             TextButton.icon(
-              onPressed: () {
-                provider.saveProfile();
-                Navigator.of(context).pop();
+              onPressed: () async {
+                await provider.saveProfile();
+                // Entferne Navigator.pop() hier, damit wir auf der gleichen Seite bleiben
               },
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(

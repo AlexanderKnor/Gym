@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/progression_manager_screen/progression_manager_provider.dart';
 
 class ProfileCardWidget extends StatelessWidget {
   final dynamic profile;
@@ -90,10 +92,25 @@ class ProfileCardWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: onTap,
-                    icon: const Icon(Icons.edit),
-                    tooltip: 'Bearbeiten',
+                  Row(
+                    children: [
+                      // Löschbutton - nur für benutzerdefinierte Profile anzeigen
+                      if (!isSystemProfile)
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete,
+                            color: Colors.red[700],
+                          ),
+                          tooltip: 'Löschen',
+                          onPressed: () =>
+                              _confirmDeleteProfile(context, profile),
+                        ),
+                      IconButton(
+                        onPressed: onTap,
+                        icon: const Icon(Icons.edit),
+                        tooltip: 'Bearbeiten',
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -212,5 +229,37 @@ class ProfileCardWidget extends StatelessWidget {
         profileId == 'linear-periodization' ||
         profileId == 'rir-based' ||
         profileId == 'set-consistency';
+  }
+
+  // Bestätigungsdialog zum Löschen des Profils
+  void _confirmDeleteProfile(BuildContext context, dynamic profile) {
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Profil löschen'),
+        content:
+            Text('Möchtest du das Profil "${profile.name}" wirklich löschen?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Abbrechen'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await provider.deleteProfile(profile.id);
+              // Nach dem Löschen werden die Profile automatisch aktualisiert
+            },
+            child: const Text('Löschen'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

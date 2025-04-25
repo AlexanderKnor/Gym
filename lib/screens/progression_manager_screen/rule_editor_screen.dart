@@ -68,20 +68,14 @@ class RuleEditorScreen extends StatelessWidget {
             icon: const Icon(Icons.close),
             onPressed: () {
               provider.closeRuleEditor();
-              // Nur zurückgehen, wenn nicht im Dialog-Modus
-              if (!isDialog) {
-                Navigator.of(context).pop();
-              }
+              // Entferne Navigator.pop() hier, damit wir auf der gleichen Seite bleiben
             },
           ),
           actions: [
             TextButton.icon(
-              onPressed: () {
-                provider.saveRule();
-                // Nur zurückgehen, wenn nicht im Dialog-Modus
-                if (!isDialog) {
-                  Navigator.of(context).pop();
-                }
+              onPressed: () async {
+                await provider.saveRule();
+                // Entferne Navigator.pop() hier, damit wir auf der gleichen Seite bleiben
               },
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(

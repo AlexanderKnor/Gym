@@ -34,7 +34,7 @@ class RuleListWidget extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () => provider.openRuleEditor(null),
               icon: const Icon(Icons.add, size: 16),
-              label: const Text('Neu'),
+              label: const Text('Neue Regel'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.purple[700],
                 side: BorderSide(color: Colors.purple[300]!),
@@ -221,8 +221,8 @@ class RuleListWidget extends StatelessWidget {
                         if (index > 0)
                           IconButton(
                             icon: const Icon(Icons.arrow_upward, size: 18),
-                            onPressed: () {
-                              _moveRule(provider, rule, index, index - 1);
+                            onPressed: () async {
+                              await _moveRule(provider, rule, index, index - 1);
                             },
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,
@@ -236,8 +236,8 @@ class RuleListWidget extends StatelessWidget {
                         if (index < totalRules - 1)
                           IconButton(
                             icon: const Icon(Icons.arrow_downward, size: 18),
-                            onPressed: () {
-                              _moveRule(provider, rule, index, index + 1);
+                            onPressed: () async {
+                              await _moveRule(provider, rule, index, index + 1);
                             },
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,
@@ -251,8 +251,9 @@ class RuleListWidget extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.delete, size: 18),
                         color: Colors.red[700],
-                        onPressed: () =>
-                            _confirmDeleteRule(context, provider, rule.id),
+                        onPressed: () async {
+                          await _confirmDeleteRule(context, provider, rule.id);
+                        },
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
@@ -443,40 +444,37 @@ class RuleListWidget extends StatelessWidget {
     }
   }
 
-  // Regel-Reihenfolge ändern
-  void _moveRule(ProgressionManagerProvider provider, dynamic rule,
-      int oldIndex, int newIndex) {
+  // Regel-Reihenfolge ändern - GEÄNDERT: Jetzt async mit await für Firebase
+  Future<void> _moveRule(ProgressionManagerProvider provider, dynamic rule,
+      int oldIndex, int newIndex) async {
     provider.handleDragStart(rule.id);
 
     if (oldIndex < newIndex) {
       // Nach unten verschieben
       final targetRule = provider.aktuellesProfil!.rules[newIndex];
-      provider.handleDrop(targetRule.id);
+      await provider.handleDrop(targetRule.id);
     } else {
       // Nach oben verschieben
       final targetRule = provider.aktuellesProfil!.rules[newIndex];
-      provider.handleDrop(targetRule.id);
+      await provider.handleDrop(targetRule.id);
     }
   }
 
-  // Bestätigungsdialog zum Löschen
-  void _confirmDeleteRule(BuildContext context,
-      ProgressionManagerProvider provider, String ruleId) {
-    showDialog(
+  // Bestätigungsdialog zum Löschen - GEÄNDERT: Jetzt async mit await für Firebase
+  Future<void> _confirmDeleteRule(BuildContext context,
+      ProgressionManagerProvider provider, String ruleId) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Regel löschen'),
         content: const Text('Möchtest du diese Regel wirklich löschen?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Abbrechen'),
           ),
           TextButton(
-            onPressed: () {
-              provider.deleteRule(ruleId);
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Löschen'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
@@ -485,5 +483,10 @@ class RuleListWidget extends StatelessWidget {
         ],
       ),
     );
+
+    if (result == true) {
+      await provider.deleteRule(ruleId);
+      // Keine weiteren Aktionen nötig, da deleteRule bereits notifyListeners aufruft
+    }
   }
 }

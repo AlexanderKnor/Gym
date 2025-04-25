@@ -188,36 +188,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
           const SizedBox(height: 24),
 
-          // Regelliste
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Progressionsregeln',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      provider.openRuleEditor(null);
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Neue Regel'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const RuleListWidget(),
-            ],
-          ),
+          // Regelliste - Hier wurden die redundanten Elemente entfernt
+          const RuleListWidget(),
         ],
       ),
     );

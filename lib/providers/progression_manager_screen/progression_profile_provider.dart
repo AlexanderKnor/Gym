@@ -25,6 +25,9 @@ class ProgressionProfileProvider with ChangeNotifier {
   // Trainingsplan-Service für die Aktualisierung von Übungsreferenzen
   final TrainingPlanService _trainingPlanService = TrainingPlanService();
 
+  // Flag, um zu verfolgen, ob gerade eine Speicheroperation läuft
+  bool _isSaving = false;
+
   // ===== KONSTRUKTOR =====
 
   ProgressionProfileProvider() {
@@ -35,6 +38,7 @@ class ProgressionProfileProvider with ChangeNotifier {
 
   ProgressionProfileModel? get bearbeitetesProfil => _bearbeitetesProfil;
   List<ProgressionProfileModel> get progressionsProfile => _progressionsProfile;
+  bool get isSaving => _isSaving;
 
   // ===== METHODEN =====
 
@@ -72,16 +76,51 @@ class ProgressionProfileProvider with ChangeNotifier {
     }
   }
 
-  // Methode zum Speichern der Profile
+  // Methode zum Speichern der Profile mit verbesserten Fehlermeldungen und Retry-Logik
   Future<bool> saveProfiles() async {
+    if (_isSaving) {
+      print('Eine Speicheroperation läuft bereits, überspringe diesen Aufruf');
+      return false;
+    }
+
+    _isSaving = true;
+
     try {
       print('Starte das Speichern von Profilen in Firestore...');
-      await _profileStorageService.saveProfiles(_progressionsProfile);
-      print('Profile erfolgreich in Firestore gespeichert');
+
+      // Maximale Anzahl von Versuchen
+      const maxRetries = 3;
+      int retryCount = 0;
+      bool success = false;
+
+      while (!success && retryCount < maxRetries) {
+        try {
+          await _profileStorageService.saveProfiles(_progressionsProfile);
+          success = true;
+          print('Profile erfolgreich in Firestore gespeichert');
+        } catch (firestoreError) {
+          retryCount++;
+          print(
+              'Fehler beim Speichern in Firestore (Versuch $retryCount/$maxRetries): $firestoreError');
+
+          if (retryCount < maxRetries) {
+            // Kurze Verzögerung vor dem nächsten Versuch
+            await Future.delayed(Duration(milliseconds: 500 * retryCount));
+          }
+        }
+      }
+
+      if (!success) {
+        print('Alle Versuche zum Speichern der Profile sind fehlgeschlagen');
+        return false;
+      }
+
       return true;
     } catch (e) {
-      print('Fehler beim Speichern der Profile: $e');
+      print('Allgemeiner Fehler beim Speichern der Profile: $e');
       return false;
+    } finally {
+      _isSaving = false;
     }
   }
 
@@ -520,8 +559,8 @@ class ProgressionProfileProvider with ChangeNotifier {
     ];
   }
 
-  void handleConfigChange(
-      String key, dynamic value, ProgressionProfileModel? aktuellesProfil) {
+  void handleConfigChange(String key, dynamic value,
+      ProgressionProfileModel? aktuellesProfil) async {
     if (aktuellesProfil == null) return;
 
     final newValue = double.tryParse(value.toString());
@@ -537,7 +576,10 @@ class ProgressionProfileProvider with ChangeNotifier {
     }).toList();
 
     // Konfigurationsänderungen speichern
-    saveProfiles();
+    await saveProfiles();
+
+    // Refreshe die Profile von Firestore, um sicherzustellen, dass alles aktuell ist
+    await loadSavedProfiles();
 
     notifyListeners();
   }
@@ -588,29 +630,45 @@ class ProgressionProfileProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Die saveProfile-Methode zu einer asynchronen Methode ändern
+  // Die saveProfile-Methode zu einer asynchronen Methode ändern mit verbessertem Fehlerhandling
   Future<void> saveProfile(ProgressionUIProvider uiProvider) async {
     if (_bearbeitetesProfil == null) return;
 
-    final existingIndex =
-        _progressionsProfile.indexWhere((p) => p.id == _bearbeitetesProfil!.id);
+    try {
+      print('Starte Speichern des Profils: ${_bearbeitetesProfil!.id}');
 
-    if (existingIndex != -1) {
-      _progressionsProfile[existingIndex] = _bearbeitetesProfil!;
-    } else {
-      _progressionsProfile.add(_bearbeitetesProfil!);
+      final existingIndex = _progressionsProfile
+          .indexWhere((p) => p.id == _bearbeitetesProfil!.id);
+
+      if (existingIndex != -1) {
+        _progressionsProfile[existingIndex] = _bearbeitetesProfil!;
+        print('Bestehendes Profil aktualisiert');
+      } else {
+        _progressionsProfile.add(_bearbeitetesProfil!);
+        print('Neues Profil hinzugefügt');
+      }
+
+      // Auf das Speichern warten
+      bool saved = await saveProfiles();
+      if (!saved) {
+        print('Fehler beim Speichern des Profils in Firebase');
+        // Hier könnte ein Fehler-Dialog angezeigt werden
+      } else {
+        print('Profil erfolgreich in Firebase gespeichert');
+      }
+
+      // Anschließend die Profile aus Firebase neu laden, um sicherzustellen,
+      // dass die lokale Liste aktuell ist
+      await loadSavedProfiles();
+
+      uiProvider.hideProfileEditor();
+      _bearbeitetesProfil = null;
+    } catch (e) {
+      print('Fehler beim Speichern des Profils: $e');
+      // Hier könnte ein Fehler-Dialog angezeigt werden
+    } finally {
+      notifyListeners();
     }
-
-    // Auf das Speichern warten
-    await saveProfiles();
-
-    // Anschließend die Profile aus Firebase neu laden, um sicherzustellen,
-    // dass die lokale Liste aktuell ist
-    await loadSavedProfiles();
-
-    uiProvider.hideProfileEditor();
-    _bearbeitetesProfil = null;
-    notifyListeners();
   }
 
   void duplicateProfile(String profilId, ProgressionUIProvider uiProvider) {
@@ -632,7 +690,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     openProfileEditor(copy, uiProvider);
   }
 
-  // Methode zum Löschen eines Profils
+  // Methode zum Löschen eines Profils mit verbessertem Fehlerhandling
   Future<void> deleteProfile(String profileId) async {
     try {
       // Standard-Profile können nicht gelöscht werden
@@ -640,12 +698,18 @@ class ProgressionProfileProvider with ChangeNotifier {
           profileId == 'linear-periodization' ||
           profileId == 'rir-based' ||
           profileId == 'set-consistency') {
+        print('Standard-Profile können nicht gelöscht werden');
         return;
       }
 
       final profilIndex =
           _progressionsProfile.indexWhere((p) => p.id == profileId);
-      if (profilIndex == -1) return;
+      if (profilIndex == -1) {
+        print('Profil mit ID $profileId nicht gefunden');
+        return;
+      }
+
+      print('Starte Löschung des Profils: $profileId');
 
       // VERBESSERT: Zuerst alle Übungen aktualisieren, die dieses Profil verwenden
       print('Aktualisiere Übungen, die Profil $profileId verwenden...');
@@ -659,15 +723,24 @@ class ProgressionProfileProvider with ChangeNotifier {
 
       // Profil aus der Liste entfernen
       _progressionsProfile.removeAt(profilIndex);
+      print('Profil aus lokaler Liste entfernt');
 
       // Änderungen speichern - SICHERSTELLEN DASS DIES ABGEWARTET WIRD
-      await saveProfiles();
+      bool saved = await saveProfiles();
+      if (!saved) {
+        print('Fehler beim Speichern der Änderungen in Firebase');
+        // Hier könnte ein Fehler-Dialog angezeigt werden
+      }
 
-      notifyListeners();
+      // Profile neu laden, um die Liste aktuell zu halten
+      await loadSavedProfiles();
 
       print('Profil erfolgreich gelöscht und Übungen aktualisiert');
     } catch (e) {
       print('Fehler beim Löschen des Profils: $e');
+      // Hier könnte ein Fehler-Dialog angezeigt werden
+    } finally {
+      notifyListeners();
     }
   }
 }

@@ -505,18 +505,23 @@ class ProgressionRuleProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void saveRule(
+  // GEÄNDERTE METHODE: saveRule mit async/await und expliziter Firebase-Aktualisierung
+  Future<void> saveRule(
       String profileId,
       List<ProgressionProfileModel> progressionsProfile,
       Future<bool> Function()
           saveProfiles, // Funktion zum Speichern der Profile
       ProgressionTrainingProvider trainingProvider,
       ProgressionProfileModel? aktuellesProfil,
-      ProgressionUIProvider uiProvider) {
+      ProgressionUIProvider uiProvider) async {
     try {
+      print('Starte Speichern der Regel für Profil: $profileId');
       final profilIndex =
           progressionsProfile.indexWhere((p) => p.id == profileId);
-      if (profilIndex == -1) return;
+      if (profilIndex == -1) {
+        print('Profil mit ID $profileId nicht gefunden');
+        return;
+      }
 
       final aktionen = <ProgressionActionModel>[];
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -652,6 +657,8 @@ class ProgressionRuleProvider with ChangeNotifier {
         final updatedProfil =
             progressionsProfile[profilIndex].copyWith(rules: updatedRules);
         progressionsProfile[profilIndex] = updatedProfil;
+
+        print('Bestehende Regel (${updatedRegel.id}) aktualisiert');
       } else {
         // Eine neue Regel erstellen
         ProgressionRuleModel neueRegel;
@@ -684,10 +691,17 @@ class ProgressionRuleProvider with ChangeNotifier {
         final updatedProfil =
             progressionsProfile[profilIndex].copyWith(rules: updatedRules);
         progressionsProfile[profilIndex] = updatedProfil;
+
+        print('Neue Regel (${neueRegel.id}) erstellt');
       }
 
-      // Regel-Änderungen speichern
-      saveProfiles();
+      // Regel-Änderungen explizit in Firestore speichern
+      bool saved = await saveProfiles();
+      if (saved) {
+        print('Regel erfolgreich in Firebase gespeichert');
+      } else {
+        print('Fehler beim Speichern der Regel in Firebase');
+      }
 
       // Für aktiven Satz Empfehlung zurücksetzen
       trainingProvider.berechneEmpfehlungFuerAktivenSatz(
@@ -701,35 +715,49 @@ class ProgressionRuleProvider with ChangeNotifier {
     }
   }
 
-  void deleteRule(
+  // GEÄNDERTE METHODE: deleteRule mit async/await und expliziter Firebase-Aktualisierung
+  Future<void> deleteRule(
       String ruleId,
       String profileId,
       List<ProgressionProfileModel> progressionsProfile,
       Future<bool> Function()
           saveProfiles, // Funktion zum Speichern der Profile
       ProgressionTrainingProvider trainingProvider,
-      ProgressionProfileModel? aktuellesProfil) {
-    final profilIndex =
-        progressionsProfile.indexWhere((p) => p.id == profileId);
-    if (profilIndex == -1) return;
+      ProgressionProfileModel? aktuellesProfil) async {
+    try {
+      print('Starte Löschen der Regel: $ruleId aus Profil: $profileId');
+      final profilIndex =
+          progressionsProfile.indexWhere((p) => p.id == profileId);
+      if (profilIndex == -1) {
+        print('Profil mit ID $profileId nicht gefunden');
+        return;
+      }
 
-    final updatedRules = progressionsProfile[profilIndex]
-        .rules
-        .where((rule) => rule.id != ruleId)
-        .toList();
+      final updatedRules = progressionsProfile[profilIndex]
+          .rules
+          .where((rule) => rule.id != ruleId)
+          .toList();
 
-    final updatedProfil =
-        progressionsProfile[profilIndex].copyWith(rules: updatedRules);
-    progressionsProfile[profilIndex] = updatedProfil;
+      final updatedProfil =
+          progressionsProfile[profilIndex].copyWith(rules: updatedRules);
+      progressionsProfile[profilIndex] = updatedProfil;
 
-    // Regel-Änderungen speichern
-    saveProfiles();
+      // Regel-Änderungen explizit in Firestore speichern
+      bool saved = await saveProfiles();
+      if (saved) {
+        print('Regel $ruleId erfolgreich aus Firebase gelöscht');
+      } else {
+        print('Fehler beim Löschen der Regel $ruleId aus Firebase');
+      }
 
-    // Für aktiven Satz Empfehlung zurücksetzen
-    trainingProvider.berechneEmpfehlungFuerAktivenSatz(
-        aktuellesProfil: aktuellesProfil);
+      // Für aktiven Satz Empfehlung zurücksetzen
+      trainingProvider.berechneEmpfehlungFuerAktivenSatz(
+          aktuellesProfil: aktuellesProfil);
 
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      print('Fehler beim Löschen der Regel: $e');
+    }
   }
 
   // ===== DRAG & DROP METHODEN =====
@@ -751,56 +779,73 @@ class ProgressionRuleProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void handleDrop(
+  // GEÄNDERTE METHODE: handleDrop mit async/await und expliziter Firebase-Aktualisierung
+  Future<void> handleDrop(
       String targetRuleId,
       String profileId,
       List<ProgressionProfileModel> progressionsProfile,
       Future<bool> Function()
           saveProfiles, // Funktion zum Speichern der Profile
       ProgressionTrainingProvider trainingProvider,
-      ProgressionProfileModel? aktuellesProfil) {
-    if (_draggedRuleId == targetRuleId) {
+      ProgressionProfileModel? aktuellesProfil) async {
+    try {
+      if (_draggedRuleId == targetRuleId) {
+        _draggedRuleId = null;
+        _dragOverRuleId = null;
+        notifyListeners();
+        return;
+      }
+
+      print(
+          'Verschiebe Regel $_draggedRuleId nach $targetRuleId in Profil $profileId');
+      final profilIndex =
+          progressionsProfile.indexWhere((p) => p.id == profileId);
+      if (profilIndex == -1) {
+        print('Profil mit ID $profileId nicht gefunden');
+        _draggedRuleId = null;
+        _dragOverRuleId = null;
+        notifyListeners();
+        return;
+      }
+
+      final rules = List<ProgressionRuleModel>.from(
+          progressionsProfile[profilIndex].rules);
+
+      final draggedRuleIndex =
+          rules.indexWhere((rule) => rule.id == _draggedRuleId);
+      final targetRuleIndex =
+          rules.indexWhere((rule) => rule.id == targetRuleId);
+
+      if (draggedRuleIndex != -1 && targetRuleIndex != -1) {
+        final draggedRule = rules.removeAt(draggedRuleIndex);
+        rules.insert(targetRuleIndex, draggedRule);
+
+        final updatedProfil =
+            progressionsProfile[profilIndex].copyWith(rules: rules);
+        progressionsProfile[profilIndex] = updatedProfil;
+
+        // Regel-Reihenfolge-Änderungen explizit in Firestore speichern
+        bool saved = await saveProfiles();
+        if (saved) {
+          print('Regelreihenfolge erfolgreich in Firebase aktualisiert');
+        } else {
+          print('Fehler beim Aktualisieren der Regelreihenfolge in Firebase');
+        }
+
+        // Für aktiven Satz Empfehlung zurücksetzen
+        trainingProvider.berechneEmpfehlungFuerAktivenSatz(
+            aktuellesProfil: aktuellesProfil);
+      }
+
       _draggedRuleId = null;
       _dragOverRuleId = null;
       notifyListeners();
-      return;
-    }
-
-    final profilIndex =
-        progressionsProfile.indexWhere((p) => p.id == profileId);
-    if (profilIndex == -1) {
+    } catch (e) {
+      print('Fehler beim Verschieben der Regel: $e');
       _draggedRuleId = null;
       _dragOverRuleId = null;
       notifyListeners();
-      return;
     }
-
-    final rules =
-        List<ProgressionRuleModel>.from(progressionsProfile[profilIndex].rules);
-
-    final draggedRuleIndex =
-        rules.indexWhere((rule) => rule.id == _draggedRuleId);
-    final targetRuleIndex = rules.indexWhere((rule) => rule.id == targetRuleId);
-
-    if (draggedRuleIndex != -1 && targetRuleIndex != -1) {
-      final draggedRule = rules.removeAt(draggedRuleIndex);
-      rules.insert(targetRuleIndex, draggedRule);
-
-      final updatedProfil =
-          progressionsProfile[profilIndex].copyWith(rules: rules);
-      progressionsProfile[profilIndex] = updatedProfil;
-
-      // Regel-Reihenfolge-Änderungen speichern
-      saveProfiles();
-
-      // Für aktiven Satz Empfehlung zurücksetzen
-      trainingProvider.berechneEmpfehlungFuerAktivenSatz(
-          aktuellesProfil: aktuellesProfil);
-    }
-
-    _draggedRuleId = null;
-    _dragOverRuleId = null;
-    notifyListeners();
   }
 
   // ===== HELFER-METHODEN =====

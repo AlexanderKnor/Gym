@@ -354,28 +354,54 @@ class ProgressionManagerProvider with ChangeNotifier {
   void updateRirAktion(String feld, dynamic wert) =>
       _ruleProvider.updateRirAktion(feld, wert);
 
-  void saveRule() {
+  // GEÄNDERTE METHODE: saveRule mit await für die asynchrone Speicherung
+  Future<void> saveRule() async {
     if (_currentDemoProfileId == null) return;
 
-    _ruleProvider.saveRule(
-        _currentDemoProfileId!,
-        progressionsProfile,
-        profileProvider.saveProfiles,
-        _trainingProvider,
-        aktuellesProfil,
-        _uiProvider);
+    try {
+      await _ruleProvider.saveRule(
+          _currentDemoProfileId!,
+          progressionsProfile,
+          profileProvider.saveProfiles,
+          _trainingProvider,
+          aktuellesProfil,
+          _uiProvider);
+
+      // Nach dem Speichern der Regel immer explizit die Profile in Firestore aktualisieren
+      await profileProvider.saveProfiles();
+
+      // Dann die lokale Liste aktualisieren
+      await refreshProfiles();
+
+      print('Regel erfolgreich gespeichert und Datenbank aktualisiert');
+    } catch (e) {
+      print('Fehler beim Speichern der Regel: $e');
+    }
   }
 
-  void deleteRule(String ruleId) {
+  // GEÄNDERTE METHODE: deleteRule mit await für die asynchrone Speicherung
+  Future<void> deleteRule(String ruleId) async {
     if (_currentDemoProfileId == null) return;
 
-    _ruleProvider.deleteRule(
-        ruleId,
-        _currentDemoProfileId!,
-        progressionsProfile,
-        profileProvider.saveProfiles,
-        _trainingProvider,
-        aktuellesProfil);
+    try {
+      await _ruleProvider.deleteRule(
+          ruleId,
+          _currentDemoProfileId!,
+          progressionsProfile,
+          profileProvider.saveProfiles,
+          _trainingProvider,
+          aktuellesProfil);
+
+      // Nach dem Löschen der Regel immer explizit die Profile in Firestore aktualisieren
+      await profileProvider.saveProfiles();
+
+      // Dann die lokale Liste aktualisieren
+      await refreshProfiles();
+
+      print('Regel erfolgreich gelöscht und Datenbank aktualisiert');
+    } catch (e) {
+      print('Fehler beim Löschen der Regel: $e');
+    }
   }
 
   // Drag & Drop Methoden
@@ -385,16 +411,30 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   void handleDragLeave() => _ruleProvider.handleDragLeave();
 
-  void handleDrop(String targetRuleId) {
+  // GEÄNDERTE METHODE: handleDrop mit await für die asynchrone Speicherung
+  Future<void> handleDrop(String targetRuleId) async {
     if (_currentDemoProfileId == null) return;
 
-    _ruleProvider.handleDrop(
-        targetRuleId,
-        _currentDemoProfileId!,
-        progressionsProfile,
-        profileProvider.saveProfiles,
-        _trainingProvider,
-        aktuellesProfil);
+    try {
+      await _ruleProvider.handleDrop(
+          targetRuleId,
+          _currentDemoProfileId!,
+          progressionsProfile,
+          profileProvider.saveProfiles,
+          _trainingProvider,
+          aktuellesProfil);
+
+      // Nach dem Drag & Drop immer explizit die Profile in Firestore aktualisieren
+      await profileProvider.saveProfiles();
+
+      // Dann die lokale Liste aktualisieren
+      await refreshProfiles();
+
+      print(
+          'Regelreihenfolge erfolgreich aktualisiert und Datenbank aktualisiert');
+    } catch (e) {
+      print('Fehler beim Aktualisieren der Regelreihenfolge: $e');
+    }
   }
 
   // Hilfsmethoden

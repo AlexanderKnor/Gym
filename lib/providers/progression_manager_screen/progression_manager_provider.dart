@@ -309,13 +309,25 @@ class ProgressionManagerProvider with ChangeNotifier {
   void updateProfile(String feld, dynamic wert) =>
       profileProvider.updateProfile(feld, wert);
 
-  void saveProfile() => profileProvider.saveProfile(_uiProvider);
+  // Geänderte saveProfile-Methode, die asynchron ist und aktiv nach dem Speichern aktualisiert
+  Future<void> saveProfile() async {
+    await profileProvider.saveProfile(_uiProvider);
+
+    // Kurze Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
+    await Future.delayed(Duration(milliseconds: 100));
+
+    // Profile nochmals aktualisieren
+    await refreshProfiles();
+  }
 
   void duplicateProfile(String profilId) =>
       profileProvider.duplicateProfile(profilId, _uiProvider);
 
-  Future<void> deleteProfile(String profileId) =>
-      profileProvider.deleteProfile(profileId);
+  Future<void> deleteProfile(String profileId) async {
+    await profileProvider.deleteProfile(profileId);
+    // Nach dem Löschen explizit die Profile aktualisieren
+    await refreshProfiles();
+  }
 
   // Regel Methoden
   void setRegelTyp(String typ) => _ruleProvider.setRegelTyp(typ);

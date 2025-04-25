@@ -588,7 +588,8 @@ class ProgressionProfileProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void saveProfile(ProgressionUIProvider uiProvider) {
+  // Die saveProfile-Methode zu einer asynchronen Methode ändern
+  Future<void> saveProfile(ProgressionUIProvider uiProvider) async {
     if (_bearbeitetesProfil == null) return;
 
     final existingIndex =
@@ -600,8 +601,12 @@ class ProgressionProfileProvider with ChangeNotifier {
       _progressionsProfile.add(_bearbeitetesProfil!);
     }
 
-    // Profil-Änderungen speichern
-    saveProfiles();
+    // Auf das Speichern warten
+    await saveProfiles();
+
+    // Anschließend die Profile aus Firebase neu laden, um sicherzustellen,
+    // dass die lokale Liste aktuell ist
+    await loadSavedProfiles();
 
     uiProvider.hideProfileEditor();
     _bearbeitetesProfil = null;

@@ -10,8 +10,13 @@ class ProgressionManagerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => ProgressionManagerProvider(),
+    // Hier verwenden wir ChangeNotifierProvider.value statt .create,
+    // um zu verhindern, dass bei jedem Build ein neuer Provider erstellt wird
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+    return ChangeNotifierProvider.value(
+      value: provider,
       child: const ProgressionManagerScreenContent(),
     );
   }

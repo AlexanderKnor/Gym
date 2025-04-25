@@ -55,7 +55,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     }
   }
 
-  // Methode zum Laden gespeicherter Profile
+  // VERBESSERTE METHODE: Laden gespeicherter Profile mit zuverlässigerer Benachrichtigung
   Future<void> loadSavedProfiles() async {
     try {
       print('Starte das Laden von Profilen aus Firestore...');
@@ -66,11 +66,14 @@ class ProgressionProfileProvider with ChangeNotifier {
 
       // Gespeicherte Profile (inklusive Standard-Profile) laden
       final savedProfiles = await _profileStorageService.loadProfiles();
+
+      // Wichtig: Lokale Liste aktualisieren bevor notifyListeners aufgerufen wird
       _progressionsProfile = savedProfiles;
       print('${savedProfiles.length} Profile aus Firestore geladen');
 
+      // Explizite Benachrichtigung an alle Listeners
       notifyListeners();
-      print('Profile erfolgreich geladen und UI aktualisiert');
+      print('UI über neu geladene Profile benachrichtigt');
     } catch (e) {
       print('Fehler beim Laden der gespeicherten Profile: $e');
     }
@@ -630,44 +633,59 @@ class ProgressionProfileProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Die saveProfile-Methode zu einer asynchronen Methode ändern mit verbessertem Fehlerhandling
+  // VERBESSERTE METHODE: saveProfile mit zuverlässigerer UI-Aktualisierung
   Future<void> saveProfile(ProgressionUIProvider uiProvider) async {
     if (_bearbeitetesProfil == null) return;
 
     try {
       print('Starte Speichern des Profils: ${_bearbeitetesProfil!.id}');
 
-      final existingIndex = _progressionsProfile
-          .indexWhere((p) => p.id == _bearbeitetesProfil!.id);
+      // Lokale Kopie des zu bearbeitenden Profils erstellen, bevor wir die UI schließen
+      final profilToSave = _bearbeitetesProfil!;
 
+      // UI-Status aktualisieren vor dem Speichern in Firebase
+      final existingIndex =
+          _progressionsProfile.indexWhere((p) => p.id == profilToSave.id);
+
+      List<ProgressionProfileModel> updatedProfiles =
+          List.from(_progressionsProfile);
       if (existingIndex != -1) {
-        _progressionsProfile[existingIndex] = _bearbeitetesProfil!;
-        print('Bestehendes Profil aktualisiert');
+        updatedProfiles[existingIndex] = profilToSave;
+        print(
+            'Bestehendes Profil in lokaler Liste aktualisiert: ${profilToSave.id}');
       } else {
-        _progressionsProfile.add(_bearbeitetesProfil!);
-        print('Neues Profil hinzugefügt');
+        updatedProfiles.add(profilToSave);
+        print('Neues Profil zur lokalen Liste hinzugefügt: ${profilToSave.id}');
       }
 
-      // Auf das Speichern warten
+      // Lokale Liste aktualisieren und UI benachrichtigen
+      _progressionsProfile = updatedProfiles;
+
+      // UI-Zustand zurücksetzen
+      _bearbeitetesProfil = null;
+      uiProvider.hideProfileEditor();
+
+      // Sofortige UI-Benachrichtigung vor Speicherung
+      notifyListeners();
+      print('UI mit lokalen Änderungen aktualisiert');
+
+      // Dann in Firebase speichern
       bool saved = await saveProfiles();
       if (!saved) {
         print('Fehler beim Speichern des Profils in Firebase');
-        // Hier könnte ein Fehler-Dialog angezeigt werden
       } else {
         print('Profil erfolgreich in Firebase gespeichert');
       }
 
-      // Anschließend die Profile aus Firebase neu laden, um sicherzustellen,
-      // dass die lokale Liste aktuell ist
+      // Profile erneut aus Firebase laden
       await loadSavedProfiles();
+      print('Profile nach dem Speichern aus Firebase neu geladen');
 
-      uiProvider.hideProfileEditor();
-      _bearbeitetesProfil = null;
+      // Nochmal benachrichtigen, falls Firebase-Daten anders sein sollten
+      notifyListeners();
+      print('UI nach Firebase-Synchronisierung erneut aktualisiert');
     } catch (e) {
       print('Fehler beim Speichern des Profils: $e');
-      // Hier könnte ein Fehler-Dialog angezeigt werden
-    } finally {
-      notifyListeners();
     }
   }
 
@@ -690,7 +708,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     openProfileEditor(copy, uiProvider);
   }
 
-  // Methode zum Löschen eines Profils mit verbessertem Fehlerhandling
+  // VERBESSERTE METHODE: Methode zum Löschen eines Profils mit verbesserten Benachrichtigungen
   Future<void> deleteProfile(String profileId) async {
     try {
       // Standard-Profile können nicht gelöscht werden
@@ -711,35 +729,46 @@ class ProgressionProfileProvider with ChangeNotifier {
 
       print('Starte Löschung des Profils: $profileId');
 
+      // UI sofort aktualisieren, bevor Firebase-Operationen beginnen
+      List<ProgressionProfileModel> updatedProfiles =
+          List.from(_progressionsProfile);
+      updatedProfiles.removeAt(profilIndex);
+      _progressionsProfile = updatedProfiles;
+
+      // UI benachrichtigen
+      notifyListeners();
+      print('Profil aus lokaler Liste entfernt und UI benachrichtigt');
+
       // VERBESSERT: Zuerst alle Übungen aktualisieren, die dieses Profil verwenden
       print('Aktualisiere Übungen, die Profil $profileId verwenden...');
       final success = await _trainingPlanService
           .updateExercisesAfterProfileDeletion(profileId);
 
       if (!success) {
-        print('Fehler beim Aktualisieren der Übungen. Vorgang abgebrochen.');
-        return;
+        print(
+            'Fehler beim Aktualisieren der Übungen. Vorgang wird trotzdem fortgesetzt.');
       }
 
-      // Profil aus der Liste entfernen
-      _progressionsProfile.removeAt(profilIndex);
-      print('Profil aus lokaler Liste entfernt');
-
-      // Änderungen speichern - SICHERSTELLEN DASS DIES ABGEWARTET WIRD
+      // Änderungen in Firebase speichern
       bool saved = await saveProfiles();
       if (!saved) {
         print('Fehler beim Speichern der Änderungen in Firebase');
-        // Hier könnte ein Fehler-Dialog angezeigt werden
+      } else {
+        print('Änderungen erfolgreich in Firebase gespeichert');
       }
 
-      // Profile neu laden, um die Liste aktuell zu halten
+      // Profile neu laden
       await loadSavedProfiles();
+      print('Profile nach dem Löschen neu geladen');
 
-      print('Profil erfolgreich gelöscht und Übungen aktualisiert');
+      // Zusätzliche Benachrichtigung nach dem Neuladen
+      notifyListeners();
+      print('Profil erfolgreich gelöscht und UI final aktualisiert');
     } catch (e) {
       print('Fehler beim Löschen des Profils: $e');
-      // Hier könnte ein Fehler-Dialog angezeigt werden
-    } finally {
+
+      // Bei Fehler Profile neu laden, um konsistenten Zustand sicherzustellen
+      await loadSavedProfiles();
       notifyListeners();
     }
   }

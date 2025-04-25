@@ -309,15 +309,29 @@ class ProgressionManagerProvider with ChangeNotifier {
   void updateProfile(String feld, dynamic wert) =>
       profileProvider.updateProfile(feld, wert);
 
-  // Geänderte saveProfile-Methode, die asynchron ist und aktiv nach dem Speichern aktualisiert
+  // VERBESSERTE METHODE: saveProfile mit verbesserter Aktualisierungslogik
   Future<void> saveProfile() async {
-    await profileProvider.saveProfile(_uiProvider);
+    if (bearbeitetesProfil == null) return;
 
-    // Kurze Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
-    await Future.delayed(Duration(milliseconds: 100));
+    try {
+      print('Starte Speichern des Profils...');
 
-    // Profile nochmals aktualisieren
-    await refreshProfiles();
+      // Profil speichern und Editor schließen
+      await profileProvider.saveProfile(_uiProvider);
+
+      // Längere Verzögerung, um sicherzustellen, dass Firebase-Operationen abgeschlossen sind
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Profile explizit neu laden
+      await refreshProfiles();
+
+      // Zusätzliche Benachrichtigung für die UI
+      notifyListeners();
+
+      print('Profil erfolgreich gespeichert und UI aktualisiert');
+    } catch (e) {
+      print('Fehler beim Speichern des Profils: $e');
+    }
   }
 
   void duplicateProfile(String profilId) =>
@@ -450,10 +464,32 @@ class ProgressionManagerProvider with ChangeNotifier {
   String renderValueNode(Map<String, dynamic> node) =>
       _ruleProvider.renderValueNode(node);
 
-  /// Lädt die gespeicherten Profile explizit neu
-  /// Diese Methode kann verwendet werden, um sicherzustellen, dass aktuelle Profile verfügbar sind
+  /// VERBESSERTE METHODE: Lädt die gespeicherten Profile explizit neu mit verbesserter Fehlerbehandlung und Benachrichtigung
   Future<void> refreshProfiles() async {
-    await profileProvider.loadSavedProfiles();
-    notifyListeners();
+    try {
+      print('Starte Aktualisierung der Profile...');
+
+      // Profile neu laden
+      await profileProvider.loadSavedProfiles();
+
+      // Aktuelles Demo-Profil neu referenzieren, falls es existiert
+      if (_currentDemoProfileId != null) {
+        // Überprüfen, ob das ausgewählte Profil noch existiert
+        final existierendesProfil =
+            profileProvider.getProfileById(_currentDemoProfileId);
+        if (existierendesProfil == null &&
+            profileProvider.progressionsProfile.isNotEmpty) {
+          // Falls nicht, das erste verfügbare Profil verwenden
+          _currentDemoProfileId = profileProvider.progressionsProfile.first.id;
+        }
+      }
+
+      // Sicherstellen, dass alle Listener benachrichtigt werden
+      notifyListeners();
+
+      print('Profile erfolgreich aktualisiert und UI benachrichtigt');
+    } catch (e) {
+      print('Fehler beim Aktualisieren der Profile: $e');
+    }
   }
 }

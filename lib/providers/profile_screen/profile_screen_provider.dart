@@ -17,8 +17,7 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   // Abmelden mit Bestätigung
-  Future<bool> confirmSignOut(
-      BuildContext context, AuthProvider authProvider) async {
+  Future<bool> confirmSignOut(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -40,11 +39,6 @@ class ProfileProvider extends ChangeNotifier {
       ),
     );
 
-    if (result == true) {
-      await authProvider.signOut();
-      return true;
-    }
-
-    return false;
+    return result == true;
   }
 }

@@ -92,8 +92,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  final shouldSignOut = await profileProvider.confirmSignOut(
-                      context, authProvider);
+                  final shouldSignOut =
+                      await profileProvider.confirmSignOut(context);
 
                   if (shouldSignOut && context.mounted) {
                     print('PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
@@ -107,8 +107,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     await authProvider.signOut();
                     print('PROFILE SCREEN: Benutzer abgemeldet');
 
-                    // Wir brauchen keinen manuellen Navigator.push, da der AuthCheckerScreen
-                    // automatisch zum LoginScreen weiterleitet
+                    // Manuell zum AuthCheckerScreen navigieren, um sicherzustellen, dass
+                    // der Login-Screen angezeigt wird
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                            builder: (context) => const AuthCheckerScreen()),
+                        (route) => false, // Entferne alle bisherigen Routen
+                      );
+                    }
                   }
                 },
                 icon: const Icon(Icons.logout),

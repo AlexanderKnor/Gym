@@ -132,6 +132,13 @@ class ProgressionTrainingProvider with ChangeNotifier {
     // Keine Empfehlung anzeigen, wenn noch keine berechnet wurde
     if (!satz.empfehlungBerechnet) return false;
 
+    // Keine Empfehlung anzeigen, wenn alle empfohlenen Werte 0 oder null sind
+    if ((satz.empfKg == null || satz.empfKg == 0) &&
+        (satz.empfWiederholungen == null || satz.empfWiederholungen == 0) &&
+        (satz.empfRir == null || satz.empfRir == 0)) {
+      return false;
+    }
+
     // Keine Empfehlung anzeigen, wenn alle Werte exakt der Empfehlung entsprechen
     if (satz.kg == satz.empfKg &&
         satz.wiederholungen == satz.empfWiederholungen &&

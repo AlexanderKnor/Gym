@@ -463,6 +463,13 @@ class TrainingSessionProvider with ChangeNotifier {
     // Keine Empfehlung anzeigen, wenn keine berechnet wurde
     if (!set.empfehlungBerechnet) return false;
 
+    // Keine Empfehlung anzeigen, wenn alle empfohlenen Werte 0 oder null sind
+    if ((set.empfKg == null || set.empfKg == 0) &&
+        (set.empfWiederholungen == null || set.empfWiederholungen == 0) &&
+        (set.empfRir == null || set.empfRir == 0)) {
+      return false;
+    }
+
     // Keine Empfehlung anzeigen, wenn alle Werte exakt der Empfehlung entsprechen
     if (set.kg == set.empfKg &&
         set.wiederholungen == set.empfWiederholungen &&

@@ -5,8 +5,126 @@ import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../providers/shared/navigation_provider.dart';
 import '../../screens/main_screen.dart';
 
-class TrainingCompletionWidget extends StatelessWidget {
+class TrainingCompletionWidget extends StatefulWidget {
   const TrainingCompletionWidget({Key? key}) : super(key: key);
+
+  @override
+  State<TrainingCompletionWidget> createState() =>
+      _TrainingCompletionWidgetState();
+}
+
+class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
+  bool _isSaving = false;
+  bool _hasAskedForChanges = false;
+  bool _saveCompleted = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Verzögerung, damit die UI zuerst rendern kann
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _saveTrainingAndCheckForChanges();
+    });
+  }
+
+  // Separate das Speichern und Überprüfen auf Änderungen
+  Future<void> _saveTrainingAndCheckForChanges() async {
+    if (!mounted) return;
+
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+
+    // Zuerst das Training speichern
+    await sessionProvider.completeTraining();
+
+    if (mounted) {
+      setState(() {
+        _saveCompleted = true;
+      });
+
+      // Dann prüfen, ob es Änderungen am Trainingsplan gab
+      if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
+        _showSaveChangesDialog(sessionProvider);
+        setState(() {
+          _hasAskedForChanges = true;
+        });
+      }
+    }
+  }
+
+  // Dialog zum Speichern der Änderungen
+  void _showSaveChangesDialog(TrainingSessionProvider sessionProvider) {
+    showDialog(
+      context: context,
+      barrierDismissible:
+          false, // Dialog kann nicht durch Klicken außerhalb geschlossen werden
+      builder: (context) => AlertDialog(
+        title: const Text('Änderungen speichern?'),
+        content: const Text(
+            'Du hast Änderungen an Übungen vorgenommen (Satzanzahl, Steigerung, Pause). '
+            'Möchtest du diese Änderungen in deinem Trainingsplan speichern?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Verwerfen'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _saveChangesToTrainingPlan(sessionProvider);
+            },
+            child: const Text('Speichern'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Speichert die Änderungen im Trainingsplan
+  Future<void> _saveChangesToTrainingPlan(
+      TrainingSessionProvider sessionProvider) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final success = await sessionProvider.saveModificationsToTrainingPlan();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Änderungen wurden im Trainingsplan gespeichert'
+                : 'Fehler beim Speichern der Änderungen'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    } catch (e) {
+      print('Fehler beim Speichern der Änderungen: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ein Fehler ist aufgetreten'),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,21 +138,44 @@ class TrainingCompletionWidget extends StatelessWidget {
       );
     }
 
+    // Wenn das Speichern noch nicht abgeschlossen ist
+    if (!_saveCompleted) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Training wird gespeichert...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Wenn gerade Änderungen gespeichert werden
+    if (_isSaving) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Änderungen werden gespeichert...'),
+            ],
+          ),
+        ),
+      );
+    }
+
     // Statistiken berechnen
     final totalExercises = trainingDay.exercises.length;
     int totalSets = 0;
     for (final exercise in trainingDay.exercises) {
       totalSets += exercise.numberOfSets;
     }
-
-    // GEÄNDERT: Sicherstellen, dass wir nur einmal speichern
-    // Verzögerung, damit die UI zuerst rendern kann
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Sicherstellen, dass wir nicht während eines Build-Vorgangs den State ändern
-      Future.microtask(() {
-        sessionProvider.completeTraining();
-      });
-    });
 
     return Scaffold(
       body: SafeArea(
@@ -164,6 +305,30 @@ class TrainingCompletionWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                // NEU: Button zum Speichern der Änderungen, falls es Änderungen gibt und noch nicht gefragt wurde
+                if (sessionProvider.hasModifiedExercises &&
+                    !_hasAskedForChanges) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _showSaveChangesDialog(sessionProvider);
+                        setState(() {
+                          _hasAskedForChanges = true;
+                        });
+                      },
+                      icon: const Icon(Icons.save),
+                      label: const Text('Änderungen an Übungen speichern'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Zurück-Button
                 SizedBox(

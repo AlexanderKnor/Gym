@@ -31,6 +31,11 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   // Speichert das Profil für die aktuelle Übung
   String? _exerciseProfileId;
 
+  // Lokale State-Variablen für Bearbeitungsfelder
+  final TextEditingController _standardIncreaseController =
+      TextEditingController();
+  final TextEditingController _restTimeController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +44,13 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeProgressionManager();
     });
+  }
+
+  @override
+  void dispose() {
+    _standardIncreaseController.dispose();
+    _restTimeController.dispose();
+    super.dispose();
   }
 
   void _initializeProgressionManager() {
@@ -50,6 +62,10 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     // Aktuelle Übung abrufen
     if (widget.exerciseIndex < sessionProvider.exercises.length) {
       final exercise = sessionProvider.exercises[widget.exerciseIndex];
+
+      // Initialisiere Controller-Werte
+      _standardIncreaseController.text = exercise.standardIncrease.toString();
+      _restTimeController.text = exercise.restPeriodSeconds.toString();
 
       // Speichere die ProfilID für diese Übung
       if (exercise.progressionProfileId != null &&
@@ -69,6 +85,25 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                 activeSetId, _exerciseProfileId!, progressionProvider);
           }
         }
+      }
+    }
+  }
+
+  // Aktualisiere die lokalen Controller, wenn sich die Übung ändert
+  void _updateLocalControllersIfNeeded() {
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+    if (widget.exerciseIndex < sessionProvider.exercises.length) {
+      final exercise = sessionProvider.exercises[widget.exerciseIndex];
+
+      // Nur aktualisieren, wenn sich die Werte geändert haben
+      if (_standardIncreaseController.text !=
+          exercise.standardIncrease.toString()) {
+        _standardIncreaseController.text = exercise.standardIncrease.toString();
+      }
+
+      if (_restTimeController.text != exercise.restPeriodSeconds.toString()) {
+        _restTimeController.text = exercise.restPeriodSeconds.toString();
       }
     }
   }
@@ -126,6 +161,62 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
+  // Dialog zum Bearbeiten von Übungseinstellungen
+  void _showEditExerciseConfigDialog(
+      BuildContext context, String field, String title, String currentValue) {
+    final TextEditingController controller =
+        TextEditingController(text: currentValue);
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.numberWithOptions(
+              decimal: field == 'standardIncrease'),
+          decoration: InputDecoration(
+            labelText:
+                field == 'standardIncrease' ? 'Wert in kg' : 'Wert in Sekunden',
+            hintText: field == 'standardIncrease' ? 'z.B. 2.5' : 'z.B. 60',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final value = controller.text;
+              if (value.isNotEmpty) {
+                sessionProvider.updateExerciseConfig(
+                    widget.exerciseIndex, field, value);
+                // Controller aktualisieren
+                if (field == 'standardIncrease') {
+                  setState(() {
+                    _standardIncreaseController.text = value;
+                  });
+                } else if (field == 'restPeriodSeconds') {
+                  setState(() {
+                    _restTimeController.text = value;
+                  });
+                }
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Speichern'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      controller.dispose();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Erforderlich für AutomaticKeepAliveClientMixin
@@ -133,6 +224,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final sessionProvider = Provider.of<TrainingSessionProvider>(context);
     final progressionProvider =
         Provider.of<ProgressionManagerProvider>(context);
+
+    // Aktualisiere die Controller, wenn sich die Übung ändert
+    _updateLocalControllersIfNeeded();
 
     // Prüfe, ob dieser Tab aktiv ist
     final bool isActiveExercise =
@@ -184,6 +278,42 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
 
           // Action-Buttons anzeigen
           const SizedBox(height: 16),
+
+          // NEU: Buttons zum Hinzufügen/Entfernen von Sätzen
+          if (isActiveExercise && !allSetsCompleted) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('Satz hinzufügen'),
+                    onPressed: () {
+                      sessionProvider.addSetToCurrentExercise();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.remove),
+                    label: const Text('Satz entfernen'),
+                    onPressed: () {
+                      sessionProvider.removeSetFromCurrentExercise();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Wenn alle Sätze abgeschlossen sind, zeige den "Übung abschließen" Button
           if (allSetsCompleted) ...[
@@ -305,22 +435,39 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                 ],
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
-            // Weitere Übungsdetails
+            // NEU: Bearbeitbare Übungsdetails als Textfelder
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildDetailItem(
+                // Standardsteigerung
+                _buildEditableDetailItem(
                   Icons.fitness_center,
                   'Steigerung',
                   '${exercise.standardIncrease} kg',
+                  () => _showEditExerciseConfigDialog(
+                    context,
+                    'standardIncrease',
+                    'Standardsteigerung bearbeiten',
+                    exercise.standardIncrease.toString(),
+                  ),
                 ),
-                _buildDetailItem(
+
+                // Satzpause
+                _buildEditableDetailItem(
                   Icons.timer,
                   'Satzpause',
                   '${exercise.restPeriodSeconds} sek',
+                  () => _showEditExerciseConfigDialog(
+                    context,
+                    'restPeriodSeconds',
+                    'Satzpause bearbeiten',
+                    exercise.restPeriodSeconds.toString(),
+                  ),
                 ),
+
+                // Sätze (nur anzeigen, nicht bearbeiten)
                 _buildDetailItem(
                   Icons.repeat,
                   'Sätze',
@@ -329,7 +476,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
               ],
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const Divider(),
             const SizedBox(height: 8),
 
@@ -405,7 +552,46 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  // Hilfsmethode für die Detailansicht
+  // Hilfsmethode für bearbeitbare Detailansicht
+  Widget _buildEditableDetailItem(
+      IconData icon, String label, String value, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Column(
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: Colors.grey[700]),
+                const SizedBox(width: 4),
+                Icon(Icons.edit, size: 14, color: Colors.blue),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Hilfsmethode für die Detailansicht (nicht bearbeitbar)
   Widget _buildDetailItem(IconData icon, String label, String value) {
     return Column(
       children: [

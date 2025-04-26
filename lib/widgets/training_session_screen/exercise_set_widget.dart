@@ -1,5 +1,6 @@
 // lib/widgets/training_session_screen/exercise_set_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import '../../services/progression_manager_screen/one_rm_calculator_service.dart';
 
@@ -21,13 +22,12 @@ class ExerciseSetWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Berechne 1RM für aktuelle Werte
+    // 1RM Calculations
     final einRM = set.kg > 0 && set.wiederholungen > 0
         ? OneRMCalculatorService.calculate1RM(
             set.kg, set.wiederholungen, set.rir)
-        : 0.0;
+        : null;
 
-    // Berechne empfohlenen 1RM
     double? empfohlener1RM;
     if (recommendation != null) {
       final empfKg = recommendation!['kg'] as double?;
@@ -40,153 +40,229 @@ class ExerciseSetWidget extends StatelessWidget {
       }
     }
 
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.only(bottom: 8),
-      // Leicht angepasste Farben für bessere Sichtbarkeit auch bei abgeschlossenen Sätzen
-      color: isActive
-          ? Colors.blue[50]
-          : isCompleted
-              ? Colors.green[
-                  50] // Grünlicher Hintergrund für abgeschlossene Sätze bleibt
-              : Colors.grey[50],
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Satz-Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? Colors.blue
-                            : isCompleted
-                                ? Colors.green
-                                : Colors.grey[300],
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${set.id}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Statustexte angepasst
-                    Text(
-                      isActive
-                          ? 'Aktueller Satz'
-                          : isCompleted
-                              ? 'Satz ${set.id} - Abgeschlossen'
-                              : 'Satz ${set.id}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isActive
-                            ? Colors.blue
-                            : isCompleted
-                                ? Colors.green[700]
-                                : Colors.grey[600],
-                      ),
-                    ),
-                  ],
+    // Kompaktere Karte mit eleganter Gestaltung
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive
+              ? Colors.black
+              : isCompleted
+                  ? Colors.green[300]!
+                  : Colors.grey[200]!,
+          width: isActive ? 1.5 : 1,
+        ),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
                 ),
+              ]
+            : null,
+      ),
+      child: Column(
+        children: [
+          // Header mit Set-Nummer und Status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Colors.black
+                  : isCompleted
+                      ? Colors.green[50]
+                      : Colors.grey[50],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Set-Nummer
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isActive
+                        ? Colors.white
+                        : isCompleted
+                            ? Colors.green
+                            : Colors.grey[400],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${set.id}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isActive ? Colors.black : Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Status-Text
+                Text(
+                  isActive
+                      ? 'Aktueller Satz'
+                      : isCompleted
+                          ? 'Abgeschlossen'
+                          : 'Satz ${set.id}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.3,
+                    color: isActive
+                        ? Colors.white
+                        : isCompleted
+                            ? Colors.green[700]
+                            : Colors.grey[700],
+                  ),
+                ),
+
+                const Spacer(),
 
                 // Status-Icon
                 if (isCompleted)
-                  Icon(Icons.check_circle, color: Colors.green[700])
+                  Icon(
+                    Icons.check,
+                    color: Colors.green[700],
+                    size: 18,
+                  )
                 else if (isActive)
-                  Icon(Icons.play_arrow, color: Colors.blue[700])
-                else
-                  Icon(Icons.circle_outlined, color: Colors.grey[700]),
+                  const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 18,
+                  ),
               ],
             ),
-            const SizedBox(height: 12),
+          ),
 
-            // Eingabefelder oder Werte, je nach Status
-            Row(
+          // Eingabefelder in einer Zeile
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
                 // Gewicht
                 Expanded(
-                  child: _buildInputField(
+                  flex: 2,
+                  child: _buildCompactField(
                     context,
                     'Gewicht',
                     set.kg.toString(),
                     'kg',
-                    isActive, // Nur aktiv, wenn der Satz aktiv ist
+                    isActive,
                     (value) => onValueChanged('kg', value),
                     recommendation != null
                         ? recommendation!['kg']?.toString()
                         : null,
-                    'kg',
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
                 // Wiederholungen
                 Expanded(
-                  child: _buildInputField(
+                  flex: 1,
+                  child: _buildCompactField(
                     context,
-                    'Wdh.',
+                    'Wdh',
                     set.wiederholungen.toString(),
                     '',
-                    isActive, // Nur aktiv, wenn der Satz aktiv ist
+                    isActive,
                     (value) => onValueChanged('wiederholungen', value),
                     recommendation != null
                         ? recommendation!['wiederholungen']?.toString()
                         : null,
-                    'wdh',
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
                 // RIR
                 Expanded(
-                  child: _buildInputField(
+                  flex: 1,
+                  child: _buildCompactField(
                     context,
                     'RIR',
                     set.rir.toString(),
                     '',
-                    isActive, // Nur aktiv, wenn der Satz aktiv ist
+                    isActive,
                     (value) => onValueChanged('rir', value),
                     recommendation != null
                         ? recommendation!['rir']?.toString()
                         : null,
-                    'rir',
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // 1RM als Read-Only Feld
-                Expanded(
-                  child: _build1RMField(
-                    context,
-                    einRM,
-                    empfohlener1RM,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          // 1RM Info als optionales Element
+          if (einRM != null || (isActive && empfohlener1RM != null))
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // Aktuelle 1RM
+                  Text(
+                    '1RM: ${einRM != null ? einRM.toStringAsFixed(1) : "—"} kg',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+
+                  // Empfohlene 1RM, falls verfügbar
+                  if (isActive && empfohlener1RM != null)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.purple[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.purple[200]!),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.arrow_upward,
+                            size: 10,
+                            color: Colors.purple[700],
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${empfohlener1RM.toStringAsFixed(1)} kg',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.purple[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  // Leicht angepasste visuelle Darstellung für Textfelder bei abgeschlossenen Sätzen
-  Widget _buildInputField(
+  // Kompakteres Eingabefeld für bessere Platznutzung
+  Widget _buildCompactField(
     BuildContext context,
     String label,
     String value,
@@ -194,129 +270,145 @@ class ExerciseSetWidget extends StatelessWidget {
     bool isEnabled,
     Function(String) onChanged,
     String? recommendationValue,
-    String fieldType,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextField(
-          controller: TextEditingController(text: value),
-          keyboardType:
-              TextInputType.numberWithOptions(decimal: fieldType == 'kg'),
-          decoration: InputDecoration(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+        // Label mit Recommendation-Badge
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
             ),
-            suffixText: suffix,
-            isDense: true,
-            enabled: isEnabled, // Nur aktiv, wenn isEnabled true ist
-            // Füge einen deutlicheren Hintergrund für abgeschlossene, nicht aktive Sätze hinzu
-            fillColor: !isEnabled ? Colors.green[50] : null,
-            filled: !isEnabled,
-          ),
-          onChanged: onChanged,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            // Bessere Farbe für abgeschlossene Sätze
-            color: isEnabled ? Colors.black : Colors.green[700],
-          ),
-        ),
-        if (isEnabled && recommendationValue != null) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.arrow_upward,
-                size: 12,
-                color: Colors.purple[700],
-              ),
-              const SizedBox(width: 2),
-              Text(
-                suffix.isNotEmpty
-                    ? '$recommendationValue $suffix'
-                    : recommendationValue,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.purple[700],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
 
-  Widget _build1RMField(
-    BuildContext context,
-    double currentRM,
-    double? suggestedRM,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '1RM',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+            // Empfehlungs-Badge
+            if (isEnabled && recommendationValue != null)
+              GestureDetector(
+                onTap: () {
+                  onChanged(recommendationValue);
+                  HapticFeedback.selectionClick();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.purple[50],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.arrow_upward,
+                        size: 8,
+                        color: Colors.purple[700],
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        recommendationValue,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.purple[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
+
         const SizedBox(height: 4),
+
+        // Eingabefeld
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          height: 44,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[400]!),
             borderRadius: BorderRadius.circular(8),
-            color: Colors.grey[100],
+            boxShadow: isEnabled
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
           ),
-          width: double.infinity,
-          child: Text(
-            currentRM > 0 ? '${currentRM.toStringAsFixed(1)} kg' : '-',
+          child: TextField(
+            controller: TextEditingController(text: value),
+            keyboardType:
+                TextInputType.numberWithOptions(decimal: suffix == 'kg'),
+            textAlign: TextAlign.center,
+            enabled: isEnabled,
+            onChanged: (newValue) {
+              onChanged(newValue);
+              HapticFeedback.selectionClick();
+            },
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isEnabled
+                  ? Colors.black
+                  : isCompleted
+                      ? Colors.green[700]
+                      : Colors.grey[400],
+            ),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: isEnabled
+                  ? Colors.white
+                  : isCompleted
+                      ? Colors.green[50]
+                      : Colors.grey[50],
+              suffixText: suffix,
+              suffixStyle: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: Colors.grey[300]!,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Colors.black,
+                  width: 1.5,
+                ),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: isCompleted ? Colors.green[200]! : Colors.grey[200]!,
+                  width: 1,
+                ),
+              ),
             ),
           ),
         ),
-        // Empfehlungs-1RM anzeigen
-        if (isActive && suggestedRM != null && suggestedRM > 0) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.arrow_upward,
-                size: 12,
-                color: Colors.purple[700],
-              ),
-              const SizedBox(width: 2),
-              Expanded(
-                child: Text(
-                  '${suggestedRM.toStringAsFixed(1)} kg',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.purple[700],
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
       ],
     );
   }

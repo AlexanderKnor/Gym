@@ -13,29 +13,57 @@ class TrainingCompletionWidget extends StatefulWidget {
       _TrainingCompletionWidgetState();
 }
 
-class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
+class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
+    with SingleTickerProviderStateMixin {
   bool _isSaving = false;
   bool _hasAskedForChanges = false;
   bool _saveCompleted = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Verzögerung, damit die UI zuerst rendern kann
+    // Configure animations
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.2, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.elasticOut,
+      ),
+    );
+
+    // Start animations after short delay
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+
+    // Initialize training completion process
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _saveTrainingAndCheckForChanges();
     });
   }
 
-  // Separate das Speichern und Überprüfen auf Änderungen
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   Future<void> _saveTrainingAndCheckForChanges() async {
     if (!mounted) return;
 
     final sessionProvider =
         Provider.of<TrainingSessionProvider>(context, listen: false);
 
-    // Zuerst das Training speichern
+    // First save the training
     await sessionProvider.completeTraining();
 
     if (mounted) {
@@ -43,7 +71,7 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
         _saveCompleted = true;
       });
 
-      // Dann prüfen, ob es Änderungen am Trainingsplan gab
+      // Check if there were modifications to the training plan
       if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
         _showSaveChangesDialog(sessionProvider);
         setState(() {
@@ -53,17 +81,24 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
     }
   }
 
-  // Dialog zum Speichern der Änderungen
   void _showSaveChangesDialog(TrainingSessionProvider sessionProvider) {
     showDialog(
       context: context,
-      barrierDismissible:
-          false, // Dialog kann nicht durch Klicken außerhalb geschlossen werden
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Änderungen speichern?'),
+        title: Row(
+          children: [
+            Icon(Icons.save_outlined, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
+            const Text('Änderungen speichern?'),
+          ],
+        ),
         content: const Text(
             'Du hast Änderungen an Übungen vorgenommen (Satzanzahl, Steigerung, Pause). '
             'Möchtest du diese Änderungen in deinem Trainingsplan speichern?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -76,6 +111,9 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
               Navigator.pop(context);
               await _saveChangesToTrainingPlan(sessionProvider);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+            ),
             child: const Text('Speichern'),
           ),
         ],
@@ -83,7 +121,6 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
     );
   }
 
-  // Speichert die Änderungen im Trainingsplan
   Future<void> _saveChangesToTrainingPlan(
       TrainingSessionProvider sessionProvider) async {
     if (!mounted) return;
@@ -101,7 +138,11 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
             content: Text(success
                 ? 'Änderungen wurden im Trainingsplan gespeichert'
                 : 'Fehler beim Speichern der Änderungen'),
-            backgroundColor: success ? Colors.green : Colors.red,
+            backgroundColor: success ? Colors.green[600] : Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
 
@@ -113,9 +154,13 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
       print('Fehler beim Speichern der Änderungen: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ein Fehler ist aufgetreten'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Ein Fehler ist aufgetreten'),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
 
@@ -133,44 +178,71 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
     final trainingDay = sessionProvider.trainingDay;
 
     if (trainingPlan == null || trainingDay == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Training'),
+          centerTitle: true,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
 
-    // Wenn das Speichern noch nicht abgeschlossen ist
+    // If still saving
     if (!_saveCompleted) {
-      return const Scaffold(
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Training wird gespeichert'),
+          centerTitle: true,
+          elevation: 0,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Training wird gespeichert...'),
+              CircularProgressIndicator(
+                color: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Training wird gespeichert...',
+                style: TextStyle(fontSize: 16),
+              ),
             ],
           ),
         ),
       );
     }
 
-    // Wenn gerade Änderungen gespeichert werden
+    // If saving modifications
     if (_isSaving) {
       return Scaffold(
+        appBar: AppBar(
+          title: const Text('Änderungen werden gespeichert'),
+          centerTitle: true,
+          elevation: 0,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Änderungen werden gespeichert...'),
+            children: [
+              CircularProgressIndicator(
+                color: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Änderungen werden gespeichert...',
+                style: TextStyle(fontSize: 16),
+              ),
             ],
           ),
         ),
       );
     }
 
-    // Statistiken berechnen
+    // Calculate stats
     final totalExercises = trainingDay.exercises.length;
     int totalSets = 0;
     for (final exercise in trainingDay.exercises) {
@@ -178,140 +250,193 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
     }
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Training abgeschlossen'),
+        centerTitle: true,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Erfolgssymbol
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    size: 80,
-                    color: Colors.green[700],
+                // Success animation
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 12,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 80,
+                      color: Colors.green[600],
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
 
-                // Titel
+                // Title and subtitle
                 const Text(
-                  'Training abgeschlossen!',
+                  'Herzlichen Glückwunsch!',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-
-                // Untertitel
+                const SizedBox(height: 12),
                 Text(
-                  'Du hast dein Training erfolgreich beendet.',
+                  'Du hast dein Training erfolgreich abgeschlossen.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
                   ),
                 ),
+
                 const SizedBox(height: 32),
 
-                // Trainingsübersicht
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue[300]!),
+                // Training summary card
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Trainingsübersicht',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[800],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Plan und Tag
-                      _buildInfoRow('Trainingsplan:', trainingPlan.name),
-                      const SizedBox(height: 8),
-                      _buildInfoRow('Trainingstag:', trainingDay.name),
-                      const SizedBox(height: 16),
-
-                      // Statistiken
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
                               Icons.fitness_center,
-                              'Übungen',
-                              '$totalExercises',
-                              Colors.purple[700]!,
-                              Colors.purple[100]!,
+                              color: Theme.of(context).primaryColor,
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatCard(
-                              Icons.repeat,
-                              'Sätze',
-                              '$totalSets',
-                              Colors.green[700]!,
-                              Colors.green[100]!,
+                            const SizedBox(width: 12),
+                            Text(
+                              'Trainingsübersicht',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+
+                        const Divider(height: 32),
+
+                        // Plan and Day info
+                        _buildInfoRow(
+                          context,
+                          Icons.assignment_outlined,
+                          'Trainingsplan:',
+                          trainingPlan.name,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          context,
+                          Icons.event_outlined,
+                          'Trainingstag:',
+                          trainingDay.name,
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Statistics cards
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                context,
+                                Icons.fitness_center,
+                                'Übungen',
+                                totalExercises.toString(),
+                                Colors.indigo,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildStatCard(
+                                context,
+                                Icons.replay,
+                                'Sätze',
+                                totalSets.toString(),
+                                Colors.teal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 32),
 
-                // Motivationstext
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.amber[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber[300]!),
+                const SizedBox(height: 24),
+
+                // Motivation card
+                Card(
+                  elevation: 2,
+                  color: Colors.amber[50],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.emoji_events,
-                          color: Colors.amber[700], size: 32),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          'Großartige Arbeit! Regelmäßiges Training ist der Schlüssel zum Erfolg.',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.amber[900],
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.emoji_events,
+                            color: Colors.white,
+                            size: 28,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            'Großartige Arbeit! Regelmäßiges Training ist der Schlüssel zum Erfolg.',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.amber[900],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 32),
 
-                // NEU: Button zum Speichern der Änderungen, falls es Änderungen gibt und noch nicht gefragt wurde
+                // Save changes button if needed
                 if (sessionProvider.hasModifiedExercises &&
-                    !_hasAskedForChanges) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
+                    !_hasAskedForChanges)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: ElevatedButton.icon(
                       onPressed: () {
                         _showSaveChangesDialog(sessionProvider);
@@ -320,28 +445,40 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
                         });
                       },
                       icon: const Icon(Icons.save),
-                      label: const Text('Änderungen an Übungen speichern'),
+                      label: const Text(
+                        'Änderungen im Trainingsplan speichern',
+                        style: TextStyle(fontSize: 15),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
+                        backgroundColor: Colors.teal[600],
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        minimumSize: const Size(double.infinity, 50),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                ],
 
-                // Zurück-Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _returnToHomeScreen(context),
-                    icon: const Icon(Icons.home),
-                    label: const Text('Zum Startbildschirm'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
+                // Return to home button
+                ElevatedButton.icon(
+                  onPressed: () => _returnToHomeScreen(context),
+                  icon: const Icon(Icons.home),
+                  label: const Text(
+                    'Zum Startbildschirm',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    minimumSize: const Size(double.infinity, 50),
                   ),
                 ),
               ],
@@ -352,42 +489,58 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(
+      BuildContext context, IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
+        Icon(icon, size: 20, color: Colors.grey[700]),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
-          ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildStatCard(
+    BuildContext context,
     IconData icon,
     String label,
     String value,
-    Color iconColor,
-    Color backgroundColor,
+    MaterialColor color,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
+        color: color[50],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -396,10 +549,18 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.1),
+                  spreadRadius: 0,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
-            child: Icon(icon, color: iconColor),
+            child: Icon(icon, color: color[700], size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -413,9 +574,9 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: iconColor,
+                  color: color[700],
                 ),
               ),
             ],
@@ -426,15 +587,14 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget> {
   }
 
   void _returnToHomeScreen(BuildContext context) {
-    // Navigation zum Home-Screen (Index 0)
+    // Update navigation index and return to main screen
     final navigationProvider =
         Provider.of<NavigationProvider>(context, listen: false);
     navigationProvider.setCurrentIndex(0);
 
-    // Navigiere zurück zur MainScreen
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const MainScreen()),
-      (route) => false, // Entferne alle vorherigen Routen
+      (route) => false,
     );
   }
 }

@@ -1,5 +1,7 @@
 // lib/screens/training_session_screen/training_session_screen.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/training_plan_screen/training_plan_model.dart';
@@ -27,23 +29,31 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   bool _initialized = false;
-  bool _startupComplete = false; // Flag für abgeschlossene Initialisierung
-  bool _isLoading = true; // Neuer Flag für den Ladezustand
-  int _lastKnownExerciseIndex = 0; // Zum Tracking des Übungswechsels
+  bool _startupComplete = false;
+  bool _isLoading = true;
+  int _lastKnownExerciseIndex = 0;
+  bool _showExerciseDetails = false;
+  bool _isNavigatingExercises = false;
 
   @override
   void initState() {
     super.initState();
-    // TabController wird später initialisiert, da wir die Anzahl der Tabs
-    // erst nach dem Laden der Session kennen
 
-    // Initialisiere die Session mit Verzögerung, um sicherzustellen, dass alle Provider bereit sind
+    // Set system UI overlay style to match the aesthetic
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeSessionWithDelay();
     });
   }
 
-  // Methode, die die Initialisierung mit Verzögerung durchführt
   Future<void> _initializeSessionWithDelay() async {
     try {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -57,16 +67,13 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       final sessionProvider =
           Provider.of<TrainingSessionProvider>(context, listen: false);
 
-      // Starte die Trainingssession
       await sessionProvider.startTrainingSession(
           widget.trainingPlan, widget.dayIndex);
 
-      // Jetzt können wir den TabController initialisieren
       if (mounted) {
         _initializeTabController();
       }
 
-      // Markiere den Startup als abgeschlossen
       if (mounted) {
         setState(() {
           _startupComplete = true;
@@ -97,7 +104,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
             vsync: this,
           );
 
-          // Listener für Tab-Änderungen
           _tabController!.addListener(() {
             if (!_tabController!.indexIsChanging) {
               sessionProvider.selectExercise(_tabController!.index);
@@ -115,184 +121,661 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   @override
   void dispose() {
     _tabController?.dispose();
+
+    // Reset system UI to default when leaving
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
+    );
+
     super.dispose();
   }
 
-  // Hilfsmethode, um den Tab zur aktuellen Übung zu synchronisieren
   void _syncTabWithCurrentExercise(TrainingSessionProvider sessionProvider) {
     if (_tabController == null) return;
 
-    // Überprüfen ob der TabController initialisiert ist und der Index gültig ist
     if (sessionProvider.currentExerciseIndex < _tabController!.length) {
-      // Wechsle immer zum Tab der aktuellen Übung
       if (_tabController!.index != sessionProvider.currentExerciseIndex) {
-        // Animierte Navigation zum Tab
         _tabController!.animateTo(sessionProvider.currentExerciseIndex);
         _lastKnownExerciseIndex = sessionProvider.currentExerciseIndex;
       }
     }
   }
 
+  void _toggleExerciseDetails() {
+    setState(() {
+      _showExerciseDetails = !_showExerciseDetails;
+
+      // Provide haptic feedback for the toggle
+      HapticFeedback.lightImpact();
+    });
+  }
+
+  void _toggleExerciseNavigation() {
+    setState(() {
+      _isNavigatingExercises = !_isNavigatingExercises;
+
+      // Provide haptic feedback for the toggle
+      HapticFeedback.mediumImpact();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Überprüfen, ob noch geladen wird
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Training wird vorbereitet...')),
-        body: const Center(
+        backgroundColor: Colors.white,
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Training wird vorbereitet...'),
+              SizedBox(
+                width: 64,
+                height: 64,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[800]!),
+                ),
+              ),
+              const SizedBox(height: 40),
+              Text(
+                'Dein Training wird vorbereitet',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[800],
+                  letterSpacing: -0.5,
+                ),
+              ),
             ],
           ),
         ),
       );
     }
 
-    // Überprüfen, ob der Startup abgeschlossen ist
     if (!_startupComplete) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Training wird vorbereitet...')),
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[800]!),
+          ),
+        ),
       );
     }
 
-    // Consumer direkt verwenden, ohne MultiProvider
     return Consumer<TrainingSessionProvider>(
       builder: (context, sessionProvider, child) {
-        // Prüfe, ob das Training abgeschlossen ist
         if (sessionProvider.isTrainingCompleted) {
           return const TrainingCompletionWidget();
         }
 
-        // Prüfe, ob die Daten geladen wurden
         if (!_initialized || sessionProvider.exercises.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Training wird geladen...')),
-            body: const Center(child: CircularProgressIndicator()),
+            backgroundColor: Colors.white,
+            body: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[800]!),
+              ),
+            ),
           );
         }
 
-        // Wichtig: Synchronisiere den TabController mit dem aktuellen Übungsindex
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _syncTabWithCurrentExercise(sessionProvider);
         });
 
+        final bool allSetsCompleted =
+            sessionProvider.areAllSetsCompletedForCurrentExercise();
+        final bool hasMoreExercises =
+            sessionProvider.hasMoreExercisesAfterCurrent();
+        final exercise =
+            sessionProvider.exercises[sessionProvider.currentExerciseIndex];
+
         return Scaffold(
-          appBar: AppBar(
-            title: Text('Training: ${sessionProvider.trainingDay?.name ?? ""}'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => _showExitConfirmation(context),
-            ),
-            bottom: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabs: sessionProvider.exercises.asMap().entries.map((entry) {
-                final index = entry.key;
-                final exercise = entry.value;
-                final isCompleted = sessionProvider.isExerciseCompleted(index);
+          backgroundColor: Colors.white,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(
+                kToolbarHeight + 40), // Erhöhte Höhe für die Tabs
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: _isNavigatingExercises
+                    ? ImageFilter.blur(sigmaX: 10, sigmaY: 10)
+                    : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  color: _isNavigatingExercises
+                      ? Colors.white.withOpacity(0.8)
+                      : Colors.white,
+                  child: SafeArea(
+                    bottom: false,
+                    child: SizedBox(
+                      // SizedBox mit fester Höhe für stabiles Layout
+                      height: kToolbarHeight + 40,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Main App Bar
+                          Container(
+                            height: kToolbarHeight,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Row(
+                              children: [
+                                // Close button
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 22),
+                                  onPressed: () =>
+                                      _showExitConfirmation(context),
+                                  splashRadius: 20,
+                                ),
 
-                return Tab(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Status-Icon (abgeschlossen, aktiv, ausstehend)
-                      Icon(
-                        isCompleted
-                            ? Icons.check_circle
-                            : index == sessionProvider.currentExerciseIndex
-                                ? Icons.play_circle_fill
-                                : Icons.circle_outlined,
-                        size: 16,
-                        color: isCompleted
-                            ? Colors.green
-                            : index == sessionProvider.currentExerciseIndex
-                                ? Colors.blue
-                                : Colors.grey,
+                                // Title
+                                Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      sessionProvider.trainingDay?.name ?? "",
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Exercise detail toggle
+                                IconButton(
+                                  icon: Icon(
+                                    _showExerciseDetails
+                                        ? Icons.info
+                                        : Icons.info_outline,
+                                    size: 22,
+                                    color: _showExerciseDetails
+                                        ? Colors.black
+                                        : Colors.grey[700],
+                                  ),
+                                  onPressed: _toggleExerciseDetails,
+                                  splashRadius: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Exercise navigation indicator
+                          GestureDetector(
+                            onTap: _toggleExerciseNavigation,
+                            child: Container(
+                              height: 40,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _isNavigatingExercises
+                                      ? Colors.grey[100]
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      exercise.name,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[900],
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      _isNavigatingExercises
+                                          ? Icons.arrow_drop_up
+                                          : Icons.arrow_drop_down,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      // Übungsname
-                      Text(exercise.name),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          body: Column(
-            children: [
-              // Timer-Widget, wenn in Erholungspause
-              if (sessionProvider.isResting)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: RestTimerWidget(),
-                ),
-
-              // Haupt-Übungsbereich
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Verhindert Wischen zwischen Tabs
-                  children: List.generate(
-                    sessionProvider.exercises.length,
-                    (index) => ExerciseTabWidget(exerciseIndex: index),
+                    ),
                   ),
                 ),
               ),
+            ),
+          ),
+          body: Stack(
+            children: [
+              // Main content
+              Column(
+                children: [
+                  // Rest timer if active
+                  if (sessionProvider.isResting)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0, vertical: 16.0),
+                      child: RestTimerWidget(),
+                    ),
+
+                  // Exercise content
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: List.generate(
+                        sessionProvider.exercises.length,
+                        (index) => ExerciseTabWidget(
+                          exerciseIndex: index,
+                          showDetails: _showExerciseDetails,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Exercise navigation overlay
+              if (_isNavigatingExercises)
+                _buildExerciseNavigationOverlay(sessionProvider),
             ],
           ),
-          // Fortschrittsanzeige am unteren Rand
-          bottomNavigationBar: LinearProgressIndicator(
-            value: sessionProvider.trainingProgress,
-            minHeight: 8,
-            backgroundColor: Colors.grey[200],
-            valueColor:
-                AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+          bottomNavigationBar: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            height: _isNavigatingExercises ? 0 : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Progress indicator
+                LinearProgressIndicator(
+                  value: sessionProvider.trainingProgress,
+                  minHeight: 2,
+                  backgroundColor: Colors.grey[200],
+                  color: Colors.black,
+                ),
+
+                // Action button
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 16.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: allSetsCompleted
+                            ? () {
+                                HapticFeedback.mediumImpact();
+                                sessionProvider.completeCurrentExercise();
+                              }
+                            : () {
+                                HapticFeedback.mediumImpact();
+                                sessionProvider.completeCurrentSet();
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          allSetsCompleted
+                              ? (hasMoreExercises
+                                  ? 'Nächste Übung'
+                                  : 'Training abschließen')
+                              : 'Satz abschließen',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  // Dialog zur Bestätigung des Trainingsabbruchs
+  Widget _buildExerciseNavigationOverlay(
+      TrainingSessionProvider sessionProvider) {
+    return GestureDetector(
+      onTap: _toggleExerciseNavigation,
+      child: Container(
+        color: Colors.transparent,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            color: Colors.white.withOpacity(0.85),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 70),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Navigation title
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Text(
+                      'Wechsle zu',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[800],
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+
+                  // Exercise list
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: sessionProvider.exercises.length,
+                      itemBuilder: (context, index) {
+                        final exercise = sessionProvider.exercises[index];
+                        final isCurrentExercise =
+                            index == sessionProvider.currentExerciseIndex;
+                        final isCompleted =
+                            sessionProvider.isExerciseCompleted(index);
+
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            _tabController?.animateTo(index);
+                            sessionProvider.selectExercise(index);
+
+                            // Close navigation with slight delay
+                            Future.delayed(const Duration(milliseconds: 200),
+                                _toggleExerciseNavigation);
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 16),
+                            decoration: BoxDecoration(
+                              color: isCurrentExercise
+                                  ? Colors.grey[100]
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isCurrentExercise
+                                    ? Colors.black
+                                    : Colors.grey[200]!,
+                                width: isCurrentExercise ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                // Status icon
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isCompleted
+                                        ? Colors.green[100]
+                                        : isCurrentExercise
+                                            ? Colors.black
+                                            : Colors.grey[200],
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      isCompleted
+                                          ? Icons.check
+                                          : isCurrentExercise
+                                              ? Icons.play_arrow
+                                              : Icons.fitness_center,
+                                      size: 18,
+                                      color: isCompleted
+                                          ? Colors.green[700]
+                                          : isCurrentExercise
+                                              ? Colors.white
+                                              : Colors.grey[500],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+
+                                // Exercise details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        exercise.name,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: isCurrentExercise
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                          color: isCurrentExercise
+                                              ? Colors.black
+                                              : Colors.grey[800],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' • ${exercise.secondaryMuscleGroup}' : ''}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Status text
+                                if (isCompleted)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green[50],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      'Abgeschlossen',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.green[700],
+                                      ),
+                                    ),
+                                  )
+                                else if (isCurrentExercise)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Text(
+                                      'Aktuell',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  // Close button
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: TextButton(
+                      onPressed: _toggleExerciseNavigation,
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.grey[100],
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Schließen',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showExitConfirmation(BuildContext context) {
-    showDialog(
+    HapticFeedback.mediumImpact();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Training beenden?'),
-        content: const Text(
-            'Möchtest du das Training wirklich beenden? Dein Fortschritt wird gespeichert.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Abbrechen'),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                // Speichere das Training vor dem Beenden
-                final sessionProvider = Provider.of<TrainingSessionProvider>(
-                    context,
-                    listen: false);
-
-                // Training als abgeschlossen markieren, auch wenn es nicht vollständig ist
-                sessionProvider.completeTraining();
-              } catch (e) {
-                print('Fehler beim Beenden des Trainings: $e');
-              }
-
-              Navigator.of(context).pop(); // Dialog schließen
-              Navigator.of(context).pop(); // Zum vorherigen Screen zurückkehren
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Training beenden'),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Training beenden?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Dein Fortschritt wird gespeichert, aber das Training wird als nicht abgeschlossen markiert.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        final sessionProvider =
+                            Provider.of<TrainingSessionProvider>(context,
+                                listen: false);
+                        sessionProvider.completeTraining();
+                      } catch (e) {
+                        print('Fehler beim Beenden des Trainings: $e');
+                      }
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[50],
+                      foregroundColor: Colors.red[700],
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Training beenden',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Weiter trainieren',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

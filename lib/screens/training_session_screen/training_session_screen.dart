@@ -122,10 +122,11 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   void _syncTabWithCurrentExercise(TrainingSessionProvider sessionProvider) {
     if (_tabController == null) return;
 
-    if (_tabController!.index != sessionProvider.currentExerciseIndex &&
-        sessionProvider.currentExerciseIndex < _tabController!.length) {
-      if (_lastKnownExerciseIndex != sessionProvider.currentExerciseIndex) {
-        // Nur animieren, wenn sich der Index tatsächlich geändert hat
+    // Überprüfen ob der TabController initialisiert ist und der Index gültig ist
+    if (sessionProvider.currentExerciseIndex < _tabController!.length) {
+      // Wechsle immer zum Tab der aktuellen Übung
+      if (_tabController!.index != sessionProvider.currentExerciseIndex) {
+        // Animierte Navigation zum Tab
         _tabController!.animateTo(sessionProvider.currentExerciseIndex);
         _lastKnownExerciseIndex = sessionProvider.currentExerciseIndex;
       }

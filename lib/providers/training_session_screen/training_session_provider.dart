@@ -424,18 +424,39 @@ class TrainingSessionProvider with ChangeNotifier {
   int findNextOpenExerciseIndex() {
     if (_trainingDay == null) return 0;
 
-    // Zuerst versuchen wir, ab dem aktuellen Index eine offene Übung zu finden
+    // Sammle alle nicht abgeschlossenen Übungen außer der aktuellen
+    List<int> openExercisesIndices = [];
     for (int i = 0; i < _trainingDay!.exercises.length; i++) {
-      // Überspringe den aktuellen Index, da wir nach der nächsten offenen suchen
-      if (i == _currentExerciseIndex) continue;
-
-      // Wenn diese Übung noch nicht abgeschlossen ist, zurückgeben
-      if (_exerciseCompletionStatus[i] != true) {
-        return i;
+      if (_exerciseCompletionStatus[i] != true && i != _currentExerciseIndex) {
+        openExercisesIndices.add(i);
       }
     }
 
-    // Wenn alle anderen abgeschlossen sind, nutze den aktuellen Index
+    // Wenn keine offenen Übungen gefunden wurden, aktuellen Index zurückgeben
+    if (openExercisesIndices.isEmpty) {
+      return _currentExerciseIndex;
+    }
+
+    // Priorisiere die Trainingsreihenfolge:
+    // 1. Wenn es offene Übungen vor der aktuellen gibt, nimm die erste davon
+    List<int> previousOpenExercises =
+        openExercisesIndices.where((i) => i < _currentExerciseIndex).toList();
+    if (previousOpenExercises.isNotEmpty) {
+      // Sortiere in aufsteigender Reihenfolge und nimm die erste offene Übung
+      previousOpenExercises.sort();
+      return previousOpenExercises.first;
+    }
+
+    // 2. Ansonsten nimm die erste offene Übung nach der aktuellen
+    List<int> nextOpenExercises =
+        openExercisesIndices.where((i) => i > _currentExerciseIndex).toList();
+    if (nextOpenExercises.isNotEmpty) {
+      // Sortiere in aufsteigender Reihenfolge und nimm die erste
+      nextOpenExercises.sort();
+      return nextOpenExercises.first;
+    }
+
+    // Sollte nie erreicht werden, da wir bereits überprüft haben, ob openExercisesIndices leer ist
     return _currentExerciseIndex;
   }
 

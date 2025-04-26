@@ -229,8 +229,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
             const SizedBox(height: 16),
           ],
 
-          // Normale Action-Buttons für aktuelle Sätze
-          _buildActionButtons(sessionProvider, progressionProvider),
+          // Normale Action-Buttons für aktuelle Sätze (nur wenn nicht alle Sätze abgeschlossen sind)
+          _buildActionButtons(
+              sessionProvider, progressionProvider, allSetsCompleted),
         ],
       ),
     );
@@ -478,7 +479,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
 
   // Action-Buttons für die aktuelle Übung
   Widget _buildActionButtons(TrainingSessionProvider sessionProvider,
-      ProgressionManagerProvider progressionProvider) {
+      ProgressionManagerProvider progressionProvider, bool allSetsCompleted) {
     final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
     final activeSet = sessionProvider.currentExerciseSets.firstWhere(
       (s) => s.id == activeSetId,
@@ -518,48 +519,50 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
 
         const SizedBox(height: 16),
 
-        // Bestehende Buttons in einer Reihe
-        Row(
-          children: [
-            // Empfehlung übernehmen Button
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: recommendation != null
-                    ? () {
-                        sessionProvider.applyProgressionRecommendation(
-                          activeSetId,
-                          recommendation['kg'] as double?,
-                          recommendation['wiederholungen'] as int?,
-                          recommendation['rir'] as int?,
-                        );
-                      }
-                    : null,
-                icon: const Icon(Icons.auto_fix_high),
-                label: const Text('Empfehlung übernehmen'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
+        // Bestehende Buttons in einer Reihe - nur anzeigen wenn nicht alle Sätze abgeschlossen sind
+        if (!allSetsCompleted) ...[
+          Row(
+            children: [
+              // Empfehlung übernehmen Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: recommendation != null
+                      ? () {
+                          sessionProvider.applyProgressionRecommendation(
+                            activeSetId,
+                            recommendation['kg'] as double?,
+                            recommendation['wiederholungen'] as int?,
+                            recommendation['rir'] as int?,
+                          );
+                        }
+                      : null,
+                  icon: const Icon(Icons.auto_fix_high),
+                  label: const Text('Empfehlung übernehmen'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            // Satz abschließen Button
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  sessionProvider.completeCurrentSet();
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('Satz abschließen'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+              // Satz abschließen Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    sessionProvider.completeCurrentSet();
+                  },
+                  icon: const Icon(Icons.check),
+                  label: const Text('Satz abschließen'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }

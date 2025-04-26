@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import '../../services/progression_manager_screen/one_rm_calculator_service.dart';
+import '../shared/weight_wheel_input_widget.dart';
+import '../shared/repetition_wheel_input_widget.dart';
+import '../shared/rir_wheel_input_widget.dart';
 
 class ExerciseSetWidget extends StatelessWidget {
   final TrainingSetModel set;
@@ -42,7 +45,7 @@ class ExerciseSetWidget extends StatelessWidget {
 
     // Kompaktere Karte mit eleganter Gestaltung
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -145,58 +148,74 @@ class ExerciseSetWidget extends StatelessWidget {
             ),
           ),
 
-          // Eingabefelder in einer Zeile
+          // Spinner-Widgets für Werte
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Gewicht
+                // Gewicht-Spinner
                 Expanded(
-                  flex: 2,
-                  child: _buildCompactField(
-                    context,
-                    'Gewicht',
-                    set.kg.toString(),
-                    'kg',
-                    isActive,
-                    (value) => onValueChanged('kg', value),
-                    recommendation != null
+                  flex: 3,
+                  child: WeightSpinnerWidget(
+                    value: set.kg,
+                    onChanged: (value) => onValueChanged('kg', value),
+                    isEnabled: isActive && !isCompleted,
+                    isCompleted: isCompleted,
+                    recommendationValue: recommendation != null
                         ? recommendation!['kg']?.toString()
                         : null,
+                    onRecommendationApplied: (value) {
+                      // Hier ist die kritische Stelle: Wir müssen sicherstellen, dass der exakte Wert übergeben wird
+                      double? parsedValue = double.tryParse(value);
+                      if (parsedValue != null) {
+                        // Direkt den exakten Wert setzen, ohne Rundung
+                        onValueChanged('kg', parsedValue);
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 10),
 
-                // Wiederholungen
+                // Wiederholungen-Spinner
                 Expanded(
-                  flex: 1,
-                  child: _buildCompactField(
-                    context,
-                    'Wdh',
-                    set.wiederholungen.toString(),
-                    '',
-                    isActive,
-                    (value) => onValueChanged('wiederholungen', value),
-                    recommendation != null
+                  flex: 2,
+                  child: RepetitionSpinnerWidget(
+                    value: set.wiederholungen,
+                    onChanged: (value) =>
+                        onValueChanged('wiederholungen', value),
+                    isEnabled: isActive && !isCompleted,
+                    isCompleted: isCompleted,
+                    recommendationValue: recommendation != null
                         ? recommendation!['wiederholungen']?.toString()
                         : null,
+                    onRecommendationApplied: (value) {
+                      int? parsedValue = int.tryParse(value);
+                      if (parsedValue != null) {
+                        onValueChanged('wiederholungen', parsedValue);
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 10),
 
-                // RIR
+                // RIR-Spinner
                 Expanded(
-                  flex: 1,
-                  child: _buildCompactField(
-                    context,
-                    'RIR',
-                    set.rir.toString(),
-                    '',
-                    isActive,
-                    (value) => onValueChanged('rir', value),
-                    recommendation != null
+                  flex: 2,
+                  child: RirSpinnerWidget(
+                    value: set.rir,
+                    onChanged: (value) => onValueChanged('rir', value),
+                    isEnabled: isActive && !isCompleted,
+                    isCompleted: isCompleted,
+                    recommendationValue: recommendation != null
                         ? recommendation!['rir']?.toString()
                         : null,
+                    onRecommendationApplied: (value) {
+                      int? parsedValue = int.tryParse(value);
+                      if (parsedValue != null) {
+                        onValueChanged('rir', parsedValue);
+                      }
+                    },
                   ),
                 ),
               ],
@@ -258,158 +277,6 @@ class ExerciseSetWidget extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-
-  // Kompakteres Eingabefeld für bessere Platznutzung
-  Widget _buildCompactField(
-    BuildContext context,
-    String label,
-    String value,
-    String suffix,
-    bool isEnabled,
-    Function(String) onChanged,
-    String? recommendationValue,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Label mit Recommendation-Badge
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
-            ),
-
-            // Empfehlungs-Badge
-            if (isEnabled && recommendationValue != null)
-              GestureDetector(
-                onTap: () {
-                  onChanged(recommendationValue);
-                  HapticFeedback.selectionClick();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.purple[50],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.arrow_upward,
-                        size: 8,
-                        color: Colors.purple[700],
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        recommendationValue,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.purple[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-
-        const SizedBox(height: 4),
-
-        // Eingabefeld
-        Container(
-          height: 44,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isEnabled
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: TextField(
-            controller: TextEditingController(text: value),
-            keyboardType:
-                TextInputType.numberWithOptions(decimal: suffix == 'kg'),
-            textAlign: TextAlign.center,
-            enabled: isEnabled,
-            onChanged: (newValue) {
-              onChanged(newValue);
-              HapticFeedback.selectionClick();
-            },
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isEnabled
-                  ? Colors.black
-                  : isCompleted
-                      ? Colors.green[700]
-                      : Colors.grey[400],
-            ),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 10,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: isEnabled
-                  ? Colors.white
-                  : isCompleted
-                      ? Colors.green[50]
-                      : Colors.grey[50],
-              suffixText: suffix,
-              suffixStyle: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Colors.black,
-                  width: 1.5,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: isCompleted ? Colors.green[200]! : Colors.grey[200]!,
-                  width: 1,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

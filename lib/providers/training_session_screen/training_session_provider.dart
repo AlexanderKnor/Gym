@@ -269,33 +269,66 @@ class TrainingSessionProvider with ChangeNotifier {
         if (value is String && value.isEmpty) {
           // Leere Werte während der Bearbeitung zulassen
         } else {
-          final newValue = double.tryParse(value.toString()) ?? currentSet.kg;
-          updatedSet = currentSet.copyWith(kg: newValue);
-          updatedSets[setIndex] = updatedSet;
-          _exerciseSets[_currentExerciseIndex] = updatedSets;
+          // Verbesserte Wertebehandlung für double
+          double? newValue;
+          if (value is double) {
+            newValue = value;
+          } else {
+            newValue = double.tryParse(value.toString());
+          }
+
+          if (newValue != null) {
+            _log('Aktualisiere Gewicht: von ${currentSet.kg} zu $newValue');
+            updatedSet = currentSet.copyWith(kg: newValue);
+            updatedSets[setIndex] = updatedSet;
+            _exerciseSets[_currentExerciseIndex] = updatedSets;
+          }
         }
         break;
+
       case 'wiederholungen':
         if (value is String && value.isEmpty) {
           // Leere Werte während der Bearbeitung zulassen
         } else {
-          final newValue =
-              int.tryParse(value.toString()) ?? currentSet.wiederholungen;
-          updatedSet = currentSet.copyWith(wiederholungen: newValue);
-          updatedSets[setIndex] = updatedSet;
-          _exerciseSets[_currentExerciseIndex] = updatedSets;
+          // Verbesserte Wertebehandlung für int
+          int? newValue;
+          if (value is int) {
+            newValue = value;
+          } else {
+            newValue = int.tryParse(value.toString());
+          }
+
+          if (newValue != null) {
+            _log(
+                'Aktualisiere Wiederholungen: von ${currentSet.wiederholungen} zu $newValue');
+            updatedSet = currentSet.copyWith(wiederholungen: newValue);
+            updatedSets[setIndex] = updatedSet;
+            _exerciseSets[_currentExerciseIndex] = updatedSets;
+          }
         }
         break;
+
       case 'rir':
         if (value is String && value.isEmpty) {
           // Leere Werte während der Bearbeitung zulassen
         } else {
-          final newValue = int.tryParse(value.toString()) ?? currentSet.rir;
-          updatedSet = currentSet.copyWith(rir: newValue);
-          updatedSets[setIndex] = updatedSet;
-          _exerciseSets[_currentExerciseIndex] = updatedSets;
+          // Verbesserte Wertebehandlung für int
+          int? newValue;
+          if (value is int) {
+            newValue = value;
+          } else {
+            newValue = int.tryParse(value.toString());
+          }
+
+          if (newValue != null) {
+            _log('Aktualisiere RIR: von ${currentSet.rir} zu $newValue');
+            updatedSet = currentSet.copyWith(rir: newValue);
+            updatedSets[setIndex] = updatedSet;
+            _exerciseSets[_currentExerciseIndex] = updatedSets;
+          }
         }
         break;
+
       default:
         return; // Ungültiges Feld, nichts tun
     }

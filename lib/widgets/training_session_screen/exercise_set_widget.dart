@@ -43,10 +43,12 @@ class ExerciseSetWidget extends StatelessWidget {
     return Card(
       elevation: 1,
       margin: const EdgeInsets.only(bottom: 8),
+      // Leicht angepasste Farben für bessere Sichtbarkeit auch bei abgeschlossenen Sätzen
       color: isActive
           ? Colors.blue[50]
           : isCompleted
-              ? Colors.green[50]
+              ? Colors.green[
+                  50] // Grünlicher Hintergrund für abgeschlossene Sätze bleibt
               : Colors.grey[50],
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -82,11 +84,12 @@ class ExerciseSetWidget extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    // Statustexte angepasst
                     Text(
                       isActive
                           ? 'Aktueller Satz'
                           : isCompleted
-                              ? 'Satz abgeschlossen'
+                              ? 'Satz ${set.id} - Abgeschlossen'
                               : 'Satz ${set.id}',
                       style: TextStyle(
                         fontSize: 14,
@@ -122,7 +125,7 @@ class ExerciseSetWidget extends StatelessWidget {
                     'Gewicht',
                     set.kg.toString(),
                     'kg',
-                    isActive,
+                    isActive, // Nur aktiv, wenn der Satz aktiv ist
                     (value) => onValueChanged('kg', value),
                     recommendation != null
                         ? recommendation!['kg']?.toString()
@@ -139,7 +142,7 @@ class ExerciseSetWidget extends StatelessWidget {
                     'Wdh.',
                     set.wiederholungen.toString(),
                     '',
-                    isActive,
+                    isActive, // Nur aktiv, wenn der Satz aktiv ist
                     (value) => onValueChanged('wiederholungen', value),
                     recommendation != null
                         ? recommendation!['wiederholungen']?.toString()
@@ -156,7 +159,7 @@ class ExerciseSetWidget extends StatelessWidget {
                     'RIR',
                     set.rir.toString(),
                     '',
-                    isActive,
+                    isActive, // Nur aktiv, wenn der Satz aktiv ist
                     (value) => onValueChanged('rir', value),
                     recommendation != null
                         ? recommendation!['rir']?.toString()
@@ -182,6 +185,7 @@ class ExerciseSetWidget extends StatelessWidget {
     );
   }
 
+  // Leicht angepasste visuelle Darstellung für Textfelder bei abgeschlossenen Sätzen
   Widget _buildInputField(
     BuildContext context,
     String label,
@@ -215,16 +219,20 @@ class ExerciseSetWidget extends StatelessWidget {
             ),
             suffixText: suffix,
             isDense: true,
-            enabled: isEnabled,
+            enabled: isEnabled, // Nur aktiv, wenn isEnabled true ist
+            // Füge einen deutlicheren Hintergrund für abgeschlossene, nicht aktive Sätze hinzu
+            fillColor: !isEnabled ? Colors.green[50] : null,
+            filled: !isEnabled,
           ),
           onChanged: onChanged,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: isEnabled ? Colors.black : Colors.grey[600],
+            // Bessere Farbe für abgeschlossene Sätze
+            color: isEnabled ? Colors.black : Colors.green[700],
           ),
         ),
-        if (isActive && recommendationValue != null) ...[
+        if (isEnabled && recommendationValue != null) ...[
           const SizedBox(height: 4),
           Row(
             children: [

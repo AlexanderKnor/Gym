@@ -26,6 +26,8 @@ class TrainingSessionProvider with ChangeNotifier {
   Map<int, List<TrainingSetModel>> _exerciseSets = {};
   Map<int, int> _activeSetByExercise = {};
   Map<int, bool> _exerciseCompletionStatus = {};
+  Map<int, int> _lastCompletedSetIndexByExercise =
+      {}; // Map für zuletzt abgeschlossene Sätze
 
   // Timer-Status
   bool _isResting = false;
@@ -166,6 +168,7 @@ class TrainingSessionProvider with ChangeNotifier {
     _exerciseSets = {};
     _activeSetByExercise = {};
     _exerciseCompletionStatus = {};
+    _lastCompletedSetIndexByExercise = {};
     _isResting = false;
     _restTimeRemaining = 0;
     _isPaused = false;
@@ -265,6 +268,76 @@ class TrainingSessionProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Reaktiviert den letzten abgeschlossenen Satz einer Übung
+  void reactivateLastCompletedSet(int exerciseIndex) {
+    if (_trainingDay == null || _currentSession == null) return;
+
+    final sets = _exerciseSets[exerciseIndex];
+    if (sets == null || sets.isEmpty) return;
+
+    // Finde den letzten abgeschlossenen Satz
+    int lastCompletedSetIndex = -1;
+    for (int i = sets.length - 1; i >= 0; i--) {
+      if (sets[i].abgeschlossen) {
+        lastCompletedSetIndex = i;
+        break;
+      }
+    }
+
+    // Wenn kein abgeschlossener Satz gefunden wurde, nichts tun
+    if (lastCompletedSetIndex == -1) return;
+
+    // Setze den letzten abgeschlossenen Satz zurück auf aktiv
+    final updatedSets = List<TrainingSetModel>.from(sets);
+    updatedSets[lastCompletedSetIndex] =
+        updatedSets[lastCompletedSetIndex].copyWith(abgeschlossen: false);
+    _exerciseSets[exerciseIndex] = updatedSets;
+
+    // Setze den aktiven Satz auf den reaktivierten Satz
+    _activeSetByExercise[exerciseIndex] = lastCompletedSetIndex;
+
+    // Prüfe, ob noch abgeschlossene Sätze vorhanden sind
+    bool stillHasCompletedSets = false;
+    for (final set in updatedSets) {
+      if (set.abgeschlossen) {
+        stillHasCompletedSets = true;
+        break;
+      }
+    }
+
+    // Setze den Übungs-Abschluss-Status zurück, wenn keine abgeschlossenen Sätze mehr vorhanden sind
+    if (!stillHasCompletedSets) {
+      _exerciseCompletionStatus[exerciseIndex] = false;
+    }
+
+    // Aktualisiere die Session im Speicher (nicht in der Datenbank!)
+    final updatedExercises =
+        List<ExerciseHistoryModel>.from(_currentSession!.exercises);
+    if (exerciseIndex < updatedExercises.length) {
+      final currentExerciseHistory = updatedExercises[exerciseIndex];
+      final updatedSetsHistory =
+          List<SetHistoryModel>.from(currentExerciseHistory.sets);
+
+      // Entferne den letzten Satz, wenn er bereits existiert
+      if (lastCompletedSetIndex < updatedSetsHistory.length) {
+        updatedSetsHistory.removeAt(lastCompletedSetIndex);
+      }
+
+      // Aktualisiere die Übungshistorie
+      updatedExercises[exerciseIndex] = currentExerciseHistory.copyWith(
+        sets: updatedSetsHistory,
+        isCompleted: stillHasCompletedSets,
+      );
+    }
+
+    // Aktualisiere die Session im Speicher
+    _currentSession = _currentSession!.copyWith(
+      exercises: updatedExercises,
+    );
+
+    notifyListeners();
+  }
+
   // Markiert den aktuellen Satz als abgeschlossen und bereitet den nächsten Satz vor
   Future<void> completeCurrentSet() async {
     if (_trainingDay == null || _currentSession == null) return;
@@ -279,6 +352,9 @@ class TrainingSessionProvider with ChangeNotifier {
     final updatedSets = List<TrainingSetModel>.from(sets);
     updatedSets[setIndex] = updatedSets[setIndex].copyWith(abgeschlossen: true);
     _exerciseSets[exerciseIndex] = updatedSets;
+
+    // Speichere den zuletzt abgeschlossenen Satz
+    _lastCompletedSetIndexByExercise[exerciseIndex] = setIndex;
 
     // Aktuellen Satz zur Übungshistorie hinzufügen
     final exercise = _trainingDay!.exercises[exerciseIndex];
@@ -325,6 +401,9 @@ class TrainingSessionProvider with ChangeNotifier {
       // Alle Sätze für diese Übung sind abgeschlossen
       _exerciseCompletionStatus[exerciseIndex] = true;
 
+      // WICHTIG: Setze den aktiven Satz auf einen ungültigen Wert, um zu signalisieren, dass kein Satz mehr aktiv ist
+      _activeSetByExercise[exerciseIndex] = -1;
+
       // Aktualisiere die Übungshistorie als abgeschlossen
       final updatedExercises =
           List<ExerciseHistoryModel>.from(_currentSession!.exercises);
@@ -336,14 +415,89 @@ class TrainingSessionProvider with ChangeNotifier {
       _currentSession = _currentSession!.copyWith(
         exercises: updatedExercises,
       );
-
-      // Warte kurz und wechsle dann zur nächsten Übung
-      Future.delayed(const Duration(seconds: 1), () {
-        moveToNextExercise();
-      });
     }
 
     notifyListeners();
+  }
+
+  // Findet den Index der nächsten offenen Übung (nicht abgeschlossen)
+  int findNextOpenExerciseIndex() {
+    if (_trainingDay == null) return 0;
+
+    // Zuerst versuchen wir, ab dem aktuellen Index eine offene Übung zu finden
+    for (int i = 0; i < _trainingDay!.exercises.length; i++) {
+      // Überspringe den aktuellen Index, da wir nach der nächsten offenen suchen
+      if (i == _currentExerciseIndex) continue;
+
+      // Wenn diese Übung noch nicht abgeschlossen ist, zurückgeben
+      if (_exerciseCompletionStatus[i] != true) {
+        return i;
+      }
+    }
+
+    // Wenn alle anderen abgeschlossen sind, nutze den aktuellen Index
+    return _currentExerciseIndex;
+  }
+
+  // Schließt die aktuelle Übung ab und wechselt zur nächsten oder beendet das Training
+  void completeCurrentExercise() {
+    if (_trainingDay == null) return;
+
+    // Setze den Übungsstatus als abgeschlossen
+    _exerciseCompletionStatus[_currentExerciseIndex] = true;
+
+    // Aktualisiere die Session im Speicher
+    if (_currentSession != null) {
+      final updatedExercises =
+          List<ExerciseHistoryModel>.from(_currentSession!.exercises);
+      if (_currentExerciseIndex < updatedExercises.length) {
+        updatedExercises[_currentExerciseIndex] =
+            updatedExercises[_currentExerciseIndex].copyWith(
+          isCompleted: true,
+        );
+
+        _currentSession = _currentSession!.copyWith(
+          exercises: updatedExercises,
+        );
+      }
+    }
+
+    // Finde die nächste offene Übung
+    int nextOpenExerciseIndex = findNextOpenExerciseIndex();
+
+    // Prüfe, ob es noch offene Übungen gibt
+    bool allExercisesCompleted = _trainingDay!.exercises.length ==
+        _exerciseCompletionStatus.values.where((completed) => completed).length;
+
+    if (allExercisesCompleted) {
+      // Alle Übungen sind abgeschlossen, beende das Training
+      _isTrainingCompleted = true;
+
+      if (_currentSession != null) {
+        _currentSession = _currentSession!.copyWith(isCompleted: true);
+      }
+    } else {
+      // Es gibt noch offene Übungen, wechsle zur nächsten
+      _currentExerciseIndex = nextOpenExerciseIndex;
+    }
+
+    notifyListeners();
+  }
+
+  // Methode zur Prüfung, ob eine bestimmte Übung abgeschlossen ist
+  bool isExerciseCompleted(int exerciseIndex) {
+    if (exerciseIndex < 0 ||
+        _trainingDay == null ||
+        exerciseIndex >= _trainingDay!.exercises.length) {
+      return false;
+    }
+
+    return _exerciseCompletionStatus[exerciseIndex] ?? false;
+  }
+
+  // Getter, der ein Map mit allen Übungs-Completion-Status zurückgibt (für das UI)
+  Map<int, bool> get exerciseCompletionStatuses {
+    return Map<int, bool>.from(_exerciseCompletionStatus);
   }
 
   // Startet den Ruhe-Timer für den aktuellen Satz
@@ -697,6 +851,20 @@ class TrainingSessionProvider with ChangeNotifier {
     }
 
     return totalCompletedExercises / _trainingDay!.exercises.length;
+  }
+
+  // Prüft, ob alle Sätze der aktuellen Übung abgeschlossen sind
+  bool areAllSetsCompletedForCurrentExercise() {
+    final sets = _exerciseSets[_currentExerciseIndex];
+    if (sets == null || sets.isEmpty) return false;
+
+    return sets.every((set) => set.abgeschlossen);
+  }
+
+  // Prüft, ob es noch weitere Übungen nach der aktuellen gibt
+  bool hasMoreExercisesAfterCurrent() {
+    if (_trainingDay == null) return false;
+    return _currentExerciseIndex < _trainingDay!.exercises.length - 1;
   }
 
   @override

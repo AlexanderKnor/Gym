@@ -149,6 +149,14 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final bool isExerciseCompleted =
         sessionProvider.isCurrentExerciseCompleted && isActiveExercise;
 
+    // Prüfen, ob alle Sätze abgeschlossen sind, um "Übung abschließen" Button anzuzeigen
+    final bool allSetsCompleted = isActiveExercise &&
+        sessionProvider.areAllSetsCompletedForCurrentExercise();
+
+    // Prüfen, ob weitere Übungen vorhanden sind
+    final bool hasMoreExercises =
+        sessionProvider.hasMoreExercisesAfterCurrent();
+
     // Wenn sich der aktive Satz ändert und ein Profil existiert, berechne die Empfehlung
     if (isActiveExercise && _exerciseProfileId != null) {
       final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
@@ -168,48 +176,74 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
           _buildExerciseHeader(exercise, progressionProvider),
           const SizedBox(height: 16),
 
-          // Information-Banner, wenn die Übung abgeschlossen ist
-          if (isExerciseCompleted)
-            Container(
+          // Satz-Liste - Immer anzeigen, unabhängig vom Übungsstatus
+          Expanded(
+            child: _buildSetsList(
+                sessionProvider, progressionProvider, isActiveExercise),
+          ),
+
+          // Action-Buttons anzeigen
+          const SizedBox(height: 16),
+
+          // Wenn alle Sätze abgeschlossen sind, zeige den "Übung abschließen" Button
+          if (allSetsCompleted) ...[
+            SizedBox(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[300]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green[700]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Übung abgeschlossen! Weiter zur nächsten Übung...',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                ],
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  sessionProvider.completeCurrentExercise();
+                },
+                icon: const Icon(Icons.done_all),
+                label: Text(hasMoreExercises
+                    ? 'Übung abschließen und zur nächsten Übung'
+                    : 'Training abschließen'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ),
-
-          if (isExerciseCompleted) const SizedBox(height: 16),
-
-          // Satz-Liste
-          if (!isExerciseCompleted)
-            Expanded(
-              child: _buildSetsList(
-                  sessionProvider, progressionProvider, isActiveExercise),
-            ),
-
-          // Action-Buttons nur anzeigen, wenn dieser Tab aktiv ist
-          if (isActiveExercise && !isExerciseCompleted) ...[
             const SizedBox(height: 16),
-            _buildActionButtons(sessionProvider, progressionProvider),
           ],
+
+          // Button zum Reaktivieren des letzten Satzes, wenn mind. ein Satz abgeschlossen ist
+          if (isActiveExercise &&
+              _hasCompletedSets(sessionProvider.currentExerciseSets)) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  sessionProvider
+                      .reactivateLastCompletedSet(widget.exerciseIndex);
+                },
+                icon: const Icon(Icons.replay),
+                label: const Text('Letzten Satz reaktivieren'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Normale Action-Buttons für aktuelle Sätze
+          _buildActionButtons(sessionProvider, progressionProvider),
         ],
       ),
     );
+  }
+
+  // Prüft, ob es abgeschlossene Sätze für die aktuelle Übung gibt
+  bool _hasCompletedSets(List<TrainingSetModel> sets) {
+    for (final set in sets) {
+      if (set.abgeschlossen) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Header mit Übungsinformationen
@@ -298,7 +332,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
             const Divider(),
             const SizedBox(height: 8),
 
-            // NEU: Dropdown zur Auswahl des Progressionsprofils
+            // Dropdown zur Auswahl des Progressionsprofils
             Row(
               children: [
                 Icon(Icons.trending_up, size: 16, color: Colors.purple[700]),
@@ -322,7 +356,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  // NEU: Dropdown zur Auswahl des Progressionsprofils
+  // Dropdown zur Auswahl des Progressionsprofils
   Widget _buildProfileDropdown(ProgressionManagerProvider progressionProvider) {
     final profiles = progressionProvider.progressionsProfile;
 
@@ -400,11 +434,18 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final sets = sessionProvider.currentExerciseSets;
     final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
 
+    // Prüfe, ob alle Sätze abgeschlossen sind
+    final allSetsCompleted =
+        sessionProvider.areAllSetsCompletedForCurrentExercise();
+
     return ListView.builder(
       itemCount: sets.length,
       itemBuilder: (context, index) {
         final set = sets[index];
-        final isActiveSet = isActiveExercise && set.id == activeSetId;
+
+        // Ein Satz kann nur aktiv sein, wenn nicht alle Sätze abgeschlossen sind
+        final isActiveSet =
+            isActiveExercise && set.id == activeSetId && !allSetsCompleted;
 
         // Prüfe, ob die Empfehlung angezeigt werden soll
         final showRecommendation = isActiveSet &&
@@ -417,7 +458,10 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
           isActive: isActiveSet,
           isCompleted: set.abgeschlossen,
           onValueChanged: (field, value) {
-            sessionProvider.updateSet(set.id, field, value);
+            // Nur Werte aktualisieren, wenn der Satz aktiv und nicht alle Sätze abgeschlossen sind
+            if (isActiveSet && !allSetsCompleted) {
+              sessionProvider.updateSet(set.id, field, value);
+            }
           },
           // Empfehlungswerte direkt aus dem Set verwenden
           recommendation: showRecommendation

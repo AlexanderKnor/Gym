@@ -29,6 +29,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   bool _initialized = false;
   bool _startupComplete = false; // Flag für abgeschlossene Initialisierung
   bool _isLoading = true; // Neuer Flag für den Ladezustand
+  int _lastKnownExerciseIndex = 0; // Zum Tracking des Übungswechsels
 
   @override
   void initState() {
@@ -70,6 +71,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
         setState(() {
           _startupComplete = true;
           _isLoading = false;
+          _lastKnownExerciseIndex = sessionProvider.currentExerciseIndex;
         });
       }
     } catch (e) {
@@ -116,6 +118,20 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     super.dispose();
   }
 
+  // Hilfsmethode, um den Tab zur aktuellen Übung zu synchronisieren
+  void _syncTabWithCurrentExercise(TrainingSessionProvider sessionProvider) {
+    if (_tabController == null) return;
+
+    if (_tabController!.index != sessionProvider.currentExerciseIndex &&
+        sessionProvider.currentExerciseIndex < _tabController!.length) {
+      if (_lastKnownExerciseIndex != sessionProvider.currentExerciseIndex) {
+        // Nur animieren, wenn sich der Index tatsächlich geändert hat
+        _tabController!.animateTo(sessionProvider.currentExerciseIndex);
+        _lastKnownExerciseIndex = sessionProvider.currentExerciseIndex;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Überprüfen, ob noch geladen wird
@@ -159,6 +175,11 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
           );
         }
 
+        // Wichtig: Synchronisiere den TabController mit dem aktuellen Übungsindex
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _syncTabWithCurrentExercise(sessionProvider);
+        });
+
         return Scaffold(
           appBar: AppBar(
             title: Text('Training: ${sessionProvider.trainingDay?.name ?? ""}'),
@@ -172,7 +193,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               tabs: sessionProvider.exercises.asMap().entries.map((entry) {
                 final index = entry.key;
                 final exercise = entry.value;
-                final isCompleted = sessionProvider.isCurrentExerciseCompleted;
+                final isCompleted = sessionProvider.isExerciseCompleted(index);
 
                 return Tab(
                   child: Row(
@@ -180,13 +201,13 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                     children: [
                       // Status-Icon (abgeschlossen, aktiv, ausstehend)
                       Icon(
-                        index < sessionProvider.currentExerciseIndex
+                        isCompleted
                             ? Icons.check_circle
                             : index == sessionProvider.currentExerciseIndex
                                 ? Icons.play_circle_fill
                                 : Icons.circle_outlined,
                         size: 16,
-                        color: index < sessionProvider.currentExerciseIndex
+                        color: isCompleted
                             ? Colors.green
                             : index == sessionProvider.currentExerciseIndex
                                 ? Colors.blue

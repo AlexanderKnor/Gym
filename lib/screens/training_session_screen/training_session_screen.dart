@@ -159,12 +159,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
           );
         }
 
-        // Wenn der Nutzer in der Ruhephase ist, den Timer anzeigen
-        if (sessionProvider.isResting) {
-          return RestTimerWidget();
-        }
-
-        // Normaler Trainingsmodus
         return Scaffold(
           appBar: AppBar(
             title: Text('Training: ${sessionProvider.trainingDay?.name ?? ""}'),
@@ -207,14 +201,25 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               }).toList(),
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
-            physics:
-                const NeverScrollableScrollPhysics(), // Verhindert Wischen zwischen Tabs
-            children: List.generate(
-              sessionProvider.exercises.length,
-              (index) => ExerciseTabWidget(exerciseIndex: index),
-            ),
+          body: Stack(
+            children: [
+              // TabBarView mit den Übungen
+              TabBarView(
+                controller: _tabController,
+                physics:
+                    const NeverScrollableScrollPhysics(), // Verhindert Wischen zwischen Tabs
+                children: List.generate(
+                  sessionProvider.exercises.length,
+                  (index) => ExerciseTabWidget(exerciseIndex: index),
+                ),
+              ),
+
+              // Timer-Overlay wenn in Erholungspause
+              if (sessionProvider.isResting)
+                Positioned.fill(
+                  child: _buildRestTimerOverlay(context, sessionProvider),
+                ),
+            ],
           ),
           // Fortschrittsanzeige am unteren Rand
           bottomNavigationBar: LinearProgressIndicator(
@@ -226,6 +231,21 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
           ),
         );
       },
+    );
+  }
+
+  // Neues Widget für den Timer als Overlay
+  Widget _buildRestTimerOverlay(
+      BuildContext context, TrainingSessionProvider sessionProvider) {
+    return Container(
+      color: Colors.black.withOpacity(0.7),
+      child: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          child: const RestTimerWidget(),
+        ),
+      ),
     );
   }
 
@@ -243,7 +263,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
             child: const Text('Abbrechen'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               try {
                 // Speichere das Training vor dem Beenden
                 final sessionProvider = Provider.of<TrainingSessionProvider>(

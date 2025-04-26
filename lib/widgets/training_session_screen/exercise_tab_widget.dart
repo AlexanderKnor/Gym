@@ -6,6 +6,7 @@ import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
+import '../../models/progression_manager_screen/progression_profile_model.dart';
 import 'exercise_set_widget.dart';
 import '../../screens/strength_calculator_screen/strength_calculator_screen.dart';
 
@@ -47,25 +48,54 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         Provider.of<ProgressionManagerProvider>(context, listen: false);
 
     // Aktuelle Übung abrufen
-    final exercise = sessionProvider.exercises[widget.exerciseIndex];
+    if (widget.exerciseIndex < sessionProvider.exercises.length) {
+      final exercise = sessionProvider.exercises[widget.exerciseIndex];
 
-    // Speichere die ProfilID für diese Übung
-    if (exercise.progressionProfileId != null &&
-        exercise.progressionProfileId!.isNotEmpty) {
-      setState(() {
-        _exerciseProfileId = exercise.progressionProfileId;
-      });
+      // Speichere die ProfilID für diese Übung
+      if (exercise.progressionProfileId != null &&
+          exercise.progressionProfileId!.isNotEmpty) {
+        setState(() {
+          _exerciseProfileId = exercise.progressionProfileId;
+        });
 
-      // Bei Initialisierung die Progression für den aktiven Satz berechnen
-      if (widget.exerciseIndex == sessionProvider.currentExerciseIndex) {
-        final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
+        // Bei Initialisierung die Progression für den aktiven Satz berechnen
+        if (widget.exerciseIndex == sessionProvider.currentExerciseIndex) {
+          final activeSetId =
+              sessionProvider.getActiveSetIdForCurrentExercise();
 
-        // Einmalig berechnen, wenn ein Profil gesetzt ist
-        if (_exerciseProfileId != null) {
-          sessionProvider.calculateProgressionForSet(widget.exerciseIndex,
-              activeSetId, _exerciseProfileId!, progressionProvider);
+          // Einmalig berechnen, wenn ein Profil gesetzt ist
+          if (_exerciseProfileId != null) {
+            sessionProvider.calculateProgressionForSet(widget.exerciseIndex,
+                activeSetId, _exerciseProfileId!, progressionProvider);
+          }
         }
       }
+    }
+  }
+
+  // Methode zum Ändern des Progressionsprofils
+  void _changeProgressionProfile(String newProfileId) {
+    if (_exerciseProfileId == newProfileId) return;
+
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+    final progressionProvider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+    // Profil im Provider aktualisieren
+    sessionProvider.updateExerciseProgressionProfile(
+        widget.exerciseIndex, newProfileId);
+
+    // Lokalen State aktualisieren
+    setState(() {
+      _exerciseProfileId = newProfileId;
+    });
+
+    // Wenn diese Übung aktiv ist, die Empfehlung neu berechnen
+    if (widget.exerciseIndex == sessionProvider.currentExerciseIndex) {
+      final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
+      sessionProvider.calculateProgressionForSet(
+          widget.exerciseIndex, activeSetId, newProfileId, progressionProvider);
     }
   }
 
@@ -102,13 +132,19 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
 
     final sessionProvider = Provider.of<TrainingSessionProvider>(context);
     final progressionProvider =
-        Provider.of<ProgressionManagerProvider>(context, listen: false);
+        Provider.of<ProgressionManagerProvider>(context);
 
     // Prüfe, ob dieser Tab aktiv ist
     final bool isActiveExercise =
         widget.exerciseIndex == sessionProvider.currentExerciseIndex;
 
     // Die aktuelle Übung aus dem Provider abrufen
+    if (widget.exerciseIndex >= sessionProvider.exercises.length) {
+      return const Center(
+        child: Text('Übung nicht gefunden'),
+      );
+    }
+
     final exercise = sessionProvider.exercises[widget.exerciseIndex];
     final bool isExerciseCompleted =
         sessionProvider.isCurrentExerciseCompleted && isActiveExercise;
@@ -129,7 +165,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Übungs-Header mit Informationen zur Übung
-          _buildExerciseHeader(exercise),
+          _buildExerciseHeader(exercise, progressionProvider),
           const SizedBox(height: 16),
 
           // Information-Banner, wenn die Übung abgeschlossen ist
@@ -177,7 +213,8 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   }
 
   // Header mit Übungsinformationen
-  Widget _buildExerciseHeader(ExerciseModel exercise) {
+  Widget _buildExerciseHeader(
+      ExerciseModel exercise, ProgressionManagerProvider progressionProvider) {
     return Card(
       elevation: 1,
       child: Padding(
@@ -257,43 +294,78 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
               ],
             ),
 
-            // Anzeige des aktiven Profils, wenn vorhanden
-            if (_exerciseProfileId != null) ...[
-              const SizedBox(height: 8),
-              const Divider(),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.trending_up, size: 16, color: Colors.purple[700]),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Progressionsprofil: ',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[700],
-                    ),
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // NEU: Dropdown zur Auswahl des Progressionsprofils
+            Row(
+              children: [
+                Icon(Icons.trending_up, size: 16, color: Colors.purple[700]),
+                const SizedBox(width: 8),
+                const Text(
+                  'Progressionsprofil:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  Consumer<ProgressionManagerProvider>(
-                    builder: (context, provider, _) {
-                      final profil = provider.progressionsProfile.firstWhere(
-                        (p) => p.id == _exerciseProfileId,
-                        orElse: () => provider.progressionsProfile.first,
-                      );
-                      return Text(
-                        profil.name,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple[800],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildProfileDropdown(progressionProvider),
+                ),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  // NEU: Dropdown zur Auswahl des Progressionsprofils
+  Widget _buildProfileDropdown(ProgressionManagerProvider progressionProvider) {
+    final profiles = progressionProvider.progressionsProfile;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.purple[300]!),
+        color: Colors.purple[50],
+      ),
+      child: DropdownButton<String>(
+        value: _exerciseProfileId,
+        isExpanded: true,
+        underline:
+            const SizedBox(), // Entfernt die standardmäßige Unterstreichung
+        hint: const Text('Profil wählen'),
+        icon: Icon(Icons.arrow_drop_down, color: Colors.purple[700]),
+        style: TextStyle(
+          color: Colors.purple[800],
+          fontWeight: FontWeight.bold,
+        ),
+        items: profiles.map((profile) {
+          return DropdownMenuItem<String>(
+            value: profile.id,
+            child: Text(
+              profile.name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: _exerciseProfileId == profile.id
+                    ? Colors.purple[800]
+                    : Colors.black87,
+                fontWeight: _exerciseProfileId == profile.id
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: (profileId) {
+          if (profileId != null) {
+            _changeProgressionProfile(profileId);
+          }
+        },
       ),
     );
   }

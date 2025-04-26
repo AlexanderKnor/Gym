@@ -2,67 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
-import '../../services/training_session_screen/training_timer_service.dart';
 
-class RestTimerWidget extends StatefulWidget {
+class RestTimerWidget extends StatelessWidget {
   const RestTimerWidget({Key? key}) : super(key: key);
 
-  @override
-  State<RestTimerWidget> createState() => _RestTimerWidgetState();
-}
-
-class _RestTimerWidgetState extends State<RestTimerWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  final TrainingTimerService _timerService = TrainingTimerService();
-  bool _isPaused = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Animationscontroller für den Countdown-Kreis
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    );
-
-    // Timer-Service initialisieren
-    _initializeTimer();
-  }
-
-  void _initializeTimer() {
-    final sessionProvider =
-        Provider.of<TrainingSessionProvider>(context, listen: false);
-    final exercise = sessionProvider.currentExercise;
-
-    if (exercise != null) {
-      final restPeriod = exercise.restPeriodSeconds;
-
-      // Callbacks für den Timer definieren
-      _timerService.onTick = (seconds) {
-        setState(() {
-          // Animation aktualisieren
-          final progress = seconds / restPeriod;
-          _animationController.value = progress;
-        });
-      };
-
-      _timerService.onComplete = () {
-        // Timer ist abgelaufen, zurück zum Training
-        sessionProvider.skipRestTimer();
-      };
-
-      // Timer starten
-      _timerService.startTimer(restPeriod);
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _timerService.dispose();
-    super.dispose();
+  // Timer-Zeit formatieren (MM:SS)
+  String _formatTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -72,122 +20,101 @@ class _RestTimerWidgetState extends State<RestTimerWidget>
     final restTimeRemaining = sessionProvider.restTimeRemaining;
 
     if (exercise == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const SizedBox.shrink();
     }
 
-    // Restzeit für Animation updaten
+    // Restzeit für Animation berechnen
     final totalRestTime = exercise.restPeriodSeconds;
     final progress = restTimeRemaining / totalRestTime;
 
-    return Scaffold(
-      body: Center(
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: restTimeRemaining <= 3 ? Colors.red[300]! : Colors.blue[300]!,
+          width: 2,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Übungsname
-            Text(
-              'Pause nach:',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              exercise.name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Timer-Anzeige
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                // Kreisförmiger Fortschrittsbalken
-                SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 10,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      restTimeRemaining <= 3
-                          ? Colors.red
-                          : Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-
-                // Zeit-Anzeige
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      TrainingTimerService.formatTime(restTimeRemaining),
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Sekunden',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-
-            // Buttons
+            // Timer-Titel
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Pause/Fortsetzen-Button
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _isPaused = !_isPaused;
-                      _timerService.togglePause();
-                    });
-                  },
-                  icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
-                  label: Text(_isPaused ? 'Fortsetzen' : 'Pause'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    minimumSize: const Size(120, 48),
-                  ),
+                Icon(
+                  Icons.timer,
+                  color: Colors.blue[700],
+                  size: 24,
                 ),
-                const SizedBox(width: 16),
-
-                // Überspringen-Button
-                ElevatedButton.icon(
-                  onPressed: () {
-                    sessionProvider.skipRestTimer();
-                  },
-                  icon: const Icon(Icons.skip_next),
-                  label: const Text('Überspringen'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    minimumSize: const Size(120, 48),
+                const SizedBox(width: 8),
+                Text(
+                  'Erholungspause',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
+            // Timer-Kreis mit Animation
+            SizedBox(
+              height: 140,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Kreisförmiger Fortschrittsbalken
+                  SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 10,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        restTimeRemaining <= 3
+                            ? Colors.red
+                            : Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+
+                  // Zeit-Anzeige
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTime(restTimeRemaining),
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Sekunden',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             // Nächster Satz Info
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(8),
@@ -207,8 +134,8 @@ class _RestTimerWidgetState extends State<RestTimerWidget>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 28,
-                        height: 28,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
                           color: Colors.blue,
                           shape: BoxShape.circle,
@@ -217,7 +144,7 @@ class _RestTimerWidgetState extends State<RestTimerWidget>
                           child: Text(
                             '${sessionProvider.activeSetIndex + 1}',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -228,7 +155,7 @@ class _RestTimerWidgetState extends State<RestTimerWidget>
                       Text(
                         'Satz ${sessionProvider.activeSetIndex + 1} von ${sessionProvider.currentExerciseSets.length}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -236,6 +163,27 @@ class _RestTimerWidgetState extends State<RestTimerWidget>
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Aktionsbuttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => sessionProvider.skipRestTimer(),
+                    icon: const Icon(Icons.skip_next),
+                    label: const Text('Pause überspringen'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

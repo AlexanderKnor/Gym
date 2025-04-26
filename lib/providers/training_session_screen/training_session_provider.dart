@@ -1,6 +1,7 @@
 // lib/providers/training_session_screen/training_session_provider.dart
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/services.dart'; // Für Vibrationsfeedback
 
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
@@ -30,6 +31,7 @@ class TrainingSessionProvider with ChangeNotifier {
   bool _isResting = false;
   int _restTimeRemaining = 0;
   Timer? _restTimer;
+  bool _isPaused = false; // Flag für Timer-Pause
 
   // Training-Status
   bool _isTrainingCompleted = false;
@@ -67,6 +69,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
   bool get isResting => _isResting;
   int get restTimeRemaining => _restTimeRemaining;
+  bool get isPaused => _isPaused;
 
   bool get isTrainingCompleted => _isTrainingCompleted;
 
@@ -165,6 +168,7 @@ class TrainingSessionProvider with ChangeNotifier {
     _exerciseCompletionStatus = {};
     _isResting = false;
     _restTimeRemaining = 0;
+    _isPaused = false;
     _cancelRestTimer();
     _isTrainingCompleted = false;
     _currentSession = null;
@@ -349,6 +353,7 @@ class TrainingSessionProvider with ChangeNotifier {
     // Setze den Timer auf die für die Übung konfigurierte Ruhezeit
     _restTimeRemaining = currentExercise!.restPeriodSeconds;
     _isResting = true;
+    _isPaused = false;
 
     _cancelRestTimer(); // Sicherheitshalber vorherigen Timer abbrechen
 
@@ -356,11 +361,29 @@ class TrainingSessionProvider with ChangeNotifier {
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_restTimeRemaining > 0) {
         _restTimeRemaining--;
+
+        // Vibrieren, wenn nur noch 3 Sekunden übrig sind
+        if (_restTimeRemaining <= 3 && _restTimeRemaining > 0) {
+          try {
+            HapticFeedback.mediumImpact();
+          } catch (e) {
+            // Ignoriere Fehler bei Haptic Feedback
+          }
+        }
+
         notifyListeners();
       } else {
         // Timer ist abgelaufen
         _isResting = false;
         _cancelRestTimer();
+
+        // Starke Vibration, wenn der Timer abgelaufen ist
+        try {
+          HapticFeedback.heavyImpact();
+        } catch (e) {
+          // Ignoriere Fehler bei Haptic Feedback
+        }
+
         notifyListeners();
       }
     });
@@ -368,9 +391,58 @@ class TrainingSessionProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Pausiert oder setzt den Timer fort
+  void toggleRestTimer() {
+    if (_isResting) {
+      if (_isPaused) {
+        // Timer fortsetzen
+        _isPaused = false;
+
+        // Neuen Timer starten
+        _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (_restTimeRemaining > 0) {
+            _restTimeRemaining--;
+
+            // Vibrieren, wenn nur noch 3 Sekunden übrig sind
+            if (_restTimeRemaining <= 3 && _restTimeRemaining > 0) {
+              try {
+                HapticFeedback.mediumImpact();
+              } catch (e) {
+                // Ignoriere Fehler bei Haptic Feedback
+              }
+            }
+
+            notifyListeners();
+          } else {
+            // Timer ist abgelaufen
+            _isResting = false;
+            _isPaused = false;
+            _cancelRestTimer();
+
+            // Starke Vibration, wenn der Timer abgelaufen ist
+            try {
+              HapticFeedback.heavyImpact();
+            } catch (e) {
+              // Ignoriere Fehler bei Haptic Feedback
+            }
+
+            notifyListeners();
+          }
+        });
+      } else {
+        // Timer pausieren
+        _isPaused = true;
+        _cancelRestTimer();
+      }
+
+      notifyListeners();
+    }
+  }
+
   // Bricht den Ruhe-Timer ab
   void skipRestTimer() {
     _isResting = false;
+    _isPaused = false;
     _restTimeRemaining = 0;
     _cancelRestTimer();
     notifyListeners();
@@ -545,6 +617,54 @@ class TrainingSessionProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       print('Fehler beim Anwenden der Kraftrechner-Werte: $e');
+    }
+  }
+
+  // Neue Methode: Progressionsprofil einer Übung während der Trainingseinheit aktualisieren
+  void updateExerciseProgressionProfile(
+      int exerciseIndex, String newProfileId) {
+    try {
+      if (_trainingDay == null || _currentSession == null) return;
+
+      if (exerciseIndex < 0 || exerciseIndex >= _trainingDay!.exercises.length)
+        return;
+
+      // Aktualisiere das Profil in der aktuellen Session (ExerciseHistoryModel)
+      final updatedExercises =
+          List<ExerciseHistoryModel>.from(_currentSession!.exercises);
+      if (exerciseIndex < updatedExercises.length) {
+        updatedExercises[exerciseIndex] =
+            updatedExercises[exerciseIndex].copyWith(
+          progressionProfileId: newProfileId,
+        );
+
+        _currentSession = _currentSession!.copyWith(
+          exercises: updatedExercises,
+        );
+      }
+
+      // Wenn die aktive Übung betroffen ist, setze die Empfehlungen zurück
+      if (exerciseIndex == _currentExerciseIndex) {
+        final activeSetIndex = _activeSetByExercise[exerciseIndex] ?? 0;
+        final sets = _exerciseSets[exerciseIndex];
+
+        if (sets != null && activeSetIndex < sets.length) {
+          final updatedSets = List<TrainingSetModel>.from(sets);
+          // Setze die Empfehlung für den aktiven Satz zurück
+          updatedSets[activeSetIndex] = updatedSets[activeSetIndex].copyWith(
+            empfehlungBerechnet: false,
+            empfKg: null,
+            empfWiederholungen: null,
+            empfRir: null,
+          );
+
+          _exerciseSets[exerciseIndex] = updatedSets;
+        }
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print('Fehler beim Aktualisieren des Progressionsprofils: $e');
     }
   }
 

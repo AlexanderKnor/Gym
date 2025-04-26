@@ -201,24 +201,27 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               }).toList(),
             ),
           ),
-          body: Stack(
+          body: Column(
             children: [
-              // TabBarView mit den Übungen
-              TabBarView(
-                controller: _tabController,
-                physics:
-                    const NeverScrollableScrollPhysics(), // Verhindert Wischen zwischen Tabs
-                children: List.generate(
-                  sessionProvider.exercises.length,
-                  (index) => ExerciseTabWidget(exerciseIndex: index),
+              // Timer-Widget, wenn in Erholungspause
+              if (sessionProvider.isResting)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RestTimerWidget(),
+                ),
+
+              // Haupt-Übungsbereich
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics:
+                      const NeverScrollableScrollPhysics(), // Verhindert Wischen zwischen Tabs
+                  children: List.generate(
+                    sessionProvider.exercises.length,
+                    (index) => ExerciseTabWidget(exerciseIndex: index),
+                  ),
                 ),
               ),
-
-              // Timer-Overlay wenn in Erholungspause
-              if (sessionProvider.isResting)
-                Positioned.fill(
-                  child: _buildRestTimerOverlay(context, sessionProvider),
-                ),
             ],
           ),
           // Fortschrittsanzeige am unteren Rand
@@ -231,21 +234,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
           ),
         );
       },
-    );
-  }
-
-  // Neues Widget für den Timer als Overlay
-  Widget _buildRestTimerOverlay(
-      BuildContext context, TrainingSessionProvider sessionProvider) {
-    return Container(
-      color: Colors.black.withOpacity(0.7),
-      child: Center(
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          child: const RestTimerWidget(),
-        ),
-      ),
     );
   }
 

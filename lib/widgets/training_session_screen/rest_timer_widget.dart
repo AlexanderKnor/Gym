@@ -28,8 +28,8 @@ class RestTimerWidget extends StatelessWidget {
     final progress = restTimeRemaining / totalRestTime;
 
     return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 16),
+      elevation: 4,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
@@ -38,152 +38,91 @@ class RestTimerWidget extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        padding: const EdgeInsets.all(12),
+        child: Row(
           children: [
-            // Timer-Titel
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.timer,
-                  color: Colors.blue[700],
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Erholungspause',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[800],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
             // Timer-Kreis mit Animation
             SizedBox(
-              height: 140,
+              width: 70,
+              height: 70,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Kreisförmiger Fortschrittsbalken
-                  SizedBox(
-                    width: 140,
-                    height: 140,
-                    child: CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 10,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        restTimeRemaining <= 3
-                            ? Colors.red
-                            : Theme.of(context).primaryColor,
-                      ),
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 8,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      restTimeRemaining <= 3
+                          ? Colors.red
+                          : Theme.of(context).primaryColor,
                     ),
                   ),
-
                   // Zeit-Anzeige
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
+                  Text(
+                    _formatTime(restTimeRemaining),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Mittelsektion mit Infos
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        _formatTime(restTimeRemaining),
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Icon(
+                        Icons.timer,
+                        color: Colors.blue[700],
+                        size: 16,
                       ),
+                      const SizedBox(width: 4),
                       Text(
-                        'Sekunden',
+                        'Erholungspause',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[800],
                         ),
                       ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Nächster Satz Info
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Nächster Satz:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${sessionProvider.activeSetIndex + 1}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Satz ${sessionProvider.activeSetIndex + 1} von ${sessionProvider.currentExerciseSets.length}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Nächster Satz: Satz ${sessionProvider.activeSetIndex + 1} von ${sessionProvider.currentExerciseSets.length}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
+            // Pause/Play Button
+            IconButton(
+              onPressed: () => sessionProvider.toggleRestTimer(),
+              icon: Icon(
+                sessionProvider.isPaused ? Icons.play_arrow : Icons.pause,
+              ),
+              tooltip: sessionProvider.isPaused ? 'Fortsetzen' : 'Pausieren',
+              color: Theme.of(context).primaryColor,
+            ),
 
-            // Aktionsbuttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => sessionProvider.skipRestTimer(),
-                    icon: const Icon(Icons.skip_next),
-                    label: const Text('Pause überspringen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
+            // Skip Button
+            IconButton(
+              onPressed: () => sessionProvider.skipRestTimer(),
+              icon: const Icon(Icons.skip_next),
+              tooltip: 'Pause überspringen',
+              color: Colors.orange,
             ),
           ],
         ),

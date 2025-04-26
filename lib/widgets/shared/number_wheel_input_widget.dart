@@ -49,6 +49,9 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
       _displayValues; // Die im Spinner angezeigten Werte (inkl. benutzerdefinierter Wert)
   bool _isCustomValue = false; // Flag für benutzerdefinierten Wert
 
+  // Neue Variable, um den letzten empfohlenen Wert zu speichern
+  double? _lastRecommendedValue;
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +96,30 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
         _displayValues.insert(insertIndex, widget.value);
       } else {
         _isCustomValue = false;
+      }
+    }
+
+    // WICHTIG: Wenn ein empfohlener Wert gespeichert ist, diesen immer einschließen
+    if (_lastRecommendedValue != null) {
+      bool recommendedValueExists = false;
+      double tolerance = 0.001;
+
+      for (double value in _displayValues) {
+        if ((_lastRecommendedValue! - value).abs() < tolerance) {
+          recommendedValueExists = true;
+          break;
+        }
+      }
+
+      if (!recommendedValueExists) {
+        // Empfohlenen Wert an der richtigen Position einfügen (sortiert)
+        int insertIndex = 0;
+        while (insertIndex < _displayValues.length &&
+            _displayValues[insertIndex] < _lastRecommendedValue!) {
+          insertIndex++;
+        }
+
+        _displayValues.insert(insertIndex, _lastRecommendedValue!);
       }
     }
   }
@@ -154,34 +181,43 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
       // Versuche, den ScrollController zu aktualisieren, wenn er existiert
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
-          _scrollController.animateToItem(
-            _selectedIndex,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
+          _scrollController.jumpToItem(
+              _selectedIndex); // WICHTIG: jumpToItem statt animateToItem verwenden
         }
       });
     }
   }
 
-  // Verarbeitet einen Empfehlungswert und behandelt ihn als benutzerdefinierten Wert, wenn nötig
+  // Verarbeitet einen Empfehlungswert und behandelt ihn als benutzerdefinierten Wert
   void _handleRecommendationValue(String recommendationText) {
     if (widget.onRecommendationApplied != null) {
-      // Zuerst den Callback ausführen, damit die Parent-Komponente den Wert aktualisieren kann
-      widget.onRecommendationApplied!(recommendationText);
+      // Parsen des empfohlenen Werts
+      double? recommendedValue = double.tryParse(recommendationText);
+      if (recommendedValue != null) {
+        // Empfohlenen Wert für spätere Verwendung speichern
+        _lastRecommendedValue = recommendedValue;
 
-      // Dann einen Vibrations-Feedback geben
-      HapticFeedback.selectionClick();
+        // Zuerst die Liste neu generieren, um den empfohlenen Wert einzufügen
+        setState(() {
+          _generateDisplayValues();
+        });
 
-      // Nach kurzer Verzögerung die angezeigte Liste aktualisieren, um den neuen Wert einzufügen
-      Future.delayed(const Duration(milliseconds: 50), () {
-        if (mounted) {
+        // Parent-Callback ausführen, damit der Wert auch dort aktualisiert wird
+        widget.onRecommendationApplied!(recommendationText);
+
+        // Aktualisiere die angezeigte Position sofort ohne Animation
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           setState(() {
-            _generateDisplayValues();
-            _updateValueOnWheel();
+            _selectedIndex = _findValueIndex(recommendedValue);
+            if (_scrollController.hasClients) {
+              _scrollController.jumpToItem(_selectedIndex);
+            }
           });
-        }
-      });
+        });
+
+        // Vibrations-Feedback
+        HapticFeedback.selectionClick();
+      }
     }
   }
 
@@ -242,21 +278,30 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
       // Nur Min/Max-Grenzen anwenden, keine Schrittrundung für manuelle Eingaben
       newValue = newValue.clamp(widget.min, widget.max);
 
+      // Als benutzerdefinierten Wert merken
+      _lastRecommendedValue = newValue;
+
       // Dialog schließen
       Navigator.pop(dialogContext);
 
       // Wert anwenden, wenn er sich geändert hat
       if (newValue != widget.value) {
+        // Werte neu generieren für die Anzeige
+        setState(() {
+          _generateDisplayValues();
+        });
+
+        // Parent-Widget informieren
         widget.onChanged(newValue);
 
-        // Nach kurzer Verzögerung die Werte neu generieren für die Anzeige
-        Future.delayed(const Duration(milliseconds: 50), () {
-          if (mounted) {
-            setState(() {
-              _generateDisplayValues();
-              _updateValueOnWheel();
-            });
-          }
+        // Aktualisiere die Position sofort
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            _selectedIndex = _findValueIndex(newValue!);
+            if (_scrollController.hasClients) {
+              _scrollController.jumpToItem(_selectedIndex);
+            }
+          });
         });
 
         // Haptic feedback

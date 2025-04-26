@@ -828,6 +828,10 @@ class TrainingSessionProvider with ChangeNotifier {
     final updatedSets = List<TrainingSetModel>.from(sets);
     final currentSet = updatedSets[setIndex];
 
+    // BUGFIX: Sicherstellen, dass exakte Werte (auch Dezimalwerte) direkt übernommen werden
+    _log(
+        'Übernehme Empfehlung: kg=${kg}, wiederholungen=${wiederholungen}, rir=${rir}');
+
     updatedSets[setIndex] = currentSet.copyWith(
       kg: kg ?? currentSet.kg,
       wiederholungen: wiederholungen ?? currentSet.wiederholungen,
@@ -836,6 +840,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
     _exerciseSets[_currentExerciseIndex] = updatedSets;
 
+    // Sofort aktualisieren
     notifyListeners();
   }
 

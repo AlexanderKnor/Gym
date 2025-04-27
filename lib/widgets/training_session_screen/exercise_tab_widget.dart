@@ -389,16 +389,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                   },
                 ),
 
-                // Kraftrechner - nur anzeigen, wenn nicht alle Sätze abgeschlossen sind
-                if (!allSetsCompleted)
-                  _buildActionButton(
-                    icon: Icons.calculate_outlined,
-                    label: 'Kraftrechner öffnen',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _openStrengthCalculator(context);
-                    },
-                  ),
+                // "Kraftrechner öffnen" Option wurde hier entfernt, da sie redundant ist
 
                 const SizedBox(height: 16),
               ],

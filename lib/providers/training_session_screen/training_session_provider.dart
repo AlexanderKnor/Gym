@@ -58,6 +58,10 @@ class TrainingSessionProvider with ChangeNotifier {
   // FIX: Flag für Debug-Logging
   final bool _debugMode = true;
 
+  // Neue Variablen zum Verhindern von wiederholten Updates
+  bool _isUpdatingExerciseConfig = false;
+  bool _isProcessingConfig = false;
+
   // Konstruktor
   TrainingSessionProvider() {
     // Beim Erstellen des Providers wird noch kein Training geladen
@@ -207,6 +211,8 @@ class TrainingSessionProvider with ChangeNotifier {
     _isTrainingCompleted = false;
     _currentSession = null;
     _hasBeenSaved = false;
+    _isUpdatingExerciseConfig = false;
+    _isProcessingConfig = false;
 
     // NEU: Tracking für Übungsänderungen zurücksetzen
     _originalExercises.clear();
@@ -970,120 +976,145 @@ class TrainingSessionProvider with ChangeNotifier {
     return _currentExerciseIndex < _trainingDay!.exercises.length - 1;
   }
 
-  // NEU: Aktualisiert die Übungskonfiguration (Standardsteigerung, Pausenzeit)
+  // ÜBERARBEITETE Methode zur Aktualisierung der Übungskonfiguration
   void updateExerciseConfig(int exerciseIndex, String field, dynamic value) {
-    if (_trainingDay == null ||
-        exerciseIndex < 0 ||
-        exerciseIndex >= _trainingDay!.exercises.length) {
+    // Guard clauses to prevent redundant updates or recursion
+    if (_isUpdatingExerciseConfig || _isProcessingConfig) return;
+    if (_trainingDay == null || _trainingPlan == null) return;
+    if (exerciseIndex < 0 || exerciseIndex >= _trainingDay!.exercises.length)
       return;
-    }
 
-    // Hole die aktuelle Übung
-    final exercise = _trainingDay!.exercises[exerciseIndex];
+    _isUpdatingExerciseConfig = true;
 
-    // Erstelle eine aktualisierte Kopie der Übung basierend auf dem Feld
-    ExerciseModel updatedExercise;
+    try {
+      _log(
+          'Anfrage zur Aktualisierung von $field für Übung $exerciseIndex mit Wert $value');
 
-    switch (field) {
-      case 'standardIncrease':
-        final newValue = double.tryParse(value.toString());
-        if (newValue == null || newValue <= 0) return;
+      // Get the current exercise
+      final currentExercise = _trainingDay!.exercises[exerciseIndex];
+
+      // Parse and validate the new value
+      dynamic newValue;
+
+      if (field == 'standardIncrease') {
+        newValue = double.tryParse(value.toString());
+        if (newValue == null || newValue <= 0) {
+          _isUpdatingExerciseConfig = false;
+          return;
+        }
         _log(
-            'Ändere Standardsteigerung für Übung $exerciseIndex von ${exercise.standardIncrease} auf $newValue');
+            'Ändere Standardsteigerung für Übung $exerciseIndex von ${currentExercise.standardIncrease} auf $newValue');
+      } else if (field == 'restPeriodSeconds') {
+        newValue = int.tryParse(value.toString());
+        if (newValue == null || newValue <= 0) {
+          _isUpdatingExerciseConfig = false;
+          return;
+        }
+        _log(
+            'Ändere Pausenzeit für Übung $exerciseIndex von ${currentExercise.restPeriodSeconds} auf $newValue');
+      } else {
+        // Invalid field
+        _isUpdatingExerciseConfig = false;
+        return;
+      }
 
-        updatedExercise = exercise.copyWith(
+      // Create a new updated exercise with the new value
+      ExerciseModel updatedExercise;
+      if (field == 'standardIncrease') {
+        updatedExercise = currentExercise.copyWith(
           standardIncrease: newValue,
         );
-        break;
-
-      case 'restPeriodSeconds':
-        final newValue = int.tryParse(value.toString());
-        if (newValue == null || newValue <= 0) return;
-        _log(
-            'Ändere Pausenzeit für Übung $exerciseIndex von ${exercise.restPeriodSeconds} auf $newValue');
-
-        updatedExercise = exercise.copyWith(
+      } else {
+        // restPeriodSeconds
+        updatedExercise = currentExercise.copyWith(
           restPeriodSeconds: newValue,
         );
-        break;
+      }
 
-      default:
-        return; // Ungültiges Feld
-    }
-
-    // FIX: Deep copy des _trainingDay und _trainingPlan, damit die UI richtig aktualisiert wird
-    if (_trainingDay != null && _trainingPlan != null) {
-      // 1. Liste der Tage kopieren
-      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
-
-      // 2. Den aktuellen Tag finden und kopieren
-      final currentDay = updatedDays[_dayIndex];
-      final updatedExercises = List<ExerciseModel>.from(currentDay.exercises);
-
-      // 3. Die aktuelle Übung durch die aktualisierte ersetzen
+      // Create safe copies of all the objects to avoid state inconsistencies
+      final updatedExercises =
+          List<ExerciseModel>.from(_trainingDay!.exercises);
       updatedExercises[exerciseIndex] = updatedExercise;
 
-      // 4. Den aktualisierten Tag erstellen
-      final updatedDay = currentDay.copyWith(
+      final updatedDay = _trainingDay!.copyWith(
         exercises: updatedExercises,
       );
 
-      // 5. Den aktualisierten Tag in die Tage-Liste einfügen
+      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
       updatedDays[_dayIndex] = updatedDay;
 
-      // 6. Den aktualisierten Plan erstellen
       final updatedPlan = _trainingPlan!.copyWith(
         days: updatedDays,
       );
 
-      // 7. Die aktualisierten Werte zurück in die Provider-Variablen setzen
+      // Update provider state in a single step
       _trainingPlan = updatedPlan;
       _trainingDay = updatedDay;
-    }
 
-    // Markiere die Übung als geändert
-    _exerciseConfigModified[exerciseIndex] = true;
+      // Mark exercise as modified
+      _exerciseConfigModified[exerciseIndex] = true;
 
-    // FIX: Wenn sich die Pausenzeit ändert und ein Timer aktiv ist, aktualisiere ihn
-    if (field == 'restPeriodSeconds' &&
-        _isResting &&
-        exerciseIndex == _currentExerciseIndex) {
-      // Setze die neue Pausenzeit, wenn die aktuelle Restzeit größer ist als die neue Gesamtzeit
-      if (_restTimeRemaining > updatedExercise.restPeriodSeconds) {
-        _log(
-            'Aktualisiere aktiven Timer von $_restTimeRemaining auf ${updatedExercise.restPeriodSeconds}');
-        _restTimeRemaining = updatedExercise.restPeriodSeconds;
+      // Update timer if the rest period is changed and timer is active
+      if (field == 'restPeriodSeconds' &&
+          _isResting &&
+          exerciseIndex == _currentExerciseIndex) {
+        // Update timer if the current rest time is greater than the new value
+        if (_restTimeRemaining > newValue) {
+          _log(
+              'Aktualisiere aktiven Timer von $_restTimeRemaining auf $newValue');
+          _restTimeRemaining = newValue;
+        }
       }
-    }
 
-    // FIX: Auch UpdateHistoryModel aktualisieren, damit die Änderungen auch in der Session gespeichert werden
-    if (_currentSession != null &&
-        exerciseIndex < _currentSession!.exercises.length) {
-      // Aktualisiere auch die ExerciseHistory
+      // Also update the history model
+      _updateExerciseHistory(exerciseIndex, field, newValue);
+
+      // Delay the notification to avoid rebuilds during processing
+      Future.microtask(() {
+        _isUpdatingExerciseConfig = false;
+        notifyListeners();
+      });
+    } catch (e) {
+      _log('Fehler beim Aktualisieren der Übungskonfiguration: $e');
+      _isUpdatingExerciseConfig = false;
+    }
+  }
+
+  // Helper method to update exercise history
+  void _updateExerciseHistory(int exerciseIndex, String field, dynamic value) {
+    if (_currentSession == null ||
+        exerciseIndex >= _currentSession!.exercises.length) return;
+
+    try {
+      // Get current exercise history
       final updatedSessionExercises =
           List<ExerciseHistoryModel>.from(_currentSession!.exercises);
       final currentExerciseHistory = updatedSessionExercises[exerciseIndex];
 
-      // Kopie mit aktualisierter Konfiguration erstellen
-      final updatedExerciseHistory = currentExerciseHistory.copyWith(
-        standardIncrease: field == 'standardIncrease'
-            ? updatedExercise.standardIncrease
-            : currentExerciseHistory.standardIncrease,
-        restPeriodSeconds: field == 'restPeriodSeconds'
-            ? updatedExercise.restPeriodSeconds
-            : currentExerciseHistory.restPeriodSeconds,
-      );
+      // Create updated copy
+      ExerciseHistoryModel updatedExerciseHistory;
 
-      // Ersetze die alte Version
+      if (field == 'standardIncrease') {
+        updatedExerciseHistory = currentExerciseHistory.copyWith(
+          standardIncrease: value,
+        );
+      } else {
+        // restPeriodSeconds
+        updatedExerciseHistory = currentExerciseHistory.copyWith(
+          restPeriodSeconds: value,
+        );
+      }
+
+      // Replace in the session
       updatedSessionExercises[exerciseIndex] = updatedExerciseHistory;
 
-      // Aktualisiere die Session
+      // Update the session
       _currentSession = _currentSession!.copyWith(
         exercises: updatedSessionExercises,
       );
+    } catch (e) {
+      _log('Fehler beim Aktualisieren der Übungshistorie: $e');
     }
-
-    notifyListeners();
   }
 
   // NEU: Fügt einen Satz zur aktuellen Übung hinzu
@@ -1094,77 +1125,77 @@ class TrainingSessionProvider with ChangeNotifier {
       return;
     }
 
-    // Hole die aktuelle Übung
-    final exercise = _trainingDay!.exercises[_currentExerciseIndex];
+    // Guard against concurrent modifications
+    if (_isProcessingConfig) return;
+    _isProcessingConfig = true;
 
-    // FIX: Deep copy des _trainingDay und _trainingPlan, damit die UI richtig aktualisiert wird
-    if (_trainingDay != null && _trainingPlan != null) {
-      // 1. Aktualisiere die Übung mit erhöhter Satzanzahl
+    try {
+      // Get the current exercise and create a safe copy
+      final exercise = _trainingDay!.exercises[_currentExerciseIndex];
       final updatedExercise = exercise.copyWith(
         numberOfSets: exercise.numberOfSets + 1,
       );
 
-      // 2. Liste der Tage kopieren
-      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
-
-      // 3. Den aktuellen Tag finden und kopieren
-      final currentDay = updatedDays[_dayIndex];
-      final updatedExercises = List<ExerciseModel>.from(currentDay.exercises);
-
-      // 4. Die aktuelle Übung durch die aktualisierte ersetzen
+      // Update training day and plan safely
+      final updatedExercises =
+          List<ExerciseModel>.from(_trainingDay!.exercises);
       updatedExercises[_currentExerciseIndex] = updatedExercise;
 
-      // 5. Den aktualisierten Tag erstellen
-      final updatedDay = currentDay.copyWith(
+      final updatedDay = _trainingDay!.copyWith(
         exercises: updatedExercises,
       );
 
-      // 6. Den aktualisierten Tag in die Tage-Liste einfügen
+      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
       updatedDays[_dayIndex] = updatedDay;
 
-      // 7. Den aktualisierten Plan erstellen
       final updatedPlan = _trainingPlan!.copyWith(
         days: updatedDays,
       );
 
-      // 8. Die aktualisierten Werte zurück in die Provider-Variablen setzen
+      // Update provider state
       _trainingPlan = updatedPlan;
       _trainingDay = updatedDay;
+
+      // Add new set to exercise sets
+      final currentSets = _exerciseSets[_currentExerciseIndex] ?? [];
+      final newSetId = currentSets.length + 1;
+
+      // Use the last set values as template if available
+      double newKg = 0.0;
+      int newReps = 0;
+      int newRir = 0;
+
+      if (currentSets.isNotEmpty) {
+        final lastSet = currentSets.last;
+        newKg = lastSet.kg;
+        newReps = lastSet.wiederholungen;
+        newRir = lastSet.rir;
+      }
+
+      // Create the new set
+      final newSet = TrainingSetModel(
+        id: newSetId,
+        kg: newKg,
+        wiederholungen: newReps,
+        rir: newRir,
+      );
+
+      // Update sets
+      final updatedSets = List<TrainingSetModel>.from(currentSets)..add(newSet);
+      _exerciseSets[_currentExerciseIndex] = updatedSets;
+
+      // Mark as modified
+      _exerciseConfigModified[_currentExerciseIndex] = true;
+
+      _log(
+          'Satz hinzugefügt: Übung $_currentExerciseIndex hat jetzt ${updatedSets.length} Sätze');
+
+      _isProcessingConfig = false;
+      notifyListeners();
+    } catch (e) {
+      _log('Fehler beim Hinzufügen eines Satzes: $e');
+      _isProcessingConfig = false;
     }
-
-    // Füge einen neuen Satz zu den Trainingssätzen hinzu
-    final currentSets = _exerciseSets[_currentExerciseIndex] ?? [];
-    final newSetId = currentSets.length + 1;
-
-    // Wenn es existierende Sätze gibt, verwende die Werte des letzten Satzes als Vorlage
-    double newKg = 0.0;
-    int newReps = 0;
-    int newRir = 0;
-
-    if (currentSets.isNotEmpty) {
-      final lastSet = currentSets.last;
-      newKg = lastSet.kg;
-      newReps = lastSet.wiederholungen;
-      newRir = lastSet.rir;
-    }
-
-    final newSet = TrainingSetModel(
-      id: newSetId,
-      kg: newKg,
-      wiederholungen: newReps,
-      rir: newRir,
-    );
-
-    final updatedSets = List<TrainingSetModel>.from(currentSets)..add(newSet);
-    _exerciseSets[_currentExerciseIndex] = updatedSets;
-
-    // Markiere die Übung als geändert
-    _exerciseConfigModified[_currentExerciseIndex] = true;
-
-    _log(
-        'Satz hinzugefügt: Übung $_currentExerciseIndex hat jetzt ${updatedSets.length} Sätze');
-
-    notifyListeners();
   }
 
   // NEU: Entfernt den letzten nicht abgeschlossenen Satz der aktuellen Übung
@@ -1175,68 +1206,70 @@ class TrainingSessionProvider with ChangeNotifier {
       return false;
     }
 
-    // Hole die aktuelle Übung und ihre Sätze
-    final exercise = _trainingDay!.exercises[_currentExerciseIndex];
-    final sets = _exerciseSets[_currentExerciseIndex] ?? [];
+    // Guard against concurrent modifications
+    if (_isProcessingConfig) return false;
+    _isProcessingConfig = true;
 
-    // Mindestens ein Satz muss bleiben
-    if (sets.length <= 1) {
-      return false;
-    }
+    try {
+      // Get current exercise and sets
+      final exercise = _trainingDay!.exercises[_currentExerciseIndex];
+      final sets = _exerciseSets[_currentExerciseIndex] ?? [];
 
-    // Prüfe, ob der letzte Satz abgeschlossen ist
-    if (sets.last.abgeschlossen) {
-      return false; // Kann abgeschlossenen Satz nicht entfernen
-    }
+      // Validation checks
+      if (sets.length <= 1) {
+        _isProcessingConfig = false;
+        return false; // At least one set must remain
+      }
 
-    // FIX: Deep copy des _trainingDay und _trainingPlan, damit die UI richtig aktualisiert wird
-    if (_trainingDay != null && _trainingPlan != null) {
-      // 1. Aktualisiere die Übung mit verringerter Satzanzahl
+      if (sets.last.abgeschlossen) {
+        _isProcessingConfig = false;
+        return false; // Cannot remove completed set
+      }
+
+      // Update exercise with reduced sets count
       final updatedExercise = exercise.copyWith(
         numberOfSets: exercise.numberOfSets - 1,
       );
 
-      // 2. Liste der Tage kopieren
-      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
-
-      // 3. Den aktuellen Tag finden und kopieren
-      final currentDay = updatedDays[_dayIndex];
-      final updatedExercises = List<ExerciseModel>.from(currentDay.exercises);
-
-      // 4. Die aktuelle Übung durch die aktualisierte ersetzen
+      // Update training day and plan safely
+      final updatedExercises =
+          List<ExerciseModel>.from(_trainingDay!.exercises);
       updatedExercises[_currentExerciseIndex] = updatedExercise;
 
-      // 5. Den aktualisierten Tag erstellen
-      final updatedDay = currentDay.copyWith(
+      final updatedDay = _trainingDay!.copyWith(
         exercises: updatedExercises,
       );
 
-      // 6. Den aktualisierten Tag in die Tage-Liste einfügen
+      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
       updatedDays[_dayIndex] = updatedDay;
 
-      // 7. Den aktualisierten Plan erstellen
       final updatedPlan = _trainingPlan!.copyWith(
         days: updatedDays,
       );
 
-      // 8. Die aktualisierten Werte zurück in die Provider-Variablen setzen
+      // Update provider state
       _trainingPlan = updatedPlan;
       _trainingDay = updatedDay;
+
+      // Remove the last set
+      final updatedSets = List<TrainingSetModel>.from(sets);
+      updatedSets.removeLast();
+      _exerciseSets[_currentExerciseIndex] = updatedSets;
+
+      // Mark as modified
+      _exerciseConfigModified[_currentExerciseIndex] = true;
+
+      _log(
+          'Satz entfernt: Übung $_currentExerciseIndex hat jetzt ${updatedSets.length} Sätze');
+
+      _isProcessingConfig = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _log('Fehler beim Entfernen eines Satzes: $e');
+      _isProcessingConfig = false;
+      return false;
     }
-
-    // Entferne den letzten Satz
-    final updatedSets = List<TrainingSetModel>.from(sets);
-    updatedSets.removeLast();
-    _exerciseSets[_currentExerciseIndex] = updatedSets;
-
-    // Markiere die Übung als geändert
-    _exerciseConfigModified[_currentExerciseIndex] = true;
-
-    _log(
-        'Satz entfernt: Übung $_currentExerciseIndex hat jetzt ${updatedSets.length} Sätze');
-
-    notifyListeners();
-    return true;
   }
 
   // NEU: Speichert Änderungen am Trainingsplan in der Datenbank

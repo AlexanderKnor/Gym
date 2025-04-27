@@ -9,6 +9,8 @@ import '../../models/training_plan_screen/exercise_model.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import 'exercise_set_widget.dart';
 import '../../screens/strength_calculator_screen/strength_calculator_screen.dart';
+import '../../widgets/shared/standard_increment_wheel_widget.dart';
+import '../../widgets/shared/rest_period_wheel_widget.dart';
 
 class ExerciseTabWidget extends StatefulWidget {
   final int exerciseIndex;
@@ -34,6 +36,8 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       TextEditingController();
   final TextEditingController _restTimeController = TextEditingController();
   bool _showAdvancedOptions = false;
+  bool _showStandardIncrementWheel = false;
+  bool _showRestPeriodWheel = false;
 
   @override
   void initState() {
@@ -147,161 +151,21 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  void _showEditExerciseConfigDialog(
-      BuildContext context, String field, String title, String currentValue) {
-    final TextEditingController controller =
-        TextEditingController(text: currentValue);
-    final sessionProvider =
-        Provider.of<TrainingSessionProvider>(context, listen: false);
+  void _toggleStandardIncrementWheel() {
+    setState(() {
+      _showStandardIncrementWheel = !_showStandardIncrementWheel;
+      _showRestPeriodWheel =
+          false; // Schließe den anderen Wheel, falls geöffnet
+      HapticFeedback.selectionClick();
+    });
+  }
 
-    HapticFeedback.selectionClick();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom +
-                MediaQuery.of(context).padding.bottom),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.numberWithOptions(
-                    decimal: field == 'standardIncrease'),
-                autofocus: true,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  labelText: field == 'standardIncrease'
-                      ? 'Wert in kg'
-                      : 'Wert in Sekunden',
-                  hintText:
-                      field == 'standardIncrease' ? 'z.B. 2.5' : 'z.B. 60',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide:
-                        const BorderSide(color: Colors.black, width: 1.5),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 56,
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.grey[100],
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Text(
-                          'Abbrechen',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: SizedBox(
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final value = controller.text;
-                          if (value.isNotEmpty) {
-                            sessionProvider.updateExerciseConfig(
-                                widget.exerciseIndex, field, value);
-                            if (field == 'standardIncrease') {
-                              setState(() {
-                                _standardIncreaseController.text = value;
-                              });
-                            } else if (field == 'restPeriodSeconds') {
-                              setState(() {
-                                _restTimeController.text = value;
-                              });
-                            }
-                            HapticFeedback.mediumImpact();
-                          }
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Text(
-                          'Speichern',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).then((_) {
-      controller.dispose();
+  void _toggleRestPeriodWheel() {
+    setState(() {
+      _showRestPeriodWheel = !_showRestPeriodWheel;
+      _showStandardIncrementWheel =
+          false; // Schließe den anderen Wheel, falls geöffnet
+      HapticFeedback.selectionClick();
     });
   }
 
@@ -388,8 +252,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                     Navigator.pop(context);
                   },
                 ),
-
-                // "Kraftrechner öffnen" Option wurde hier entfernt, da sie redundant ist
 
                 const SizedBox(height: 16),
               ],
@@ -481,10 +343,11 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         children: [
           // Exercise details section - only show if enabled
           if (widget.showDetails)
-            _buildExerciseInfoCard(exercise, progressionProvider),
+            _buildExerciseInfoCard(
+                exercise, progressionProvider, sessionProvider),
 
           // Action Bar - always accessible, even when details are hidden
-          if (isActiveExercise) // Entfernt die Bedingung "!allSetsCompleted"
+          if (isActiveExercise)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Row(
@@ -634,7 +497,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   }
 
   Widget _buildExerciseInfoCard(
-      ExerciseModel exercise, ProgressionManagerProvider progressionProvider) {
+      ExerciseModel exercise,
+      ProgressionManagerProvider progressionProvider,
+      TrainingSessionProvider sessionProvider) {
     return Container(
       margin: const EdgeInsets.fromLTRB(24, 16, 24, 16),
       decoration: BoxDecoration(
@@ -683,24 +548,14 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                         icon: Icons.fitness_center,
                         label: 'Steigerung',
                         value: '${exercise.standardIncrease} kg',
-                        onTap: () => _showEditExerciseConfigDialog(
-                          context,
-                          'standardIncrease',
-                          'Standardsteigerung',
-                          exercise.standardIncrease.toString(),
-                        ),
+                        onTap: _toggleStandardIncrementWheel,
                       ),
                       _buildExerciseDetailItem(
                         context: context,
                         icon: Icons.timer_outlined,
                         label: 'Satzpause',
                         value: '${exercise.restPeriodSeconds} s',
-                        onTap: () => _showEditExerciseConfigDialog(
-                          context,
-                          'restPeriodSeconds',
-                          'Satzpause',
-                          exercise.restPeriodSeconds.toString(),
-                        ),
+                        onTap: _toggleRestPeriodWheel,
                       ),
                       _buildExerciseDetailItem(
                         context: context,
@@ -711,6 +566,30 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                       ),
                     ],
                   ),
+
+                  // Standard Increment Wheel
+                  if (_showStandardIncrementWheel) ...[
+                    const SizedBox(height: 16),
+                    StandardIncrementWheelWidget(
+                      value: exercise.standardIncrease,
+                      onChanged: (value) {
+                        sessionProvider.updateExerciseConfig(
+                            widget.exerciseIndex, 'standardIncrease', value);
+                      },
+                    ),
+                  ],
+
+                  // Rest Period Wheel
+                  if (_showRestPeriodWheel) ...[
+                    const SizedBox(height: 16),
+                    RestPeriodWheelWidget(
+                      value: exercise.restPeriodSeconds,
+                      onChanged: (value) {
+                        sessionProvider.updateExerciseConfig(
+                            widget.exerciseIndex, 'restPeriodSeconds', value);
+                      },
+                    ),
+                  ],
 
                   const SizedBox(height: 16),
 

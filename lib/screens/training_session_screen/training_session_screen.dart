@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/training_plan_screen/training_plan_model.dart';
+import '../../models/progression_manager_screen/training_set_model.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../widgets/training_session_screen/exercise_tab_widget.dart';
@@ -32,7 +33,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   bool _startupComplete = false;
   bool _isLoading = true;
   int _lastKnownExerciseIndex = 0;
-  bool _showExerciseDetails = false;
+  bool _showExerciseDetails = true; // Standardmäßig auf true setzen
   bool _isNavigatingExercises = false;
 
   @override
@@ -286,20 +287,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                                   ),
                                 ),
 
-                                // Exercise detail toggle
-                                IconButton(
-                                  icon: Icon(
-                                    _showExerciseDetails
-                                        ? Icons.info
-                                        : Icons.info_outline,
-                                    size: 22,
-                                    color: _showExerciseDetails
-                                        ? Colors.black
-                                        : Colors.grey[700],
-                                  ),
-                                  onPressed: _toggleExerciseDetails,
-                                  splashRadius: 20,
-                                ),
+                                // Info-Button wurde entfernt
+                                const SizedBox(width: 48), // Platzhalter
                               ],
                             ),
                           ),
@@ -662,6 +651,203 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
         ),
       ),
     );
+  }
+
+  void _showActionsMenu(
+      BuildContext context, TrainingSessionProvider sessionProvider) {
+    HapticFeedback.mediumImpact();
+
+    final bool hasCompletedSets =
+        _hasCompletedSets(sessionProvider.currentExerciseSets);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Übungsoptionen',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Übungsdetails-Bereich
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 8),
+                        child: Text(
+                          "Übungsinformationen",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      // Übungsdetails anzeigen/ausblenden
+                      _buildActionButton(
+                        icon: _showExerciseDetails
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        label: _showExerciseDetails
+                            ? 'Übungsdetails ausblenden'
+                            : 'Übungsdetails anzeigen',
+                        onTap: () {
+                          _toggleExerciseDetails();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Satz-Optionen
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12, top: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 8),
+                        child: Text(
+                          "Satz-Optionen",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      // Satz reaktivieren - wird angezeigt, wenn es abgeschlossene Sätze gibt
+                      if (hasCompletedSets)
+                        _buildActionButton(
+                          icon: Icons.replay_rounded,
+                          label: 'Letzten Satz reaktivieren',
+                          onTap: () {
+                            sessionProvider.reactivateLastCompletedSet(
+                                sessionProvider.currentExerciseIndex);
+                            Navigator.pop(context);
+                          },
+                        ),
+
+                      // Add set
+                      _buildActionButton(
+                        icon: Icons.add_circle_outline,
+                        label: 'Satz hinzufügen',
+                        onTap: () {
+                          sessionProvider.addSetToCurrentExercise();
+                          Navigator.pop(context);
+                        },
+                      ),
+
+                      // Remove set
+                      _buildActionButton(
+                        icon: Icons.remove_circle_outline,
+                        label: 'Satz entfernen',
+                        onTap: () {
+                          sessionProvider.removeSetFromCurrentExercise();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[200]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: Colors.black,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _hasCompletedSets(List<TrainingSetModel> sets) {
+    for (final set in sets) {
+      if (set.abgeschlossen) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _showExitConfirmation(BuildContext context) {

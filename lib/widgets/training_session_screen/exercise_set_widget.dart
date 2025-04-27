@@ -23,6 +23,28 @@ class ExerciseSetWidget extends StatelessWidget {
     this.recommendation,
   }) : super(key: key);
 
+  // Prüft, ob Empfehlungen angezeigt werden sollen
+  bool shouldShowRecommendation() {
+    if (recommendation == null) return false;
+
+    // Keine Empfehlung anzeigen, wenn alle empfohlenen Werte 0 oder null sind
+    if ((recommendation!['kg'] == null || recommendation!['kg'] == 0) &&
+        (recommendation!['wiederholungen'] == null ||
+            recommendation!['wiederholungen'] == 0) &&
+        (recommendation!['rir'] == null || recommendation!['rir'] == 0)) {
+      return false;
+    }
+
+    // Keine Empfehlung anzeigen, wenn alle Werte exakt der Empfehlung entsprechen
+    if (set.kg == recommendation!['kg'] &&
+        set.wiederholungen == recommendation!['wiederholungen'] &&
+        set.rir == recommendation!['rir']) {
+      return false;
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     // 1RM Calculations
@@ -162,7 +184,9 @@ class ExerciseSetWidget extends StatelessWidget {
                     onChanged: (value) => onValueChanged('kg', value),
                     isEnabled: isActive && !isCompleted,
                     isCompleted: isCompleted,
-                    recommendationValue: recommendation != null
+                    recommendationValue: recommendation != null &&
+                            isActive &&
+                            shouldShowRecommendation()
                         ? recommendation!['kg']?.toString()
                         : null,
                     onRecommendationApplied: (value) {
@@ -170,6 +194,7 @@ class ExerciseSetWidget extends StatelessWidget {
                       double? parsedValue = double.tryParse(value);
                       if (parsedValue != null) {
                         // Direkt den exakten Wert setzen, ohne Rundung
+                        HapticFeedback.mediumImpact();
                         onValueChanged('kg', parsedValue);
                       }
                     },
@@ -186,12 +211,15 @@ class ExerciseSetWidget extends StatelessWidget {
                         onValueChanged('wiederholungen', value),
                     isEnabled: isActive && !isCompleted,
                     isCompleted: isCompleted,
-                    recommendationValue: recommendation != null
+                    recommendationValue: recommendation != null &&
+                            isActive &&
+                            shouldShowRecommendation()
                         ? recommendation!['wiederholungen']?.toString()
                         : null,
                     onRecommendationApplied: (value) {
                       int? parsedValue = int.tryParse(value);
                       if (parsedValue != null) {
+                        HapticFeedback.mediumImpact();
                         onValueChanged('wiederholungen', parsedValue);
                       }
                     },
@@ -207,12 +235,15 @@ class ExerciseSetWidget extends StatelessWidget {
                     onChanged: (value) => onValueChanged('rir', value),
                     isEnabled: isActive && !isCompleted,
                     isCompleted: isCompleted,
-                    recommendationValue: recommendation != null
+                    recommendationValue: recommendation != null &&
+                            isActive &&
+                            shouldShowRecommendation()
                         ? recommendation!['rir']?.toString()
                         : null,
                     onRecommendationApplied: (value) {
                       int? parsedValue = int.tryParse(value);
                       if (parsedValue != null) {
+                        HapticFeedback.mediumImpact();
                         onValueChanged('rir', parsedValue);
                       }
                     },
@@ -239,34 +270,41 @@ class ExerciseSetWidget extends StatelessWidget {
                     ),
                   ),
 
-                  // Empfohlene 1RM, falls verfügbar
+                  // Empfohlene 1RM, falls verfügbar - moderneres Schwarz-Design
                   if (isActive && empfohlener1RM != null)
                     Container(
                       margin: const EdgeInsets.only(left: 8),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.purple[50],
+                        color: Colors.black,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.purple[200]!),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.arrow_upward,
                             size: 10,
-                            color: Colors.purple[700],
+                            color: Colors.white,
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 4),
                           Text(
                             '${empfohlener1RM.toStringAsFixed(1)} kg',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Colors.purple[700],
+                              color: Colors.white,
+                              letterSpacing: -0.2,
                             ),
                           ),
                         ],

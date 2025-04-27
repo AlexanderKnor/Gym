@@ -19,13 +19,13 @@ class StandardIncrementWheelWidget extends StatelessWidget {
     return NumberWheelPickerWidget(
       value: value,
       onChanged: onChanged,
-      step: 0.5, // Standardsteigerung in 0.5kg Schritten
-      min: 0.5, // Minimum Steigerung 0.5kg
+      step: 0.25, // Standardsteigerung in 0.25kg Schritten
+      min: 0.25, // Minimum Steigerung 0.5kg
       max: 10.0, // Maximum Steigerung 10kg
       suffix: 'kg',
       label: 'Standardsteigerung',
       isEnabled: isEnabled,
-      decimalPlaces: 1, // Eine Dezimalstelle für Gewicht (z.B. 2.5 kg)
+      decimalPlaces: 2, // Zwei Dezimalstelle für Gewicht (z.B. 2.25 kg)
       useIntValue: false,
       allowCustomValues: true, // Erlaubt benutzerdefinierte Werte
     );

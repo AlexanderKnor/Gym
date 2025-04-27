@@ -38,6 +38,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   bool _showAdvancedOptions = false;
   bool _showStandardIncrementWheel = false;
   bool _showRestPeriodWheel = false;
+  bool _settingsExpanded = false; // Neuer Status für eingeklappte Einstellungen
 
   @override
   void initState() {
@@ -346,88 +347,186 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
             _buildExerciseInfoCard(
                 exercise, progressionProvider, sessionProvider),
 
-          // Action Bar - always accessible, even when details are hidden
+          // Action Bar - immer sichtbar im Apple-Stil
           if (isActiveExercise)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Quick action buttons
-                  Row(
-                    children: [
-                      // Kraftrechner button - nur anzeigen, wenn nicht alle Sätze abgeschlossen sind
-                      if (!allSetsCompleted)
-                        _buildQuickActionButton(
-                          icon: Icons.calculate_outlined,
-                          label: 'Kraftrechner',
-                          onPressed: () => _openStrengthCalculator(context),
-                        ),
-
-                      // Empfehlungen - nur anzeigen, wenn Empfehlungen verfügbar sind und nicht alle Sätze abgeschlossen sind
-                      if (_exerciseProfileId != null && !allSetsCompleted) ...[
-                        const SizedBox(width: 16),
-                        _buildQuickActionButton(
-                          icon: Icons.auto_fix_high,
-                          label: 'Empfehlung',
-                          onPressed: () {
-                            final activeSetId = sessionProvider
-                                .getActiveSetIdForCurrentExercise();
-                            final activeSet =
-                                sessionProvider.currentExerciseSets.firstWhere(
-                              (s) => s.id == activeSetId,
-                              orElse: () => TrainingSetModel(
-                                  id: 0, kg: 0, wiederholungen: 0, rir: 0),
-                            );
-
-                            if (activeSet.empfehlungBerechnet) {
-                              HapticFeedback.mediumImpact();
-                              sessionProvider.applyProgressionRecommendation(
-                                activeSetId,
-                                activeSet.empfKg,
-                                activeSet.empfWiederholungen,
-                                activeSet.empfRir,
-                              );
-                            }
-                          },
-                          isDisabled: !_hasRecommendation(
-                              sessionProvider,
-                              sessionProvider
-                                  .getActiveSetIdForCurrentExercise()),
-                        ),
-                      ],
-                    ],
-                  ),
-
-                  // Options button
-                  GestureDetector(
-                    onTap: () => _showActionsMenu(context, sessionProvider),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.more_horiz,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Optionen',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[800],
+              child: Container(
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    // Kraftrechner button - kompakter Stil
+                    if (!allSetsCompleted)
+                      Expanded(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openStrengthCalculator(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 38,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.calculate_outlined,
+                                    size: 18,
+                                    color: Colors.grey[800],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Rechner',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[800],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
+                        ),
+                      ),
+
+                    // Trennlinie
+                    if (!allSetsCompleted &&
+                        _exerciseProfileId != null &&
+                        !allSetsCompleted)
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: Colors.grey[300],
+                      ),
+
+                    // Empfehlungen - kompakter Stil
+                    if (_exerciseProfileId != null && !allSetsCompleted)
+                      Expanded(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: !_hasRecommendation(
+                                    sessionProvider,
+                                    sessionProvider
+                                        .getActiveSetIdForCurrentExercise())
+                                ? null
+                                : () {
+                                    final activeSetId = sessionProvider
+                                        .getActiveSetIdForCurrentExercise();
+                                    final activeSet = sessionProvider
+                                        .currentExerciseSets
+                                        .firstWhere(
+                                      (s) => s.id == activeSetId,
+                                      orElse: () => TrainingSetModel(
+                                          id: 0,
+                                          kg: 0,
+                                          wiederholungen: 0,
+                                          rir: 0),
+                                    );
+
+                                    if (activeSet.empfehlungBerechnet) {
+                                      HapticFeedback.mediumImpact();
+                                      sessionProvider
+                                          .applyProgressionRecommendation(
+                                        activeSetId,
+                                        activeSet.empfKg,
+                                        activeSet.empfWiederholungen,
+                                        activeSet.empfRir,
+                                      );
+                                    }
+                                  },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Opacity(
+                              opacity: !_hasRecommendation(
+                                      sessionProvider,
+                                      sessionProvider
+                                          .getActiveSetIdForCurrentExercise())
+                                  ? 0.5
+                                  : 1.0,
+                              child: Container(
+                                height: 38,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.bolt,
+                                      size: 18,
+                                      color: Colors.grey[800],
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Progress',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey[800],
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Trennlinie
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: Colors.grey[300],
+                    ),
+
+                    // Optionen button - kompakter Stil
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () =>
+                              _showActionsMenu(context, sessionProvider),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            height: 38,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.grey[800],
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Optionen',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[800],
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
@@ -496,22 +595,30 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     }
   }
 
+  void _toggleSettingsExpanded() {
+    setState(() {
+      _settingsExpanded = !_settingsExpanded;
+
+      // Beim Einklappen auch die Wheels ausblenden
+      if (!_settingsExpanded) {
+        _showStandardIncrementWheel = false;
+        _showRestPeriodWheel = false;
+      }
+
+      HapticFeedback.selectionClick();
+    });
+  }
+
   Widget _buildExerciseInfoCard(
       ExerciseModel exercise,
       ProgressionManagerProvider progressionProvider,
       TrainingSessionProvider sessionProvider) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      margin: const EdgeInsets.fromLTRB(24, 12, 24, 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: AnimatedSize(
         duration: const Duration(milliseconds: 200),
@@ -519,153 +626,229 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Basic info
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Muscle groups as chips
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+            // Übungseinstellungs-Header mit Toggle-Button im Apple-Stil
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _toggleSettingsExpanded,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
                     children: [
-                      _buildMuscleGroupChip(exercise.primaryMuscleGroup),
-                      if (exercise.secondaryMuscleGroup.isNotEmpty)
-                        _buildMuscleGroupChip(exercise.secondaryMuscleGroup,
-                            isSecondary: true),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Exercise details in a row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildExerciseDetailItem(
-                        context: context,
-                        icon: Icons.fitness_center,
-                        label: 'Steigerung',
-                        value: '${exercise.standardIncrease} kg',
-                        onTap: _toggleStandardIncrementWheel,
-                      ),
-                      _buildExerciseDetailItem(
-                        context: context,
-                        icon: Icons.timer_outlined,
-                        label: 'Satzpause',
-                        value: '${exercise.restPeriodSeconds} s',
-                        onTap: _toggleRestPeriodWheel,
-                      ),
-                      _buildExerciseDetailItem(
-                        context: context,
-                        icon: Icons.repeat,
-                        label: 'Sätze',
-                        value: '${exercise.numberOfSets}',
-                        onTap: null,
-                      ),
-                    ],
-                  ),
-
-                  // Standard Increment Wheel
-                  if (_showStandardIncrementWheel) ...[
-                    const SizedBox(height: 16),
-                    StandardIncrementWheelWidget(
-                      value: exercise.standardIncrease,
-                      onChanged: (value) {
-                        sessionProvider.updateExerciseConfig(
-                            widget.exerciseIndex, 'standardIncrease', value);
-                      },
-                    ),
-                  ],
-
-                  // Rest Period Wheel
-                  if (_showRestPeriodWheel) ...[
-                    const SizedBox(height: 16),
-                    RestPeriodWheelWidget(
-                      value: exercise.restPeriodSeconds,
-                      onChanged: (value) {
-                        sessionProvider.updateExerciseConfig(
-                            widget.exerciseIndex, 'restPeriodSeconds', value);
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 16),
-
-                  // Progression profile dropdown
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Progressionsprofil',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      // Settings icon
                       Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
-                          color: Colors.grey[50],
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _exerciseProfileId,
-                            isExpanded: true,
-                            icon: const Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Colors.black,
-                            ),
-                            hint: Text(
-                              'Profil wählen',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 15,
-                              ),
-                            ),
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            dropdownColor: Colors.white,
-                            items: progressionProvider.progressionsProfile
-                                .map((profile) {
-                              return DropdownMenuItem<String>(
-                                value: profile.id,
-                                child: Text(
-                                  profile.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: _exerciseProfileId == profile.id
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (profileId) {
-                              if (profileId != null) {
-                                _changeProgressionProfile(profileId);
-                              }
-                            },
+                        child: Center(
+                          child: Icon(
+                            Icons.settings,
+                            size: 16,
+                            color: Colors.grey[700],
                           ),
                         ),
                       ),
+                      const SizedBox(width: 10),
+
+                      // Übungseinstellungen Text
+                      Text(
+                        'Übungseinstellungen',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Muskelgruppen in einer kompakten horizontalen Anordnung
+                      Wrap(
+                        spacing: 6,
+                        children: [
+                          _buildMuscleGroupChip(exercise.primaryMuscleGroup),
+                          if (exercise.secondaryMuscleGroup.isNotEmpty)
+                            _buildMuscleGroupChip(exercise.secondaryMuscleGroup,
+                                isSecondary: true),
+                        ],
+                      ),
+
+                      const SizedBox(width: 8),
+                      // Pfeil-Icon
+                      Icon(
+                        _settingsExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        size: 18,
+                        color: Colors.grey[700],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
+
+            // Einstellungsbereich (nur anzeigen, wenn erweitert)
+            if (_settingsExpanded) ...[
+              // Trennlinie im Apple-Stil
+              Container(
+                height: 1,
+                color: Colors.grey[200],
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Überschrift "Einstellungen"
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'Einstellungen',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ),
+
+                    // Exercise details in a row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildExerciseDetailItem(
+                          context: context,
+                          icon: Icons.fitness_center,
+                          label: 'Steigerung',
+                          value: '${exercise.standardIncrease} kg',
+                          onTap: _toggleStandardIncrementWheel,
+                        ),
+                        _buildExerciseDetailItem(
+                          context: context,
+                          icon: Icons.timer_outlined,
+                          label: 'Satzpause',
+                          value: '${exercise.restPeriodSeconds} s',
+                          onTap: _toggleRestPeriodWheel,
+                        ),
+                        _buildExerciseDetailItem(
+                          context: context,
+                          icon: Icons.repeat,
+                          label: 'Sätze',
+                          value: '${exercise.numberOfSets}',
+                          onTap: null,
+                        ),
+                      ],
+                    ),
+
+                    // Standard Increment Wheel
+                    if (_showStandardIncrementWheel) ...[
+                      const SizedBox(height: 16),
+                      StandardIncrementWheelWidget(
+                        value: exercise.standardIncrease,
+                        onChanged: (value) {
+                          sessionProvider.updateExerciseConfig(
+                              widget.exerciseIndex, 'standardIncrease', value);
+                        },
+                      ),
+                    ],
+
+                    // Rest Period Wheel
+                    if (_showRestPeriodWheel) ...[
+                      const SizedBox(height: 16),
+                      RestPeriodWheelWidget(
+                        value: exercise.restPeriodSeconds,
+                        onChanged: (value) {
+                          sessionProvider.updateExerciseConfig(
+                              widget.exerciseIndex, 'restPeriodSeconds', value);
+                        },
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // Progression profile dropdown
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Progressionsprofil',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                            color: Colors.grey[50],
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _exerciseProfileId,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.black,
+                              ),
+                              hint: Text(
+                                'Profil wählen',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 15,
+                                ),
+                              ),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              dropdownColor: Colors.white,
+                              items: progressionProvider.progressionsProfile
+                                  .map((profile) {
+                                return DropdownMenuItem<String>(
+                                  value: profile.id,
+                                  child: Text(
+                                    profile.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight:
+                                          _exerciseProfileId == profile.id
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (profileId) {
+                                if (profileId != null) {
+                                  _changeProgressionProfile(profileId);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -675,20 +858,8 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   Widget _buildMuscleGroupChip(String label, {bool isSecondary = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: isSecondary ? Colors.purple[50] : Colors.blue[50],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: isSecondary ? Colors.purple[700] : Colors.blue[700],
-        ),
+        horizontal: 10,
+        vertical: 4,
       ),
     );
   }
@@ -711,23 +882,10 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         ),
         child: Column(
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: Colors.grey[800],
-                ),
-                if (onTap != null) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.edit,
-                    size: 12,
-                    color: Colors.blue[600],
-                  ),
-                ],
-              ],
+            Icon(
+              icon,
+              size: 16,
+              color: Colors.grey[800],
             ),
             const SizedBox(height: 4),
             Text(

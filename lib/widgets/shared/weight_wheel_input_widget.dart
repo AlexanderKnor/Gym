@@ -34,7 +34,7 @@ class WeightSpinnerWidget extends StatelessWidget {
       isCompleted: isCompleted,
       recommendationValue: recommendationValue,
       onRecommendationApplied: onRecommendationApplied,
-      decimalPlaces: 1, // Eine Dezimalstelle für Gewicht (z.B. 72.5 kg)
+      decimalPlaces: 2, // Zwei Dezimalstelle für Gewicht (z.B. 72.25 kg)
       useIntValue: false,
       allowCustomValues: true, // Erlaubt benutzerdefinierte Werte wie 14.2kg
     );

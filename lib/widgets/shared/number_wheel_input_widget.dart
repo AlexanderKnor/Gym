@@ -364,35 +364,43 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
               ),
             ),
 
-            // Empfehlungs-Badge
+            // Empfehlungs-Badge im modernen schwarzen Design
             if (widget.isEnabled && widget.recommendationValue != null)
               GestureDetector(
                 onTap: () =>
                     _handleRecommendationValue(widget.recommendationValue!),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
+                    horizontal: 6,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.purple[50],
+                    color: Colors.black,
                     borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 1,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.arrow_upward,
+                      const Icon(
+                        Icons.arrow_upward_rounded,
                         size: 8,
-                        color: Colors.purple[700],
+                        color: Colors.white,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         widget.recommendationValue!,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: Colors.purple[700],
+                          color: Colors.white,
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ],
@@ -560,30 +568,6 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                           BorderSide(color: Colors.grey[300]!.withOpacity(0.7)),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ),
-
-        // Tap to edit button
-        if (widget.isEnabled)
-          Positioned(
-            top: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: () => _showEditValueDialog(context),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(4),
-                  ),
-                ),
-                child: Icon(
-                  Icons.edit,
-                  size: 14,
-                  color: Colors.grey[700],
                 ),
               ),
             ),

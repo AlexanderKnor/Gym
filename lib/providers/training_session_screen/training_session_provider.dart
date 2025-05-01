@@ -55,6 +55,10 @@ class TrainingSessionProvider with ChangeNotifier {
   // NEU: Service für das Updaten des Trainingsplans
   final TrainingPlanService _trainingPlanService = TrainingPlanService();
 
+  // NEU: Tracking für hinzugefügte Übungen
+  final List<ExerciseModel> _addedExercises = [];
+  bool get hasAddedExercises => _addedExercises.isNotEmpty;
+
   // FIX: Flag für Debug-Logging
   final bool _debugMode = true;
 
@@ -213,6 +217,7 @@ class TrainingSessionProvider with ChangeNotifier {
     _hasBeenSaved = false;
     _isUpdatingExerciseConfig = false;
     _isProcessingConfig = false;
+    _addedExercises.clear(); // NEU: Hinzugefügte Übungen zurücksetzen
 
     // NEU: Tracking für Übungsänderungen zurücksetzen
     _originalExercises.clear();
@@ -1302,6 +1307,104 @@ class TrainingSessionProvider with ChangeNotifier {
       return success;
     } catch (e) {
       _log('Fehler beim Speichern der Änderungen am Trainingsplan: $e');
+      return false;
+    }
+  }
+
+  // NEU: Methode zum Hinzufügen einer neuen Übung zur Session
+  Future<void> addNewExerciseToSession(ExerciseModel exercise) async {
+    try {
+      if (_trainingDay == null || _trainingPlan == null) return;
+
+      _log('Neue Übung zur Session hinzufügen: ${exercise.name}');
+
+      // Übung zur Liste der hinzugefügten Übungen hinzufügen
+      _addedExercises.add(exercise);
+
+      // Übung zum Trainingstag hinzufügen
+      final updatedExercises = List<ExerciseModel>.from(_trainingDay!.exercises)
+        ..add(exercise);
+
+      // Trainingstag aktualisieren
+      final updatedDay = _trainingDay!.copyWith(
+        exercises: updatedExercises,
+      );
+
+      // Trainingsplan aktualisieren
+      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
+      updatedDays[_dayIndex] = updatedDay;
+
+      final updatedPlan = _trainingPlan!.copyWith(
+        days: updatedDays,
+      );
+
+      // Provider-Status aktualisieren
+      _trainingPlan = updatedPlan;
+      _trainingDay = updatedDay;
+
+      // Übungshistorie erstellen
+      final exerciseHistory = ExerciseHistoryModel.fromExerciseModel(
+        exercise.id,
+        exercise.name,
+        exercise.primaryMuscleGroup,
+        exercise.secondaryMuscleGroup,
+        exercise.standardIncrease,
+        exercise.restPeriodSeconds,
+        exercise.progressionProfileId,
+      );
+
+      // Zur Session hinzufügen
+      _currentSession!.exercises.add(exerciseHistory);
+
+      // Sätze für die neue Übung erstellen
+      List<TrainingSetModel> sets = List.generate(
+        exercise.numberOfSets,
+        (setIndex) => TrainingSetModel(
+          id: setIndex + 1,
+          kg: 0,
+          wiederholungen: 0,
+          rir: 0,
+        ),
+      );
+
+      // Setze die Tracking-Daten für die neue Übung
+      final newExerciseIndex = _trainingDay!.exercises.length - 1;
+      _exerciseSets[newExerciseIndex] = sets;
+      _activeSetByExercise[newExerciseIndex] = 0;
+      _exerciseCompletionStatus[newExerciseIndex] = false;
+
+      // TabController muss vom UI aktualisiert werden
+
+      notifyListeners();
+    } catch (e) {
+      _log('Fehler beim Hinzufügen einer neuen Übung: $e');
+    }
+  }
+
+  // NEU: Methode zum Speichern hinzugefügter Übungen im Trainingsplan
+  Future<bool> saveAddedExercisesToTrainingPlan() async {
+    try {
+      // Prüfe, ob es hinzugefügte Übungen gibt
+      if (_addedExercises.isEmpty || _trainingPlan == null) {
+        return false;
+      }
+
+      _log(
+          'Speichere ${_addedExercises.length} hinzugefügte Übungen im Trainingsplan: ${_trainingPlan!.id}');
+
+      // Trainingsplan speichern
+      final success =
+          await _trainingPlanService.saveTrainingPlans([_trainingPlan!]);
+
+      if (success) {
+        _log('Hinzugefügte Übungen erfolgreich gespeichert');
+        // Liste der hinzugefügten Übungen leeren
+        _addedExercises.clear();
+      }
+
+      return success;
+    } catch (e) {
+      _log('Fehler beim Speichern hinzugefügter Übungen: $e');
       return false;
     }
   }

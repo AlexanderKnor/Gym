@@ -17,6 +17,7 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     with SingleTickerProviderStateMixin {
   bool _isSaving = false;
   bool _hasAskedForChanges = false;
+  bool _hasAskedForAddedExercises = false; // NEU: Für hinzugefügte Übungen
   bool _saveCompleted = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -71,6 +72,15 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
         _saveCompleted = true;
       });
 
+      // NEU: Prüfe zuerst, ob neue Übungen hinzugefügt wurden
+      if (sessionProvider.hasAddedExercises && !_hasAskedForAddedExercises) {
+        _showSaveAddedExercisesDialog(sessionProvider);
+        setState(() {
+          _hasAskedForAddedExercises = true;
+        });
+        return; // Weitere Dialoge erst nach diesem Dialog anzeigen
+      }
+
       // Check if there were modifications to the training plan
       if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
         _showSaveChangesDialog(sessionProvider);
@@ -121,6 +131,66 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     );
   }
 
+  // NEU: Dialog zur Speicherung hinzugefügter Übungen anzeigen
+  void _showSaveAddedExercisesDialog(TrainingSessionProvider sessionProvider) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.add_circle_outline, color: Colors.blue[600]),
+            const SizedBox(width: 8),
+            const Text('Neue Übungen speichern?'),
+          ],
+        ),
+        content: const Text(
+            'Du hast während des Trainings neue Übungen hinzugefügt. '
+            'Möchtest du diese Übungen dauerhaft in deinem Trainingsplan speichern?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+
+              // Nach dem Schließen des Dialogs prüfen, ob es Änderungen gab
+              if (sessionProvider.hasModifiedExercises &&
+                  !_hasAskedForChanges) {
+                _showSaveChangesDialog(sessionProvider);
+                setState(() {
+                  _hasAskedForChanges = true;
+                });
+              }
+            },
+            child: const Text('Verwerfen'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _saveAddedExercisesToTrainingPlan(sessionProvider);
+
+              // Nach dem Speichern prüfen, ob es Änderungen gab
+              if (mounted &&
+                  sessionProvider.hasModifiedExercises &&
+                  !_hasAskedForChanges) {
+                _showSaveChangesDialog(sessionProvider);
+                setState(() {
+                  _hasAskedForChanges = true;
+                });
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[600],
+            ),
+            child: const Text('Speichern'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _saveChangesToTrainingPlan(
       TrainingSessionProvider sessionProvider) async {
     if (!mounted) return;
@@ -152,6 +222,57 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
       }
     } catch (e) {
       print('Fehler beim Speichern der Änderungen: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Ein Fehler ist aufgetreten'),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  // NEU: Methode zum Speichern hinzugefügter Übungen
+  Future<void> _saveAddedExercisesToTrainingPlan(
+      TrainingSessionProvider sessionProvider) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final success = await sessionProvider.saveAddedExercisesToTrainingPlan();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Neue Übungen wurden im Trainingsplan gespeichert'
+                : 'Fehler beim Speichern der neuen Übungen'),
+            backgroundColor: success ? Colors.green[600] : Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    } catch (e) {
+      print('Fehler beim Speichern der hinzugefügten Übungen: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -431,6 +552,36 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
                 ),
 
                 const SizedBox(height: 32),
+
+                // NEU: Button zum Speichern hinzugefügter Übungen, wenn benötigt
+                if (sessionProvider.hasAddedExercises &&
+                    !_hasAskedForAddedExercises)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _showSaveAddedExercisesDialog(sessionProvider);
+                        setState(() {
+                          _hasAskedForAddedExercises = true;
+                        });
+                      },
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: const Text(
+                        'Neue Übungen im Trainingsplan speichern',
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                    ),
+                  ),
 
                 // Save changes button if needed
                 if (sessionProvider.hasModifiedExercises &&

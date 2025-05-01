@@ -11,6 +11,7 @@ import '../../providers/progression_manager_screen/progression_manager_provider.
 import '../../widgets/training_session_screen/exercise_tab_widget.dart';
 import '../../widgets/training_session_screen/rest_timer_widget.dart';
 import '../../widgets/training_session_screen/training_completion_widget.dart';
+import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
 
 class TrainingSessionScreen extends StatefulWidget {
   final TrainingPlanModel trainingPlan;
@@ -27,7 +28,8 @@ class TrainingSessionScreen extends StatefulWidget {
 }
 
 class _TrainingSessionScreenState extends State<TrainingSessionScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  // Hier wurde SingleTickerProviderStateMixin zu TickerProviderStateMixin geändert
   TabController? _tabController;
   bool _initialized = false;
   bool _startupComplete = false;
@@ -619,9 +621,61 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                     ),
                   ),
 
+                  // NEU: Übung hinzufügen Button (jetzt am Ende, vor dem Schließen-Button)
+                  GestureDetector(
+                    onTap: () {
+                      // Navigation schließen
+                      _toggleExerciseNavigation();
+                      // Dialog zum Hinzufügen einer Übung anzeigen
+                      _showAddExerciseDialog(context, sessionProvider);
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 20, bottom: 12),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.blue[300]!,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blue[100],
+                            ),
+                            child: Icon(
+                              Icons.add_rounded,
+                              size: 24,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Neue Übung hinzufügen',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   // Close button
                   Padding(
-                    padding: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.only(top: 8),
                     child: TextButton(
                       onPressed: _toggleExerciseNavigation,
                       style: TextButton.styleFrom(
@@ -648,6 +702,41 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+// NEU: Dialog zum Hinzufügen einer Übung anzeigen
+  void _showAddExerciseDialog(
+      BuildContext context, TrainingSessionProvider sessionProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: ExerciseFormWidget(
+          onSave: (exercise) async {
+            await sessionProvider.addNewExerciseToSession(exercise);
+
+            // TabController aktualisieren
+            if (_initialized && _tabController != null) {
+              final exerciseCount = sessionProvider.exercises.length;
+
+              // TabController neu erstellen mit neuer Anzahl an Übungen
+              _tabController!.dispose();
+              _tabController = TabController(
+                length: exerciseCount,
+                vsync: this,
+              );
+
+              // Zum neuen Tab navigieren
+              _tabController!.animateTo(exerciseCount - 1);
+              sessionProvider.selectExercise(exerciseCount - 1);
+            }
+
+            Navigator.pop(context);
+
+            // Die SnackBar-Benachrichtigung wurde entfernt
+          },
         ),
       ),
     );

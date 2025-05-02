@@ -84,96 +84,142 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     // Prüfen, ob mehr als eine Übung vorhanden ist
     final bool canDeleteExercise = sessionProvider.exercises.length > 1;
 
-    // Aktuelle Übung als Startwert für das Formular verwenden
+    // Dialog mit StatefulBuilder zeigen, um Zustand im Dialog zu verwalten
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Bestehender Formular-Widget
-              ExerciseFormWidget(
-                initialExercise: exercise,
-                onSave: (updatedExercise) async {
-                  // Übung im Provider aktualisieren
-                  await sessionProvider.updateExerciseFullDetails(
-                      widget.exerciseIndex, updatedExercise);
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        // Lokale Variable für den Ladezustand
+        bool isFormLoaded = false;
 
-                  // Dialog schließen
-                  Navigator.pop(context);
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              child: Stack(
+                children: [
+                  // Das tatsächliche Formular mit Lösch-Button
+                  SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Form Widget
+                        ExerciseFormWidget(
+                          initialExercise: exercise,
+                          onSave: (updatedExercise) async {
+                            // Übung im Provider aktualisieren
+                            await sessionProvider.updateExerciseFullDetails(
+                                widget.exerciseIndex, updatedExercise);
 
-                  // Wenn das Progressionsprofil geändert wurde oder ein neues hinzugefügt wurde,
-                  // Empfehlungen sofort neu berechnen
-                  if (originalProfileId !=
-                      updatedExercise.progressionProfileId) {
-                    setState(() {
-                      _exerciseProfileId = updatedExercise.progressionProfileId;
-                    });
+                            // Dialog schließen
+                            Navigator.pop(context);
 
-                    // Für den aktiven Satz sofort neu berechnen, falls es der aktuelle Index ist
-                    if (widget.exerciseIndex ==
-                            sessionProvider.currentExerciseIndex &&
-                        updatedExercise.progressionProfileId != null) {
-                      // Aktiven Satz-ID abrufen
-                      final activeSetId =
-                          sessionProvider.getActiveSetIdForCurrentExercise();
+                            // Wenn das Progressionsprofil geändert wurde oder ein neues hinzugefügt wurde,
+                            // Empfehlungen sofort neu berechnen
+                            if (originalProfileId !=
+                                updatedExercise.progressionProfileId) {
+                              setState(() {
+                                _exerciseProfileId =
+                                    updatedExercise.progressionProfileId;
+                              });
 
-                      // Alte Empfehlungen zurücksetzen
-                      sessionProvider.resetProgressionRecommendations(
-                          widget.exerciseIndex, activeSetId);
+                              // Für den aktiven Satz sofort neu berechnen, falls es der aktuelle Index ist
+                              if (widget.exerciseIndex ==
+                                      sessionProvider.currentExerciseIndex &&
+                                  updatedExercise.progressionProfileId !=
+                                      null) {
+                                // Aktiven Satz-ID abrufen
+                                final activeSetId = sessionProvider
+                                    .getActiveSetIdForCurrentExercise();
 
-                      // Neue Empfehlungen berechnen auf Basis der historischen Daten
-                      await sessionProvider.calculateProgressionForSet(
-                          widget.exerciseIndex,
-                          activeSetId,
-                          updatedExercise.progressionProfileId!,
-                          progressionProvider,
-                          forceRecalculation: true);
-                    }
-                  }
+                                // Alte Empfehlungen zurücksetzen
+                                sessionProvider.resetProgressionRecommendations(
+                                    widget.exerciseIndex, activeSetId);
 
-                  // Haptic feedback für Bestätigung
-                  HapticFeedback.mediumImpact();
-                },
-              ),
+                                // Neue Empfehlungen berechnen auf Basis der historischen Daten
+                                await sessionProvider
+                                    .calculateProgressionForSet(
+                                        widget.exerciseIndex,
+                                        activeSetId,
+                                        updatedExercise.progressionProfileId!,
+                                        progressionProvider,
+                                        forceRecalculation: true);
+                              }
+                            }
 
-              // NEU: Löschen-Button, nur wenn mehr als eine Übung vorhanden ist
-              if (canDeleteExercise)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      // Dialog schließen
-                      Navigator.pop(context);
+                            // Haptic feedback für Bestätigung
+                            HapticFeedback.mediumImpact();
+                          },
+                          // Callback für den Ladezustand
+                          onFormLoaded: () {
+                            // Zustand im Dialog aktualisieren, wenn das Formular geladen ist
+                            setDialogState(() {
+                              isFormLoaded = true;
+                            });
+                          },
+                        ),
 
-                      // Bestätigungsdialog anzeigen
-                      bool confirm = await _showDeleteConfirmation(context);
-                      if (confirm) {
-                        // Übung löschen
-                        await sessionProvider
-                            .removeExerciseFromSession(widget.exerciseIndex);
+                        // Lösch-Button - wird nur angezeigt, wenn das Formular geladen ist
+                        if (isFormLoaded && canDeleteExercise)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                // Dialog schließen
+                                Navigator.pop(context);
 
-                        // Haptisches Feedback
-                        HapticFeedback.mediumImpact();
-                      }
-                    },
-                    icon: const Icon(Icons.delete_outline, color: Colors.white),
-                    label: const Text('Übung löschen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 45),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                                // Bestätigungsdialog anzeigen
+                                bool confirm =
+                                    await _showDeleteConfirmation(context);
+                                if (confirm) {
+                                  // Übung löschen
+                                  await sessionProvider
+                                      .removeExerciseFromSession(
+                                          widget.exerciseIndex);
+
+                                  // Haptisches Feedback
+                                  HapticFeedback.mediumImpact();
+                                }
+                              },
+                              icon: const Icon(Icons.delete_outline,
+                                  color: Colors.white),
+                              label: const Text('Übung löschen'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 45),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-            ],
-          ),
-        ),
-      ),
+
+                  // Overlay mit Ladeindikator, wenn das Formular noch nicht geladen ist
+                  if (!isFormLoaded)
+                    Container(
+                      color: Colors.white,
+                      width: double.infinity,
+                      height: double.infinity,
+                      child: const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Übung wird geladen...'),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

@@ -7,11 +7,13 @@ import '../../providers/progression_manager_screen/progression_manager_provider.
 class ExerciseFormWidget extends StatefulWidget {
   final ExerciseModel? initialExercise;
   final Function(ExerciseModel) onSave;
+  final Function()? onFormLoaded; // Neuer Callback für den Ladezustand
 
   const ExerciseFormWidget({
     Key? key,
     this.initialExercise,
     required this.onSave,
+    this.onFormLoaded, // Neuer optionaler Parameter
   }) : super(key: key);
 
   @override
@@ -98,6 +100,11 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         setState(() {
           _isLoading = false;
         });
+
+        // NEU: Signalisieren, dass das Formular geladen ist
+        if (widget.onFormLoaded != null) {
+          widget.onFormLoaded!();
+        }
       }
     }
   }

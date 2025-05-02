@@ -164,14 +164,47 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                // Dialog schließen
-                                Navigator.pop(context);
+                                // GEÄNDERT: Dialog NICHT sofort schließen
+                                // Stattdessen Bestätigungsdialog über dem aktuellen Dialog anzeigen
+                                bool confirmDelete = await showDialog<bool>(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (confirmContext) => AlertDialog(
+                                        title: const Text('Übung löschen?'),
+                                        content: const Text(
+                                            'Möchtest du diese Übung wirklich löschen? Dies kann später im Trainingsplan gespeichert werden.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              // Bei Abbruch nur den Bestätigungsdialog schließen
+                                              // und zum Editor zurückkehren
+                                              Navigator.of(confirmContext)
+                                                  .pop(false);
+                                            },
+                                            child: const Text('Abbrechen'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              // Bei Bestätigung true zurückgeben
+                                              Navigator.of(confirmContext)
+                                                  .pop(true);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                            ),
+                                            child: const Text('Löschen'),
+                                          ),
+                                        ],
+                                      ),
+                                    ) ??
+                                    false;
 
-                                // Bestätigungsdialog anzeigen
-                                bool confirm =
-                                    await _showDeleteConfirmation(context);
-                                if (confirm) {
-                                  // Übung löschen
+                                // Wenn der Benutzer bestätigt hat
+                                if (confirmDelete) {
+                                  // Zuerst den Editor-Dialog schließen
+                                  Navigator.pop(context);
+
+                                  // Dann die Übung löschen
                                   await sessionProvider
                                       .removeExerciseFromSession(
                                           widget.exerciseIndex);
@@ -179,6 +212,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                   // Haptisches Feedback
                                   HapticFeedback.mediumImpact();
                                 }
+                                // Wenn der Benutzer abgebrochen hat, bleibt der Editor-Dialog offen
                               },
                               icon: const Icon(Icons.delete_outline,
                                   color: Colors.white),
@@ -223,38 +257,155 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  // NEU: Füge die Methode für den Bestätigungsdialog hinzu
-  Future<bool> _showDeleteConfirmation(BuildContext context) async {
-    bool result = false;
+  void _openStrengthCalculator(BuildContext context) {
+    HapticFeedback.mediumImpact();
 
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Übung löschen?'),
-        content: const Text(
-            'Möchtest du diese Übung wirklich löschen? Dies kann später im Trainingsplan gespeichert werden.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Abbrechen'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              result = true;
-              Navigator.of(context).pop();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Löschen'),
-          ),
-        ],
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => StrengthCalculatorScreen(
+          onApplyValues: (calculatedWeight, targetReps, targetRIR) {
+            final activeSetId =
+                sessionProvider.getActiveSetIdForCurrentExercise();
+            sessionProvider.applyCustomValues(
+              widget.exerciseIndex,
+              activeSetId,
+              calculatedWeight,
+              targetReps,
+              targetRIR,
+            );
+          },
+        ),
       ),
     );
+  }
 
-    return result;
+  void _showActionsMenu(
+      BuildContext context, TrainingSessionProvider sessionProvider) {
+    // Prüfen, ob es abgeschlossene Sätze gibt
+    final hasCompletedSets =
+        _hasCompletedSets(sessionProvider.currentExerciseSets);
+
+    // Wenn keine abgeschlossenen Sätze vorhanden sind, keinen Dialog zeigen
+    // und stattdessen eine Benachrichtigung anzeigen
+    if (!hasCompletedSets) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Keine abgeschlossenen Sätze vorhanden'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Haptisches Feedback
+    HapticFeedback.mediumImpact();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Satz-Optionen',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Satz reaktivieren - wird immer angezeigt, da wir bereits geprüft haben, dass es abgeschlossene Sätze gibt
+                _buildActionButton(
+                  icon: Icons.replay_rounded,
+                  label: 'Letzten Satz reaktivieren',
+                  onTap: () {
+                    sessionProvider
+                        .reactivateLastCompletedSet(widget.exerciseIndex);
+                    Navigator.pop(context);
+                  },
+                ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[200]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: Colors.black,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -428,49 +579,55 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                         ),
                       ),
 
-                    // Trennlinie
-                    Container(
-                      width: 1,
-                      height: 24,
-                      color: Colors.grey[300],
-                    ),
+                    // Trennlinie - nur anzeigen, wenn ein vorheriger Button sichtbar ist
+                    if ((!allSetsCompleted &&
+                            _hasCompletedSets(
+                                sessionProvider.currentExerciseSets)) ||
+                        (_exerciseProfileId != null && !allSetsCompleted))
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: Colors.grey[300],
+                      ),
 
-                    // Optionen button - kompakter Stil
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () =>
-                              _showActionsMenu(context, sessionProvider),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            height: 38,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.more_horiz,
-                                  size: 18,
-                                  color: Colors.grey[800],
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Optionen',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
+                    // Reaktivieren button - nur anzeigen, wenn es abgeschlossene Sätze gibt
+                    if (_hasCompletedSets(sessionProvider.currentExerciseSets))
+                      Expanded(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () =>
+                                _showActionsMenu(context, sessionProvider),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 38,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.replay_rounded,
+                                    size: 18,
                                     color: Colors.grey[800],
                                   ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Reaktivieren',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[800],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -568,162 +725,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                 Icons.edit,
                 color: Colors.grey[700],
                 size: 20,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _openStrengthCalculator(BuildContext context) {
-    HapticFeedback.mediumImpact();
-
-    final sessionProvider =
-        Provider.of<TrainingSessionProvider>(context, listen: false);
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => StrengthCalculatorScreen(
-          onApplyValues: (calculatedWeight, targetReps, targetRIR) {
-            final activeSetId =
-                sessionProvider.getActiveSetIdForCurrentExercise();
-            sessionProvider.applyCustomValues(
-              widget.exerciseIndex,
-              activeSetId,
-              calculatedWeight,
-              targetReps,
-              targetRIR,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  void _showActionsMenu(
-      BuildContext context, TrainingSessionProvider sessionProvider) {
-    HapticFeedback.mediumImpact();
-
-    final bool allSetsCompleted =
-        sessionProvider.areAllSetsCompletedForCurrentExercise();
-    final hasCompletedSets =
-        _hasCompletedSets(sessionProvider.currentExerciseSets);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const Text(
-                  'Satz-Optionen',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Satz reaktivieren - wird angezeigt, wenn es abgeschlossene Sätze gibt
-                if (hasCompletedSets)
-                  _buildActionButton(
-                    icon: Icons.replay_rounded,
-                    label: 'Letzten Satz reaktivieren',
-                    onTap: () {
-                      sessionProvider
-                          .reactivateLastCompletedSet(widget.exerciseIndex);
-                      Navigator.pop(context);
-                    },
-                  ),
-
-                // Add set
-                _buildActionButton(
-                  icon: Icons.add_circle_outline,
-                  label: 'Satz hinzufügen',
-                  onTap: () {
-                    sessionProvider.addSetToCurrentExercise();
-                    Navigator.pop(context);
-                  },
-                ),
-
-                // Remove set
-                _buildActionButton(
-                  icon: Icons.remove_circle_outline,
-                  label: 'Satz entfernen',
-                  onTap: () {
-                    sessionProvider.removeSetFromCurrentExercise();
-                    Navigator.pop(context);
-                  },
-                ),
-
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.grey[200]!,
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: Colors.black,
-            ),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
               ),
             ),
           ],

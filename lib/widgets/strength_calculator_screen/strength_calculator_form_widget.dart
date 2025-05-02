@@ -1,7 +1,11 @@
 // lib/widgets/strength_calculator_screen/strength_calculator_form_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/strength_calculator_screen/strength_calculator_model.dart';
 import '../../services/progression_manager_screen/one_rm_calculator_service.dart';
+import '../shared/weight_wheel_input_widget.dart';
+import '../shared/repetition_wheel_input_widget.dart';
+import '../shared/rir_wheel_input_widget.dart';
 
 class StrengthCalculatorFormWidget extends StatefulWidget {
   final Function(double, int, int) onApplyValues;
@@ -18,58 +22,39 @@ class StrengthCalculatorFormWidget extends StatefulWidget {
 
 class _StrengthCalculatorFormWidgetState
     extends State<StrengthCalculatorFormWidget> {
-  final _formKey = GlobalKey<FormState>();
-
-  // Controller für die Textfelder
-  final _testWeightController = TextEditingController();
-  final _testRepsController = TextEditingController();
-  final _targetRepsController = TextEditingController();
-  final _targetRIRController = TextEditingController();
-
   // Modell für die Berechnungen
   late StrengthCalculatorModel _calculatorModel;
 
+  // Werte für die Eingabefelder
+  double _testWeight = 0.0;
+  int _testReps = 0;
+  int _targetReps = 10;
+  int _targetRIR = 2;
+
   // Zeigt an, ob eine Berechnung durchgeführt wurde
   bool _hasCalculated = false;
+  bool _isCalculating = false;
 
   @override
   void initState() {
     super.initState();
 
     // Modell mit Standardwerten initialisieren
-    _calculatorModel = StrengthCalculatorModel();
-
-    // Controller mit Standardwerten initialisieren
-    _testWeightController.text = '';
-    _testRepsController.text = '';
-    _targetRepsController.text = _calculatorModel.targetReps.toString();
-    _targetRIRController.text = _calculatorModel.targetRIR.toString();
-
-    // Listener hinzufügen, um das Modell zu aktualisieren
-    _testWeightController.addListener(_updateModelFromControllers);
-    _testRepsController.addListener(_updateModelFromControllers);
-    _targetRepsController.addListener(_updateModelFromControllers);
-    _targetRIRController.addListener(_updateModelFromControllers);
+    _calculatorModel = StrengthCalculatorModel(
+        testWeight: _testWeight,
+        testReps: _testReps,
+        targetReps: _targetReps,
+        targetRIR: _targetRIR);
   }
 
-  @override
-  void dispose() {
-    // Controller freigeben
-    _testWeightController.dispose();
-    _testRepsController.dispose();
-    _targetRepsController.dispose();
-    _targetRIRController.dispose();
-    super.dispose();
-  }
-
-  // Aktualisiert das Modell mit den Werten aus den Controllern
-  void _updateModelFromControllers() {
+  // Aktualisiert das Modell mit den neuen Werten
+  void _updateModelValues() {
     setState(() {
       _calculatorModel = _calculatorModel.copyWith(
-        testWeight: double.tryParse(_testWeightController.text) ?? 0.0,
-        testReps: int.tryParse(_testRepsController.text) ?? 0,
-        targetReps: int.tryParse(_targetRepsController.text) ?? 10,
-        targetRIR: int.tryParse(_targetRIRController.text) ?? 2,
+        testWeight: _testWeight,
+        testReps: _testReps,
+        targetReps: _targetReps,
+        targetRIR: _targetRIR,
       );
 
       // Bei Änderungen müssen die Berechnungen zurückgesetzt werden
@@ -81,8 +66,36 @@ class _StrengthCalculatorFormWidgetState
   }
 
   // Führt die Berechnung durch
-  void _calculateWorkingWeight() {
-    if (_formKey.currentState!.validate()) {
+  void _calculateWorkingWeight() async {
+    // Validierung
+    if (_testWeight <= 0 ||
+        _testReps <= 0 ||
+        _targetReps <= 0 ||
+        _targetRIR < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Bitte gib gültige Werte ein.'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Provide haptic feedback
+    HapticFeedback.mediumImpact();
+
+    // Zeige Lade-Animation
+    setState(() {
+      _isCalculating = true;
+    });
+
+    // Künstliche Verzögerung für bessere UX
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (mounted) {
       setState(() {
         // 1RM berechnen (mit RIR = 0, da wir bis zum Muskelversagen gehen)
         _calculatorModel.calculatedOneRM = OneRMCalculatorService.calculate1RM(
@@ -102,6 +115,7 @@ class _StrengthCalculatorFormWidgetState
         }
 
         _hasCalculated = true;
+        _isCalculating = false;
       });
     }
   }
@@ -109,6 +123,9 @@ class _StrengthCalculatorFormWidgetState
   // Wendet die berechneten Werte auf den aktuellen Satz an
   void _applyToCurrentSet() {
     if (_hasCalculated && _calculatorModel.calculatedWorkingWeight != null) {
+      // Provide haptic feedback
+      HapticFeedback.mediumImpact();
+
       widget.onApplyValues(
         _calculatorModel.calculatedWorkingWeight!,
         _calculatorModel.targetReps,
@@ -120,194 +137,208 @@ class _StrengthCalculatorFormWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Eingabebereich
-            Card(
-              elevation: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Test-Werte Eingabebereich
+        _buildSectionLabel('Testgewicht & Wiederholungen'),
+        const SizedBox(height: 8),
+
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey[200]!, width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gib das Gewicht und die Wiederholungen ein, die du bis zum Muskelversagen schaffst',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Testgewicht und Wiederholungen',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    // Testgewicht mit Wheel
+                    Expanded(
+                      flex: 3,
+                      child: WeightSpinnerWidget(
+                        value: _testWeight,
+                        onChanged: (value) {
+                          setState(() {
+                            _testWeight = value;
+                            _updateModelValues();
+                          });
+                        },
+                        isEnabled: true,
+                        isCompleted: false,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Gib das Gewicht und die Wiederholungen ein, die du bis zum Muskelversagen schaffst',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(width: 10),
 
-                    // Testgewicht
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _testWeightController,
-                            decoration: const InputDecoration(
-                              labelText: 'Testgewicht',
-                              suffixText: 'kg',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Bitte gib ein Gewicht ein';
-                              }
-                              final weight = double.tryParse(value);
-                              if (weight == null || weight <= 0) {
-                                return 'Bitte gib ein gültiges Gewicht ein';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _testRepsController,
-                            decoration: const InputDecoration(
-                              labelText: 'Wiederholungen',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Bitte gib Wiederholungen ein';
-                              }
-                              final reps = int.tryParse(value);
-                              if (reps == null || reps <= 0) {
-                                return 'Bitte gib gültige Wiederholungen ein';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
+                    // Wiederholungen mit Wheel
+                    Expanded(
+                      flex: 2,
+                      child: RepetitionSpinnerWidget(
+                        value: _testReps,
+                        onChanged: (value) {
+                          setState(() {
+                            _testReps = value;
+                            _updateModelValues();
+                          });
+                        },
+                        isEnabled: true,
+                        isCompleted: false,
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
+          ),
+        ),
 
-            const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
-            // Zielwerte
-            Card(
-              elevation: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+        // Zielwerte Eingabebereich
+        _buildSectionLabel('Zielwerte'),
+        const SizedBox(height: 8),
+
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey[200]!, width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gib die gewünschten Zielwerte für dein Training ein',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Zielwerte',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    // Zielwiederholungen mit Wheel
+                    Expanded(
+                      flex: 2,
+                      child: RepetitionSpinnerWidget(
+                        value: _targetReps,
+                        onChanged: (value) {
+                          setState(() {
+                            _targetReps = value;
+                            _updateModelValues();
+                          });
+                        },
+                        isEnabled: true,
+                        isCompleted: false,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Gib die gewünschten Zielwerte für dein Training ein',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(width: 10),
 
-                    // Zielwiederholungen und Ziel-RIR
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _targetRepsController,
-                            decoration: const InputDecoration(
-                              labelText: 'Ziel Wiederholungen',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Bitte gib Wiederholungen ein';
-                              }
-                              final reps = int.tryParse(value);
-                              if (reps == null || reps <= 0) {
-                                return 'Bitte gib gültige Wiederholungen ein';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _targetRIRController,
-                            decoration: const InputDecoration(
-                              labelText: 'Ziel RIR',
-                              border: OutlineInputBorder(),
-                              helperText: 'Reps in Reserve',
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Bitte gib RIR ein';
-                              }
-                              final rir = int.tryParse(value);
-                              if (rir == null || rir < 0) {
-                                return 'Bitte gib gültigen RIR ein';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
+                    // Ziel-RIR mit Wheel
+                    Expanded(
+                      flex: 2,
+                      child: RirSpinnerWidget(
+                        value: _targetRIR,
+                        onChanged: (value) {
+                          setState(() {
+                            _targetRIR = value;
+                            _updateModelValues();
+                          });
+                        },
+                        isEnabled: true,
+                        isCompleted: false,
+                      ),
                     ),
                   ],
                 ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 32),
+
+        // Berechnen-Button
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _isCalculating ? null : _calculateWorkingWeight,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey[300],
+              disabledForegroundColor: Colors.grey[600],
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
+            child: _isCalculating
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.grey[200]!),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Berechnung läuft...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  )
+                : const Text(
+                    'Berechnen',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+          ),
+        ),
 
-            const SizedBox(height: 24),
-
-            // Berechnen-Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _calculateWorkingWeight,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+        // Ergebnisbereich (nur anzeigen, wenn Berechnung durchgeführt wurde)
+        if (_hasCalculated && _calculatorModel.calculatedWorkingWeight != null)
+          Column(
+            children: [
+              const SizedBox(height: 32),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.green[300]!,
+                    width: 1,
+                  ),
                 ),
-                child: const Text('Berechnen'),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Ergebnisbereich (nur anzeigen, wenn Berechnung durchgeführt wurde)
-            if (_hasCalculated &&
-                _calculatorModel.calculatedWorkingWeight != null)
-              Card(
-                elevation: 2,
-                color: Colors.green[50],
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -315,37 +346,59 @@ class _StrengthCalculatorFormWidgetState
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.green[700]),
-                          const SizedBox(width: 8),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.green[100],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.check,
+                                size: 18,
+                                color: Colors.green[700],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           const Text(
                             'Berechnungsergebnis',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.3,
                             ),
                           ),
                         ],
                       ),
+
+                      const SizedBox(height: 16),
+                      const Divider(height: 1),
                       const SizedBox(height: 16),
 
                       // 1RM Ergebnis
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Dein geschätztes 1RM:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
                           ),
                           Text(
                             '${_calculatorModel.calculatedOneRM!.toStringAsFixed(1)} kg',
                             style: const TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+
+                      const SizedBox(height: 12),
 
                       // Arbeitsgewicht Ergebnis
                       Row(
@@ -353,7 +406,10 @@ class _StrengthCalculatorFormWidgetState
                         children: [
                           Text(
                             'Arbeitsgewicht für ${_calculatorModel.targetReps} Wdh. mit RIR ${_calculatorModel.targetRIR}:',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           Text(
                             '${_calculatorModel.calculatedWorkingWeight!.toStringAsFixed(1)} kg',
@@ -366,27 +422,51 @@ class _StrengthCalculatorFormWidgetState
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
 
                       // Übernehmen-Button
                       SizedBox(
                         width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton.icon(
+                        height: 56,
+                        child: ElevatedButton(
                           onPressed: _applyToCurrentSet,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.green[600],
                             foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
-                          icon: const Icon(Icons.check),
-                          label: const Text('Auf aktuellen Satz anwenden'),
+                          child: const Text(
+                            'Auf aktuellen Satz anwenden',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.3,
         ),
       ),
     );

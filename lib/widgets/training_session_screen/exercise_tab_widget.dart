@@ -457,13 +457,16 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                 child: Row(
                   children: [
                     // Kraftrechner button - kompakter Stil
-                    if (!allSetsCompleted)
-                      Expanded(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _openStrengthCalculator(context),
-                            borderRadius: BorderRadius.circular(12),
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: allSetsCompleted
+                              ? null
+                              : () => _openStrengthCalculator(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Opacity(
+                            opacity: allSetsCompleted ? 0.5 : 1.0,
                             child: Container(
                               height: 38,
                               padding:
@@ -493,112 +496,114 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           ),
                         ),
                       ),
+                    ),
 
                     // Trennlinie
-                    if (!allSetsCompleted &&
-                        _exerciseProfileId != null &&
-                        !allSetsCompleted)
-                      Container(
-                        width: 1,
-                        height: 24,
-                        color: Colors.grey[300],
-                      ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: Colors.grey[300],
+                    ),
 
-                    // Empfehlungen - kompakter Stil
-                    if (_exerciseProfileId != null && !allSetsCompleted)
-                      Expanded(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: !_hasRecommendation(
-                                    sessionProvider,
-                                    sessionProvider
-                                        .getActiveSetIdForCurrentExercise())
-                                ? null
-                                : () {
-                                    final activeSetId = sessionProvider
-                                        .getActiveSetIdForCurrentExercise();
-                                    final activeSet = sessionProvider
-                                        .currentExerciseSets
-                                        .firstWhere(
-                                      (s) => s.id == activeSetId,
-                                      orElse: () => TrainingSetModel(
-                                          id: 0,
-                                          kg: 0,
-                                          wiederholungen: 0,
-                                          rir: 0),
-                                    );
-
-                                    if (activeSet.empfehlungBerechnet) {
-                                      HapticFeedback.mediumImpact();
-                                      sessionProvider
-                                          .applyProgressionRecommendation(
-                                        activeSetId,
-                                        activeSet.empfKg,
-                                        activeSet.empfWiederholungen,
-                                        activeSet.empfRir,
-                                      );
-                                    }
-                                  },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Opacity(
-                              opacity: !_hasRecommendation(
+                    // Progress-Button - immer anzeigen, aber bei Bedarf ausgegraut
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: (!_hasRecommendation(
                                       sessionProvider,
                                       sessionProvider
-                                          .getActiveSetIdForCurrentExercise())
-                                  ? 0.5
-                                  : 1.0,
-                              child: Container(
-                                height: 38,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.bolt,
-                                      size: 18,
+                                          .getActiveSetIdForCurrentExercise()) ||
+                                  allSetsCompleted)
+                              ? null
+                              : () {
+                                  final activeSetId = sessionProvider
+                                      .getActiveSetIdForCurrentExercise();
+                                  final activeSet = sessionProvider
+                                      .currentExerciseSets
+                                      .firstWhere(
+                                    (s) => s.id == activeSetId,
+                                    orElse: () => TrainingSetModel(
+                                        id: 0,
+                                        kg: 0,
+                                        wiederholungen: 0,
+                                        rir: 0),
+                                  );
+
+                                  if (activeSet.empfehlungBerechnet) {
+                                    HapticFeedback.mediumImpact();
+                                    sessionProvider
+                                        .applyProgressionRecommendation(
+                                      activeSetId,
+                                      activeSet.empfKg,
+                                      activeSet.empfWiederholungen,
+                                      activeSet.empfRir,
+                                    );
+                                  }
+                                },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Opacity(
+                            opacity: (!_hasRecommendation(
+                                        sessionProvider,
+                                        sessionProvider
+                                            .getActiveSetIdForCurrentExercise()) ||
+                                    allSetsCompleted)
+                                ? 0.5
+                                : 1.0,
+                            child: Container(
+                              height: 38,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.bolt,
+                                    size: 18,
+                                    color: Colors.grey[800],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Progress',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
                                       color: Colors.grey[800],
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Progress',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey[800],
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
                       ),
+                    ),
 
-                    // Trennlinie - nur anzeigen, wenn ein vorheriger Button sichtbar ist
-                    if ((!allSetsCompleted &&
-                            _hasCompletedSets(
-                                sessionProvider.currentExerciseSets)) ||
-                        (_exerciseProfileId != null && !allSetsCompleted))
-                      Container(
-                        width: 1,
-                        height: 24,
-                        color: Colors.grey[300],
-                      ),
+                    // Trennlinie - immer anzeigen
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: Colors.grey[300],
+                    ),
 
-                    // Reaktivieren button - nur anzeigen, wenn es abgeschlossene Sätze gibt
-                    if (_hasCompletedSets(sessionProvider.currentExerciseSets))
-                      Expanded(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () =>
-                                _showActionsMenu(context, sessionProvider),
-                            borderRadius: BorderRadius.circular(12),
+                    // Zurück-Button - immer anzeigen, aber bei Bedarf ausgegraut
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: !_hasCompletedSets(
+                                  sessionProvider.currentExerciseSets)
+                              ? null
+                              : () =>
+                                  _showActionsMenu(context, sessionProvider),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Opacity(
+                            opacity: !_hasCompletedSets(
+                                    sessionProvider.currentExerciseSets)
+                                ? 0.5
+                                : 1.0,
                             child: Container(
                               height: 38,
                               padding:
@@ -628,6 +633,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),

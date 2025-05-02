@@ -743,9 +743,10 @@ class TrainingSessionProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Berechnet die Progression für einen Satz einmalig und speichert sie
-  void calculateProgressionForSet(int exerciseIndex, int setId,
-      String profileId, ProgressionManagerProvider progressionProvider) {
+  // Berechnet die Progression für einen Satz und speichert sie
+  Future<void> calculateProgressionForSet(int exerciseIndex, int setId,
+      String profileId, ProgressionManagerProvider progressionProvider,
+      {bool forceRecalculation = false}) async {
     final sets = _exerciseSets[exerciseIndex];
     if (sets == null) return;
 
@@ -754,28 +755,87 @@ class TrainingSessionProvider with ChangeNotifier {
 
     final set = sets[setIndex];
 
-    // Nur berechnen, wenn noch nicht berechnet wurde
-    if (!set.empfehlungBerechnet) {
-      // Standard-Steigerungswert holen
-      final exercise = _trainingDay?.exercises[exerciseIndex];
-      final customIncrement = exercise?.standardIncrease ?? 2.5;
+    // Nur berechnen, wenn noch nicht berechnet wurde oder eine Neuberechnung erzwungen wird
+    if (!set.empfehlungBerechnet || forceRecalculation) {
+      try {
+        // Standard-Steigerungswert holen
+        final exercise = _trainingDay?.exercises[exerciseIndex];
+        if (exercise == null) return;
 
-      // Empfehlung berechnen mit der angepassten Methode
-      final empfehlung = progressionProvider.berechneEmpfehlungMitProfil(
-          set, profileId, sets,
-          customIncrement: customIncrement);
+        final customIncrement = exercise.standardIncrease;
 
-      // Empfehlung im Set speichern
-      final updatedSets = List<TrainingSetModel>.from(sets);
-      updatedSets[setIndex] = set.copyWith(
-        empfKg: empfehlung['kg'],
-        empfWiederholungen: empfehlung['wiederholungen'],
-        empfRir: empfehlung['rir'],
-        empfehlungBerechnet: true,
-      );
+        // WICHTIG: Die historischen Trainingsdaten für diese Übung abrufen
+        // statt die aktuellen Werte im Set zu verwenden
+        List<SetHistoryModel> lastSetData =
+            await _historyService.getLastTrainingDataForExercise(exercise.id);
 
-      _exerciseSets[exerciseIndex] = updatedSets;
-      notifyListeners();
+        // Wenn keine historischen Daten verfügbar sind, können wir keine Empfehlung berechnen
+        if (lastSetData.isEmpty) {
+          _log(
+              'Keine historischen Trainingsdaten für Übung ${exercise.id} gefunden');
+          return;
+        }
+
+        // Erstelle ein temporäres Set-Objekt aus den historischen Daten
+        // und verwende es für die Berechnung anstelle des aktuellen Sets
+        TrainingSetModel historicalSet;
+
+        // Finde den historischen Satz mit dem entsprechenden Index, falls verfügbar
+        if (setIndex < lastSetData.length) {
+          final lastSet = lastSetData[setIndex];
+          historicalSet = TrainingSetModel(
+              id: set.id,
+              kg: lastSet.kg,
+              wiederholungen: lastSet.reps,
+              rir: lastSet.rir,
+              abgeschlossen: false);
+        } else {
+          // Falls kein entsprechender Satz vorhanden ist, verwende den letzten verfügbaren
+          final lastSet = lastSetData.last;
+          historicalSet = TrainingSetModel(
+              id: set.id,
+              kg: lastSet.kg,
+              wiederholungen: lastSet.reps,
+              rir: lastSet.rir,
+              abgeschlossen: false);
+        }
+
+        _log(
+            'Berechne Progression auf Basis historischer Daten: ${historicalSet.kg}kg, ${historicalSet.wiederholungen} Wdh, ${historicalSet.rir} RIR');
+
+        // Erstelle eine Liste von historischen Sets für die Berechnung
+        List<TrainingSetModel> historicalSets = [];
+        for (var histSet in lastSetData) {
+          historicalSets.add(TrainingSetModel(
+              id: histSet.setNumber,
+              kg: histSet.kg,
+              wiederholungen: histSet.reps,
+              rir: histSet.rir,
+              abgeschlossen: histSet.completed));
+        }
+
+        // Empfehlung berechnen mit den historischen Werten
+        final empfehlung = progressionProvider.berechneEmpfehlungMitProfil(
+            historicalSet, profileId, historicalSets,
+            customIncrement: customIncrement);
+
+        // Empfehlung im aktuellen Set speichern
+        final updatedSets = List<TrainingSetModel>.from(sets);
+        updatedSets[setIndex] = set.copyWith(
+          empfKg: empfehlung['kg'],
+          empfWiederholungen: empfehlung['wiederholungen'],
+          empfRir: empfehlung['rir'],
+          empfehlungBerechnet: true,
+        );
+
+        _exerciseSets[exerciseIndex] = updatedSets;
+        notifyListeners();
+
+        _log(
+            'Progression berechnet: ${empfehlung['kg']}kg, ${empfehlung['wiederholungen']} Wdh, ${empfehlung['rir']} RIR');
+      } catch (e) {
+        _log('Fehler bei der Berechnung der Progression: $e');
+      }
     }
   }
 
@@ -1413,5 +1473,180 @@ class TrainingSessionProvider with ChangeNotifier {
   void dispose() {
     _cancelRestTimer();
     super.dispose();
+  }
+
+  // Umfassende Aktualisierung einer Übung mit vollständigen Details
+  Future<void> updateExerciseFullDetails(
+      int exerciseIndex, ExerciseModel updatedExercise) async {
+    if (_trainingDay == null || _trainingPlan == null) return;
+    if (exerciseIndex < 0 || exerciseIndex >= _trainingDay!.exercises.length)
+      return;
+
+    try {
+      // Guard gegen gleichzeitige Änderungen
+      if (_isProcessingConfig) return;
+      _isProcessingConfig = true;
+
+      // Aktuelle Übung abrufen
+      final currentExercise = _trainingDay!.exercises[exerciseIndex];
+
+      // Übung mit allen aktualisierten Details erstellen
+      final newExercise = ExerciseModel(
+        id: currentExercise.id, // ID beibehalten
+        name: updatedExercise.name,
+        primaryMuscleGroup: updatedExercise.primaryMuscleGroup,
+        secondaryMuscleGroup: updatedExercise.secondaryMuscleGroup,
+        standardIncrease: updatedExercise.standardIncrease,
+        restPeriodSeconds: updatedExercise.restPeriodSeconds,
+        numberOfSets: updatedExercise.numberOfSets,
+        progressionProfileId: updatedExercise.progressionProfileId,
+      );
+
+      // Trainingsplan aktualisieren
+      final updatedExercises =
+          List<ExerciseModel>.from(_trainingDay!.exercises);
+      updatedExercises[exerciseIndex] = newExercise;
+
+      final updatedDay = _trainingDay!.copyWith(
+        exercises: updatedExercises,
+      );
+
+      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
+      updatedDays[_dayIndex] = updatedDay;
+
+      final updatedPlan = _trainingPlan!.copyWith(
+        days: updatedDays,
+      );
+
+      // Provider-Status aktualisieren
+      _trainingPlan = updatedPlan;
+      _trainingDay = updatedDay;
+
+      // Als geändert markieren
+      _exerciseConfigModified[exerciseIndex] = true;
+
+      // Anzahl der Sätze anpassen, wenn sie sich geändert hat
+      final currentSets = _exerciseSets[exerciseIndex] ?? [];
+      if (newExercise.numberOfSets != currentSets.length) {
+        // Sätze hinzufügen oder entfernen
+        List<TrainingSetModel> updatedSets =
+            List<TrainingSetModel>.from(currentSets);
+
+        if (newExercise.numberOfSets > currentSets.length) {
+          // Sätze hinzufügen
+          for (int i = currentSets.length; i < newExercise.numberOfSets; i++) {
+            // Wenn vorhanden, verwende Werte aus dem letzten Satz als Vorlage
+            double newKg = 0.0;
+            int newReps = 0;
+            int newRir = 0;
+
+            if (currentSets.isNotEmpty) {
+              final lastSet = currentSets.last;
+              newKg = lastSet.kg;
+              newReps = lastSet.wiederholungen;
+              newRir = lastSet.rir;
+            }
+
+            updatedSets.add(TrainingSetModel(
+              id: i + 1,
+              kg: newKg,
+              wiederholungen: newReps,
+              rir: newRir,
+            ));
+          }
+        } else if (newExercise.numberOfSets < currentSets.length) {
+          // Sätze entfernen (nur nicht abgeschlossene vom Ende)
+          int setsToRemove = currentSets.length - newExercise.numberOfSets;
+          for (int i = 0; i < setsToRemove; i++) {
+            if (updatedSets.isNotEmpty && !updatedSets.last.abgeschlossen) {
+              updatedSets.removeLast();
+            } else {
+              break; // Keine weiteren nicht abgeschlossenen Sätze mehr
+            }
+          }
+
+          // Wenn wir noch nicht genug entfernt haben, Warnung ausgeben
+          if (updatedSets.length > newExercise.numberOfSets) {
+            _log(
+                'Warnung: Konnte nicht alle Sätze entfernen, da einige bereits abgeschlossen sind');
+          }
+        }
+
+        // Aktualisiere die Sätze
+        _exerciseSets[exerciseIndex] = updatedSets;
+      }
+
+      // Auch die Übungshistorie aktualisieren
+      _updateExerciseHistoryFull(exerciseIndex, newExercise);
+
+      // Benachrichtigung verzögern, um Neuaufbau während der Verarbeitung zu vermeiden
+      Future.microtask(() {
+        _isProcessingConfig = false;
+        notifyListeners();
+      });
+
+      _log(
+          'Vollständige Details der Übung $exerciseIndex aktualisiert: ${newExercise.name}');
+
+      return;
+    } catch (e) {
+      _log('Fehler bei der vollständigen Aktualisierung der Übung: $e');
+      _isProcessingConfig = false;
+      rethrow;
+    }
+  }
+
+// Hilfsmethode zum Aktualisieren der Übungshistorie mit allen Details
+  void _updateExerciseHistoryFull(int exerciseIndex, ExerciseModel exercise) {
+    if (_currentSession == null ||
+        exerciseIndex >= _currentSession!.exercises.length) return;
+
+    try {
+      // Aktuelle Übungshistorie abrufen
+      final updatedSessionExercises =
+          List<ExerciseHistoryModel>.from(_currentSession!.exercises);
+      final currentExerciseHistory = updatedSessionExercises[exerciseIndex];
+
+      // Aktualisierte Übungshistorie erstellen
+      final updatedExerciseHistory = currentExerciseHistory.copyWith(
+        name: exercise.name,
+        primaryMuscleGroup: exercise.primaryMuscleGroup,
+        secondaryMuscleGroup: exercise.secondaryMuscleGroup,
+        standardIncrease: exercise.standardIncrease,
+        restPeriodSeconds: exercise.restPeriodSeconds,
+        progressionProfileId: exercise.progressionProfileId,
+      );
+
+      // In der Session ersetzen
+      updatedSessionExercises[exerciseIndex] = updatedExerciseHistory;
+
+      // Session aktualisieren
+      _currentSession = _currentSession!.copyWith(
+        exercises: updatedSessionExercises,
+      );
+    } catch (e) {
+      _log(
+          'Fehler beim Aktualisieren der Übungshistorie mit vollständigen Details: $e');
+    }
+  }
+
+  // Empfehlungen für einen bestimmten Satz zurücksetzen
+  void resetProgressionRecommendations(int exerciseIndex, int setId) {
+    final sets = _exerciseSets[exerciseIndex];
+    if (sets == null) return;
+
+    final setIndex = setId - 1; // setId beginnt bei 1, Index bei 0
+    if (setIndex < 0 || setIndex >= sets.length) return;
+
+    final updatedSets = List<TrainingSetModel>.from(sets);
+    updatedSets[setIndex] = updatedSets[setIndex].copyWith(
+      empfehlungBerechnet: false,
+      empfKg: null,
+      empfWiederholungen: null,
+      empfRir: null,
+    );
+
+    _exerciseSets[exerciseIndex] = updatedSets;
+    notifyListeners();
   }
 }

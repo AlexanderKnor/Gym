@@ -11,6 +11,7 @@ import 'exercise_set_widget.dart';
 import '../../screens/strength_calculator_screen/strength_calculator_screen.dart';
 import '../../widgets/shared/standard_increment_wheel_widget.dart';
 import '../../widgets/shared/rest_period_wheel_widget.dart';
+import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
 
 class ExerciseTabWidget extends StatefulWidget {
   final int exerciseIndex;
@@ -32,13 +33,8 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   bool get wantKeepAlive => true;
 
   String? _exerciseProfileId;
-  final TextEditingController _standardIncreaseController =
-      TextEditingController();
-  final TextEditingController _restTimeController = TextEditingController();
-  bool _showAdvancedOptions = false;
   bool _showStandardIncrementWheel = false;
   bool _showRestPeriodWheel = false;
-  bool _settingsExpanded = false; // Neuer Status für eingeklappte Einstellungen
 
   @override
   void initState() {
@@ -46,13 +42,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeProgressionManager();
     });
-  }
-
-  @override
-  void dispose() {
-    _standardIncreaseController.dispose();
-    _restTimeController.dispose();
-    super.dispose();
   }
 
   void _initializeProgressionManager() {
@@ -63,9 +52,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
 
     if (widget.exerciseIndex < sessionProvider.exercises.length) {
       final exercise = sessionProvider.exercises[widget.exerciseIndex];
-
-      _standardIncreaseController.text = exercise.standardIncrease.toString();
-      _restTimeController.text = exercise.restPeriodSeconds.toString();
 
       if (exercise.progressionProfileId != null &&
           exercise.progressionProfileId!.isNotEmpty) {
@@ -86,223 +72,63 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     }
   }
 
-  void _updateLocalControllersIfNeeded() {
-    final sessionProvider =
-        Provider.of<TrainingSessionProvider>(context, listen: false);
-    if (widget.exerciseIndex < sessionProvider.exercises.length) {
-      final exercise = sessionProvider.exercises[widget.exerciseIndex];
-
-      if (_standardIncreaseController.text !=
-          exercise.standardIncrease.toString()) {
-        _standardIncreaseController.text = exercise.standardIncrease.toString();
-      }
-
-      if (_restTimeController.text != exercise.restPeriodSeconds.toString()) {
-        _restTimeController.text = exercise.restPeriodSeconds.toString();
-      }
-    }
-  }
-
-  void _changeProgressionProfile(String newProfileId) {
-    if (_exerciseProfileId == newProfileId) return;
-
+  void _showExerciseEditor(BuildContext context, ExerciseModel exercise) {
     final sessionProvider =
         Provider.of<TrainingSessionProvider>(context, listen: false);
     final progressionProvider =
         Provider.of<ProgressionManagerProvider>(context, listen: false);
 
-    sessionProvider.updateExerciseProgressionProfile(
-        widget.exerciseIndex, newProfileId);
+    // Merken wir uns das aktuelle Profil, um später zu überprüfen, ob es geändert wurde
+    final String? originalProfileId = exercise.progressionProfileId;
 
-    HapticFeedback.selectionClick();
-
-    setState(() {
-      _exerciseProfileId = newProfileId;
-    });
-
-    if (widget.exerciseIndex == sessionProvider.currentExerciseIndex) {
-      final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
-      sessionProvider.calculateProgressionForSet(
-          widget.exerciseIndex, activeSetId, newProfileId, progressionProvider);
-    }
-  }
-
-  void _openStrengthCalculator(BuildContext context) {
-    HapticFeedback.mediumImpact();
-
-    final sessionProvider =
-        Provider.of<TrainingSessionProvider>(context, listen: false);
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => StrengthCalculatorScreen(
-          onApplyValues: (calculatedWeight, targetReps, targetRIR) {
-            final activeSetId =
-                sessionProvider.getActiveSetIdForCurrentExercise();
-            sessionProvider.applyCustomValues(
-              widget.exerciseIndex,
-              activeSetId,
-              calculatedWeight,
-              targetReps,
-              targetRIR,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  void _toggleStandardIncrementWheel() {
-    setState(() {
-      _showStandardIncrementWheel = !_showStandardIncrementWheel;
-      _showRestPeriodWheel =
-          false; // Schließe den anderen Wheel, falls geöffnet
-      HapticFeedback.selectionClick();
-    });
-  }
-
-  void _toggleRestPeriodWheel() {
-    setState(() {
-      _showRestPeriodWheel = !_showRestPeriodWheel;
-      _showStandardIncrementWheel =
-          false; // Schließe den anderen Wheel, falls geöffnet
-      HapticFeedback.selectionClick();
-    });
-  }
-
-  void _toggleAdvancedOptions() {
-    setState(() {
-      _showAdvancedOptions = !_showAdvancedOptions;
-      HapticFeedback.selectionClick();
-    });
-  }
-
-  void _showActionsMenu(
-      BuildContext context, TrainingSessionProvider sessionProvider) {
-    HapticFeedback.mediumImpact();
-
-    final bool allSetsCompleted =
-        sessionProvider.areAllSetsCompletedForCurrentExercise();
-    final hasCompletedSets =
-        _hasCompletedSets(sessionProvider.currentExerciseSets);
-
-    showModalBottomSheet(
+    // Aktuelle Übung als Startwert für das Formular verwenden
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const Text(
-                  'Satz-Optionen',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
+      builder: (context) => Dialog(
+        child: ExerciseFormWidget(
+          initialExercise: exercise,
+          onSave: (updatedExercise) async {
+            // Übung im Provider aktualisieren
+            await sessionProvider.updateExerciseFullDetails(
+                widget.exerciseIndex, updatedExercise);
 
-                // Satz reaktivieren - wird angezeigt, wenn es abgeschlossene Sätze gibt
-                if (hasCompletedSets)
-                  _buildActionButton(
-                    icon: Icons.replay_rounded,
-                    label: 'Letzten Satz reaktivieren',
-                    onTap: () {
-                      sessionProvider
-                          .reactivateLastCompletedSet(widget.exerciseIndex);
-                      Navigator.pop(context);
-                    },
-                  ),
+            // Dialog schließen
+            Navigator.pop(context);
 
-                // Add set
-                _buildActionButton(
-                  icon: Icons.add_circle_outline,
-                  label: 'Satz hinzufügen',
-                  onTap: () {
-                    sessionProvider.addSetToCurrentExercise();
-                    Navigator.pop(context);
-                  },
-                ),
+            // Wenn das Progressionsprofil geändert wurde oder ein neues hinzugefügt wurde,
+            // Empfehlungen sofort neu berechnen
+            if (originalProfileId != updatedExercise.progressionProfileId) {
+              setState(() {
+                _exerciseProfileId = updatedExercise.progressionProfileId;
+              });
 
-                // Remove set
-                _buildActionButton(
-                  icon: Icons.remove_circle_outline,
-                  label: 'Satz entfernen',
-                  onTap: () {
-                    sessionProvider.removeSetFromCurrentExercise();
-                    Navigator.pop(context);
-                  },
-                ),
+              // Für den aktiven Satz sofort neu berechnen, falls es der aktuelle Index ist
+              if (widget.exerciseIndex ==
+                      sessionProvider.currentExerciseIndex &&
+                  updatedExercise.progressionProfileId != null) {
+                // Aktiven Satz-ID abrufen
+                final activeSetId =
+                    sessionProvider.getActiveSetIdForCurrentExercise();
 
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+                // Alte Empfehlungen zurücksetzen
+                sessionProvider.resetProgressionRecommendations(
+                    widget.exerciseIndex, activeSetId);
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.grey[200]!,
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: Colors.black,
-            ),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+                // Neue Empfehlungen berechnen auf Basis der historischen Daten
+                await sessionProvider.calculateProgressionForSet(
+                    widget.exerciseIndex,
+                    activeSetId,
+                    updatedExercise.progressionProfileId!,
+                    progressionProvider,
+                    forceRecalculation:
+                        true // Wichtig: Erzwinge eine Neuberechnung
+                    );
+              }
+            }
+
+            // Haptic feedback für Bestätigung
+            HapticFeedback.mediumImpact();
+          },
         ),
       ),
     );
@@ -315,8 +141,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final sessionProvider = Provider.of<TrainingSessionProvider>(context);
     final progressionProvider =
         Provider.of<ProgressionManagerProvider>(context);
-
-    _updateLocalControllersIfNeeded();
 
     final bool isActiveExercise =
         widget.exerciseIndex == sessionProvider.currentExerciseIndex;
@@ -344,8 +168,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         children: [
           // Exercise details section - only show if enabled
           if (widget.showDetails)
-            _buildExerciseInfoCard(
-                exercise, progressionProvider, sessionProvider),
+            _buildExerciseDetailsButton(context, exercise),
 
           // Action Bar - immer sichtbar im Apple-Stil
           if (isActiveExercise)
@@ -540,366 +363,255 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  Widget _buildQuickActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    bool isDisabled = false,
-  }) {
+  // Neuer Button zum Öffnen des Übungseditors
+  Widget _buildExerciseDetailsButton(
+      BuildContext context, ExerciseModel exercise) {
     return GestureDetector(
-      onTap: isDisabled ? null : onPressed,
-      child: Opacity(
-        opacity: isDisabled ? 0.5 : 1.0,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: Colors.black,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+      onTap: () => _showExerciseEditor(context, exercise),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(24, 12, 24, 6),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  bool _hasRecommendation(
-      TrainingSessionProvider sessionProvider, int activeSetId) {
-    if (_exerciseProfileId == null) return false;
-
-    try {
-      final activeSet = sessionProvider.currentExerciseSets.firstWhere(
-        (s) => s.id == activeSetId,
-      );
-      return activeSet.empfehlungBerechnet;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  void _toggleSettingsExpanded() {
-    setState(() {
-      _settingsExpanded = !_settingsExpanded;
-
-      // Beim Einklappen auch die Wheels ausblenden
-      if (!_settingsExpanded) {
-        _showStandardIncrementWheel = false;
-        _showRestPeriodWheel = false;
-      }
-
-      HapticFeedback.selectionClick();
-    });
-  }
-
-  Widget _buildExerciseInfoCard(
-      ExerciseModel exercise,
-      ProgressionManagerProvider progressionProvider,
-      TrainingSessionProvider sessionProvider) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 12, 24, 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            // Übungseinstellungs-Header mit Toggle-Button im Apple-Stil
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _toggleSettingsExpanded,
+            // Icon für Übung
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
                 borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      // Settings icon
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.settings,
-                            size: 16,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
+              ),
+              child: Icon(
+                Icons.fitness_center,
+                color: Colors.blue[700],
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
 
-                      // Übungseinstellungen Text
-                      Text(
-                        'Übungseinstellungen',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Muskelgruppen in einer kompakten horizontalen Anordnung
-                      Wrap(
-                        spacing: 6,
-                        children: [
-                          _buildMuscleGroupChip(exercise.primaryMuscleGroup),
-                          if (exercise.secondaryMuscleGroup.isNotEmpty)
-                            _buildMuscleGroupChip(exercise.secondaryMuscleGroup,
-                                isSecondary: true),
-                        ],
-                      ),
-
-                      const SizedBox(width: 8),
-                      // Pfeil-Icon
-                      Icon(
-                        _settingsExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        size: 18,
-                        color: Colors.grey[700],
-                      ),
-                    ],
+            // Übungsdetails
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' • ${exercise.secondaryMuscleGroup}' : ''}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${exercise.numberOfSets} Sätze • ${exercise.restPeriodSeconds}s Pause • ${exercise.standardIncrease} kg Steigerung',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            // Einstellungsbereich (nur anzeigen, wenn erweitert)
-            if (_settingsExpanded) ...[
-              // Trennlinie im Apple-Stil
-              Container(
-                height: 1,
-                color: Colors.grey[200],
-                margin: const EdgeInsets.symmetric(horizontal: 12),
+            // Edit-Icon
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
               ),
-
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Überschrift "Einstellungen"
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        'Einstellungen',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[800],
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ),
-
-                    // Exercise details in a row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildExerciseDetailItem(
-                          context: context,
-                          icon: Icons.fitness_center,
-                          label: 'Steigerung',
-                          value: '${exercise.standardIncrease} kg',
-                          onTap: _toggleStandardIncrementWheel,
-                        ),
-                        _buildExerciseDetailItem(
-                          context: context,
-                          icon: Icons.timer_outlined,
-                          label: 'Satzpause',
-                          value: '${exercise.restPeriodSeconds} s',
-                          onTap: _toggleRestPeriodWheel,
-                        ),
-                        _buildExerciseDetailItem(
-                          context: context,
-                          icon: Icons.repeat,
-                          label: 'Sätze',
-                          value: '${exercise.numberOfSets}',
-                          onTap: null,
-                        ),
-                      ],
-                    ),
-
-                    // Standard Increment Wheel
-                    if (_showStandardIncrementWheel) ...[
-                      const SizedBox(height: 16),
-                      StandardIncrementWheelWidget(
-                        value: exercise.standardIncrease,
-                        onChanged: (value) {
-                          sessionProvider.updateExerciseConfig(
-                              widget.exerciseIndex, 'standardIncrease', value);
-                        },
-                      ),
-                    ],
-
-                    // Rest Period Wheel
-                    if (_showRestPeriodWheel) ...[
-                      const SizedBox(height: 16),
-                      RestPeriodWheelWidget(
-                        value: exercise.restPeriodSeconds,
-                        onChanged: (value) {
-                          sessionProvider.updateExerciseConfig(
-                              widget.exerciseIndex, 'restPeriodSeconds', value);
-                        },
-                      ),
-                    ],
-
-                    const SizedBox(height: 16),
-
-                    // Progression profile dropdown
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Progressionsprofil',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[300]!),
-                            color: Colors.grey[50],
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _exerciseProfileId,
-                              isExpanded: true,
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Colors.black,
-                              ),
-                              hint: Text(
-                                'Profil wählen',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 15,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              dropdownColor: Colors.white,
-                              items: progressionProvider.progressionsProfile
-                                  .map((profile) {
-                                return DropdownMenuItem<String>(
-                                  value: profile.id,
-                                  child: Text(
-                                    profile.name,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight:
-                                          _exerciseProfileId == profile.id
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (profileId) {
-                                if (profileId != null) {
-                                  _changeProgressionProfile(profileId);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              child: Icon(
+                Icons.edit,
+                color: Colors.grey[700],
+                size: 20,
               ),
-            ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMuscleGroupChip(String label, {bool isSecondary = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
+  void _openStrengthCalculator(BuildContext context) {
+    HapticFeedback.mediumImpact();
+
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => StrengthCalculatorScreen(
+          onApplyValues: (calculatedWeight, targetReps, targetRIR) {
+            final activeSetId =
+                sessionProvider.getActiveSetIdForCurrentExercise();
+            sessionProvider.applyCustomValues(
+              widget.exerciseIndex,
+              activeSetId,
+              calculatedWeight,
+              targetReps,
+              targetRIR,
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildExerciseDetailItem({
-    required BuildContext context,
+  void _showActionsMenu(
+      BuildContext context, TrainingSessionProvider sessionProvider) {
+    HapticFeedback.mediumImpact();
+
+    final bool allSetsCompleted =
+        sessionProvider.areAllSetsCompletedForCurrentExercise();
+    final hasCompletedSets =
+        _hasCompletedSets(sessionProvider.currentExerciseSets);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Satz-Optionen',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Satz reaktivieren - wird angezeigt, wenn es abgeschlossene Sätze gibt
+                if (hasCompletedSets)
+                  _buildActionButton(
+                    icon: Icons.replay_rounded,
+                    label: 'Letzten Satz reaktivieren',
+                    onTap: () {
+                      sessionProvider
+                          .reactivateLastCompletedSet(widget.exerciseIndex);
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                // Add set
+                _buildActionButton(
+                  icon: Icons.add_circle_outline,
+                  label: 'Satz hinzufügen',
+                  onTap: () {
+                    sessionProvider.addSetToCurrentExercise();
+                    Navigator.pop(context);
+                  },
+                ),
+
+                // Remove set
+                _buildActionButton(
+                  icon: Icons.remove_circle_outline,
+                  label: 'Satz entfernen',
+                  onTap: () {
+                    sessionProvider.removeSetFromCurrentExercise();
+                    Navigator.pop(context);
+                  },
+                ),
+
+                // Übung bearbeiten
+                _buildActionButton(
+                  icon: Icons.edit,
+                  label: 'Übung bearbeiten',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showExerciseEditor(context,
+                        sessionProvider.exercises[widget.exerciseIndex]);
+                  },
+                ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
     required IconData icon,
     required String label,
-    required String value,
-    required VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: onTap != null ? Colors.grey[50] : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: onTap != null ? Border.all(color: Colors.grey[200]!) : null,
+        padding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
         ),
-        child: Column(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[200]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
           children: [
             Icon(
               icon,
-              size: 16,
-              color: Colors.grey[800],
+              size: 24,
+              color: Colors.black,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(width: 16),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            Text(
-              value,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -985,6 +697,20 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         );
       },
     );
+  }
+
+  bool _hasRecommendation(
+      TrainingSessionProvider sessionProvider, int activeSetId) {
+    if (_exerciseProfileId == null) return false;
+
+    try {
+      final activeSet = sessionProvider.currentExerciseSets.firstWhere(
+        (s) => s.id == activeSetId,
+      );
+      return activeSet.empfehlungBerechnet;
+    } catch (e) {
+      return false;
+    }
   }
 
   bool _hasCompletedSets(List<TrainingSetModel> sets) {

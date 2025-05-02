@@ -18,6 +18,7 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
   bool _isSaving = false;
   bool _hasAskedForChanges = false;
   bool _hasAskedForAddedExercises = false; // NEU: Für hinzugefügte Übungen
+  bool _hasAskedForDeletedExercises = false; // NEU: Für gelöschte Übungen
   bool _saveCompleted = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -77,6 +78,16 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
         _showSaveAddedExercisesDialog(sessionProvider);
         setState(() {
           _hasAskedForAddedExercises = true;
+        });
+        return; // Weitere Dialoge erst nach diesem Dialog anzeigen
+      }
+
+      // NEU: Prüfe dann, ob Übungen gelöscht wurden
+      if (sessionProvider.hasDeletedExercises &&
+          !_hasAskedForDeletedExercises) {
+        _showSaveDeletedExercisesDialog(sessionProvider);
+        setState(() {
+          _hasAskedForDeletedExercises = true;
         });
         return; // Weitere Dialoge erst nach diesem Dialog anzeigen
       }
@@ -156,13 +167,7 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
               Navigator.pop(context);
 
               // Nach dem Schließen des Dialogs prüfen, ob es Änderungen gab
-              if (sessionProvider.hasModifiedExercises &&
-                  !_hasAskedForChanges) {
-                _showSaveChangesDialog(sessionProvider);
-                setState(() {
-                  _hasAskedForChanges = true;
-                });
-              }
+              _continueWithNextDialogs(sessionProvider);
             },
             child: const Text('Verwerfen'),
           ),
@@ -171,15 +176,8 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
               Navigator.pop(context);
               await _saveAddedExercisesToTrainingPlan(sessionProvider);
 
-              // Nach dem Speichern prüfen, ob es Änderungen gab
-              if (mounted &&
-                  sessionProvider.hasModifiedExercises &&
-                  !_hasAskedForChanges) {
-                _showSaveChangesDialog(sessionProvider);
-                setState(() {
-                  _hasAskedForChanges = true;
-                });
-              }
+              // Nach dem Speichern prüfen, ob es weitere Dialoge gibt
+              _continueWithNextDialogs(sessionProvider);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[600],
@@ -189,6 +187,74 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
         ],
       ),
     );
+  }
+
+  // NEU: Dialog zum Speichern gelöschter Übungen
+  void _showSaveDeletedExercisesDialog(
+      TrainingSessionProvider sessionProvider) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.delete_outline, color: Colors.red[600]),
+            const SizedBox(width: 8),
+            const Text('Gelöschte Übungen speichern?'),
+          ],
+        ),
+        content: const Text('Du hast während des Trainings Übungen gelöscht. '
+            'Möchtest du diese Änderungen dauerhaft in deinem Trainingsplan speichern?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+
+              // Nach dem Schließen des Dialogs prüfen, ob es Änderungen gab
+              _continueWithNextDialogs(sessionProvider);
+            },
+            child: const Text('Verwerfen'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _saveDeletedExercisesToTrainingPlan(sessionProvider);
+
+              // Nach dem Speichern prüfen, ob es weitere Dialoge gibt
+              _continueWithNextDialogs(sessionProvider);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600],
+            ),
+            child: const Text('Speichern'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEU: Hilfsmethode, um mit den nächsten Dialogen fortzufahren
+  void _continueWithNextDialogs(TrainingSessionProvider sessionProvider) {
+    if (mounted) {
+      // Prüfen, ob gelöschte Übungen vorhanden sind
+      if (sessionProvider.hasDeletedExercises &&
+          !_hasAskedForDeletedExercises) {
+        _showSaveDeletedExercisesDialog(sessionProvider);
+        setState(() {
+          _hasAskedForDeletedExercises = true;
+        });
+      }
+      // Prüfen, ob Änderungen vorhanden sind
+      else if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
+        _showSaveChangesDialog(sessionProvider);
+        setState(() {
+          _hasAskedForChanges = true;
+        });
+      }
+    }
   }
 
   Future<void> _saveChangesToTrainingPlan(
@@ -273,6 +339,58 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
       }
     } catch (e) {
       print('Fehler beim Speichern der hinzugefügten Übungen: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Ein Fehler ist aufgetreten'),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  // NEU: Methode zum Speichern gelöschter Übungen
+  Future<void> _saveDeletedExercisesToTrainingPlan(
+      TrainingSessionProvider sessionProvider) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final success =
+          await sessionProvider.saveDeletedExercisesToTrainingPlan();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Gelöschte Übungen wurden im Trainingsplan gespeichert'
+                : 'Fehler beim Speichern der gelöschten Übungen'),
+            backgroundColor: success ? Colors.green[600] : Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    } catch (e) {
+      print('Fehler beim Speichern der gelöschten Übungen: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

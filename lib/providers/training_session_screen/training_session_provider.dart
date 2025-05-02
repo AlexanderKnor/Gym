@@ -59,6 +59,10 @@ class TrainingSessionProvider with ChangeNotifier {
   final List<ExerciseModel> _addedExercises = [];
   bool get hasAddedExercises => _addedExercises.isNotEmpty;
 
+  // NEU: Liste für gelöschte Übungen
+  final List<ExerciseModel> _deletedExercises = [];
+  bool get hasDeletedExercises => _deletedExercises.isNotEmpty;
+
   // FIX: Flag für Debug-Logging
   final bool _debugMode = true;
 
@@ -217,7 +221,8 @@ class TrainingSessionProvider with ChangeNotifier {
     _hasBeenSaved = false;
     _isUpdatingExerciseConfig = false;
     _isProcessingConfig = false;
-    _addedExercises.clear(); // NEU: Hinzugefügte Übungen zurücksetzen
+    _addedExercises.clear();
+    _deletedExercises.clear(); // NEU: Gelöschte Übungen zurücksetzen
 
     // NEU: Tracking für Übungsänderungen zurücksetzen
     _originalExercises.clear();
@@ -1465,6 +1470,158 @@ class TrainingSessionProvider with ChangeNotifier {
       return success;
     } catch (e) {
       _log('Fehler beim Speichern hinzugefügter Übungen: $e');
+      return false;
+    }
+  }
+
+  // NEU: Methode zum Löschen einer Übung aus der Session
+  Future<bool> removeExerciseFromSession(int exerciseIndex) async {
+    try {
+      if (_trainingDay == null || _trainingPlan == null) return false;
+
+      // Sicherstellen, dass wir mehr als eine Übung haben
+      if (_trainingDay!.exercises.length <= 1) {
+        _log(
+            'Löschen nicht möglich: Es muss mindestens eine Übung vorhanden sein');
+        return false;
+      }
+
+      // Guard gegen gleichzeitige Änderungen
+      if (_isProcessingConfig) return false;
+      _isProcessingConfig = true;
+
+      _log('Entferne Übung mit Index $exerciseIndex');
+
+      // Die zu löschende Übung speichern, um sie später verfolgen zu können
+      final exerciseToDelete = _trainingDay!.exercises[exerciseIndex];
+      _deletedExercises.add(exerciseToDelete);
+
+      // Übung aus dem Trainingstag entfernen
+      final updatedExercises =
+          List<ExerciseModel>.from(_trainingDay!.exercises);
+      updatedExercises.removeAt(exerciseIndex);
+
+      // Trainingstag aktualisieren
+      final updatedDay = _trainingDay!.copyWith(
+        exercises: updatedExercises,
+      );
+
+      // Trainingsplan aktualisieren
+      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
+      updatedDays[_dayIndex] = updatedDay;
+
+      final updatedPlan = _trainingPlan!.copyWith(
+        days: updatedDays,
+      );
+
+      // Provider-Status aktualisieren
+      _trainingPlan = updatedPlan;
+      _trainingDay = updatedDay;
+
+      // Tracking-Daten anpassen
+      _adjustTrackingDataAfterExerciseRemoval(exerciseIndex);
+
+      // Zur nächsten offenen Übung navigieren
+      int nextExerciseIndex = findNextOpenExerciseIndex();
+
+      // Falls nächste Übung die gerade gelöschte wäre, nehmen wir die erste verfügbare
+      if (nextExerciseIndex >= updatedExercises.length) {
+        nextExerciseIndex =
+            updatedExercises.isEmpty ? 0 : updatedExercises.length - 1;
+      }
+
+      _currentExerciseIndex = nextExerciseIndex;
+
+      _isProcessingConfig = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _log('Fehler beim Entfernen der Übung: $e');
+      _isProcessingConfig = false;
+      return false;
+    }
+  }
+
+  // NEU: Hilfsmethode zum Anpassen der Tracking-Daten nach dem Entfernen einer Übung
+  void _adjustTrackingDataAfterExerciseRemoval(int removedIndex) {
+    // Temporäre Maps für die aktualisierten Tracking-Daten
+    Map<int, List<TrainingSetModel>> updatedExerciseSets = {};
+    Map<int, int> updatedActiveSetByExercise = {};
+    Map<int, bool> updatedExerciseCompletionStatus = {};
+    Map<int, int> updatedLastCompletedSetIndexByExercise = {};
+
+    // Für jeden Index in den Tracking-Maps
+    for (int i = 0; i < _trainingDay!.exercises.length + 1; i++) {
+      if (i < removedIndex) {
+        // Indizes vor dem entfernten bleiben gleich
+        if (_exerciseSets.containsKey(i))
+          updatedExerciseSets[i] = _exerciseSets[i]!;
+        if (_activeSetByExercise.containsKey(i))
+          updatedActiveSetByExercise[i] = _activeSetByExercise[i]!;
+        if (_exerciseCompletionStatus.containsKey(i))
+          updatedExerciseCompletionStatus[i] = _exerciseCompletionStatus[i]!;
+        if (_lastCompletedSetIndexByExercise.containsKey(i))
+          updatedLastCompletedSetIndexByExercise[i] =
+              _lastCompletedSetIndexByExercise[i]!;
+      } else if (i > removedIndex) {
+        // Indizes nach dem entfernten werden um 1 verringert
+        if (_exerciseSets.containsKey(i))
+          updatedExerciseSets[i - 1] = _exerciseSets[i]!;
+        if (_activeSetByExercise.containsKey(i))
+          updatedActiveSetByExercise[i - 1] = _activeSetByExercise[i]!;
+        if (_exerciseCompletionStatus.containsKey(i))
+          updatedExerciseCompletionStatus[i - 1] =
+              _exerciseCompletionStatus[i]!;
+        if (_lastCompletedSetIndexByExercise.containsKey(i))
+          updatedLastCompletedSetIndexByExercise[i - 1] =
+              _lastCompletedSetIndexByExercise[i]!;
+      }
+      // Der entfernte Index wird übersprungen
+    }
+
+    // Tracking-Maps aktualisieren
+    _exerciseSets = updatedExerciseSets;
+    _activeSetByExercise = updatedActiveSetByExercise;
+    _exerciseCompletionStatus = updatedExerciseCompletionStatus;
+    _lastCompletedSetIndexByExercise = updatedLastCompletedSetIndexByExercise;
+
+    // Auch die Übungshistorie aktualisieren (aus dem currentSession)
+    if (_currentSession != null) {
+      final updatedExercises =
+          List<ExerciseHistoryModel>.from(_currentSession!.exercises);
+      if (removedIndex < updatedExercises.length) {
+        updatedExercises.removeAt(removedIndex);
+        _currentSession = _currentSession!.copyWith(
+          exercises: updatedExercises,
+        );
+      }
+    }
+  }
+
+  // NEU: Methode zum Speichern der gelöschten Übungen im Trainingsplan
+  Future<bool> saveDeletedExercisesToTrainingPlan() async {
+    try {
+      // Prüfe, ob es gelöschte Übungen gibt
+      if (_deletedExercises.isEmpty || _trainingPlan == null) {
+        return false;
+      }
+
+      _log(
+          'Speichere ${_deletedExercises.length} gelöschte Übungen im Trainingsplan: ${_trainingPlan!.id}');
+
+      // Trainingsplan speichern
+      final success =
+          await _trainingPlanService.saveTrainingPlans([_trainingPlan!]);
+
+      if (success) {
+        _log('Gelöschte Übungen erfolgreich gespeichert');
+        // Liste der gelöschten Übungen leeren
+        _deletedExercises.clear();
+      }
+
+      return success;
+    } catch (e) {
+      _log('Fehler beim Speichern gelöschter Übungen: $e');
       return false;
     }
   }

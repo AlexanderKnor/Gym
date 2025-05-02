@@ -632,17 +632,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                   },
                 ),
 
-                // Übung bearbeiten
-                _buildActionButton(
-                  icon: Icons.edit,
-                  label: 'Übung bearbeiten',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showExerciseEditor(context,
-                        sessionProvider.exercises[widget.exerciseIndex]);
-                  },
-                ),
-
                 const SizedBox(height: 16),
               ],
             ),

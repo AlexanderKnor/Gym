@@ -1,5 +1,5 @@
 // lib/widgets/training_session_screen/rest_timer_widget.dart
-import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -7,13 +7,6 @@ import '../../providers/training_session_screen/training_session_provider.dart';
 
 class RestTimerWidget extends StatelessWidget {
   const RestTimerWidget({Key? key}) : super(key: key);
-
-  // Format time as MM:SS with precision typography
-  String _formatTime(int totalSeconds) {
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,217 +18,247 @@ class RestTimerWidget extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Rest time calculations for UI
+    // Zeit-Berechnungen
     final totalRestTime = exercise.restPeriodSeconds;
     final progress = restTimeRemaining / totalRestTime;
+    final minutes = restTimeRemaining ~/ 60;
+    final seconds = restTimeRemaining % 60;
 
-    // Color theme based on remaining time
+    // Farbe basierend auf verbleibender Zeit
     final Color timerColor = restTimeRemaining <= 3
         ? Colors.red
         : restTimeRemaining <= 10
             ? Colors.orange
             : Colors.black;
 
-    // Calculate animations for ticking effect
-    final bool isLastThreeSeconds = restTimeRemaining <= 3;
-
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: timerColor.withOpacity(isLastThreeSeconds ? 0.3 : 0.1),
-                width: isLastThreeSeconds ? 1.5 : 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Timer-Sektion mit Label
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // "PAUSE" Label mit moderner Typografie
+                Text(
+                  'PAUSE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Modern gestaltete Timer-Uhr
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.grey[50]!,
+                        Colors.grey[100]!,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white,
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                        offset: const Offset(-1, -1),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        spreadRadius: 0,
+                        offset: const Offset(1, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Feiner Ziffernblatt-Rand
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+
+                      // Subtilere Tick-Marker
+                      ...List.generate(
+                        60,
+                        (index) {
+                          final bool isHour = index % 5 == 0;
+                          return Transform.rotate(
+                            angle: index * (2 * math.pi / 60),
+                            child: Align(
+                              alignment: const Alignment(0, -0.85),
+                              child: Container(
+                                width: isHour ? 1.5 : 0.5,
+                                height: isHour ? 5 : 3,
+                                decoration: BoxDecoration(
+                                  color: isHour
+                                      ? Colors.grey[600]
+                                      : Colors.grey[400],
+                                  borderRadius: BorderRadius.circular(0.5),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // Fortschrittskreis mit abgerundeten Enden
+                      SizedBox(
+                        width: 62,
+                        height: 62,
+                        child: CircularProgressIndicator(
+                          value: 1 - progress,
+                          strokeWidth: 3,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(timerColor),
+                          strokeCap: StrokeCap.round,
+                        ),
+                      ),
+
+                      // Zeit mit verbesserter Typografie
+                      Text(
+                        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          color: timerColor,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Eleganter Trennstrich
+            Container(
+              height: 50,
+              width: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.grey[300]!.withOpacity(0.0),
+                    Colors.grey[300]!.withOpacity(0.8),
+                    Colors.grey[300]!.withOpacity(0.0),
+                  ],
+                ),
               ),
             ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(20),
+
+            // Satz-Information mit besserer Typografie
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Nächster Satz',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[500],
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '${sessionProvider.activeSetIndex + 1}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      '/${sessionProvider.currentExerciseSets.length}',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // Modernere Steuerelemente
+            Container(
+              padding: const EdgeInsets.only(left: 8),
               child: Row(
                 children: [
-                  // Elegant timer circle
-                  SizedBox(
-                    width: 80,
-                    height: 80,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Progress circle with subtle shadow
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Progress animation
-                        TweenAnimationBuilder(
-                          tween: Tween<double>(begin: 0, end: 1 - progress),
-                          duration: const Duration(milliseconds: 300),
-                          builder: (context, double value, child) {
-                            return CircularProgressIndicator(
-                              value: value,
-                              strokeWidth: 4,
-                              backgroundColor: Colors.transparent,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(timerColor),
-                            );
-                          },
-                        ),
-
-                        // Pulsing animation for last seconds
-                        if (isLastThreeSeconds)
-                          TweenAnimationBuilder(
-                            tween: Tween<double>(begin: 0.8, end: 1.0),
-                            duration: const Duration(milliseconds: 500),
-                            builder: (context, double value, child) {
-                              return AnimatedOpacity(
-                                opacity: value,
-                                duration: const Duration(milliseconds: 500),
-                                child: Container(
-                                  width: 88 * value,
-                                  height: 88 * value,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.red.withOpacity(0.3),
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
-                        // Timer display with precise typography
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _formatTime(restTimeRemaining),
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.5,
-                                color: timerColor,
-                              ),
-                            ),
-                          ],
+                  // Pause/Play Button mit verbessertem Schatten
+                  Container(
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  // Rest information with refined typography
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Timer title
-                        const Text(
-                          'Erholungspause',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        // Next set info
-                        Text(
-                          'Nächster Satz: ${sessionProvider.activeSetIndex + 1} von ${sessionProvider.currentExerciseSets.length}',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey[600],
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-
-                        // Minimal progress bar (Apple-like subtle UI)
-                        const SizedBox(height: 12),
-                        Container(
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: 1 - progress,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: timerColor,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  // Timer controls with refined design
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Pause/Play button
-                      GestureDetector(
+                    child: Material(
+                      color: sessionProvider.isPaused
+                          ? Colors.black
+                          : Colors.white,
+                      shape: const CircleBorder(),
+                      elevation: 0,
+                      child: InkWell(
                         onTap: () {
                           sessionProvider.toggleRestTimer();
                           HapticFeedback.mediumImpact();
                         },
+                        customBorder: const CircleBorder(),
                         child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: sessionProvider.isPaused
-                                ? Colors.black
-                                : Colors.white,
-                            border: Border.all(
-                              color: sessionProvider.isPaused
-                                  ? Colors.transparent
-                                  : Colors.grey[300]!,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
+                          padding: const EdgeInsets.all(10),
                           child: Icon(
                             sessionProvider.isPaused
                                 ? Icons.play_arrow_rounded
@@ -243,56 +266,50 @@ class RestTimerWidget extends StatelessWidget {
                             color: sessionProvider.isPaused
                                 ? Colors.white
                                 : Colors.black,
-                            size: 24,
+                            size: 20,
                           ),
                         ),
                       ),
+                    ),
+                  ),
 
-                      const SizedBox(height: 12),
-
-                      // Skip button with minimalist design
-                      GestureDetector(
+                  // Skip Button mit verbessertem Schatten
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.black,
+                      shape: const CircleBorder(),
+                      elevation: 0,
+                      child: InkWell(
                         onTap: () {
                           sessionProvider.skipRestTimer();
                           HapticFeedback.mediumImpact();
                         },
+                        customBorder: const CircleBorder(),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.skip_next_rounded,
-                                size: 16,
-                                color: Colors.grey[700],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Skip',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                            ],
+                          padding: const EdgeInsets.all(10),
+                          child: const Icon(
+                            Icons.skip_next_rounded,
+                            color: Colors.white,
+                            size: 20,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

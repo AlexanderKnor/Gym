@@ -614,7 +614,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Reaktivieren',
+                                    'Zurück',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
@@ -646,85 +646,36 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   // Neuer Button zum Öffnen des Übungseditors
   Widget _buildExerciseDetailsButton(
       BuildContext context, ExerciseModel exercise) {
-    return GestureDetector(
+    return InkWell(
       onTap: () => _showExerciseEditor(context, exercise),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(24, 12, 24, 6),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon für Übung
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.fitness_center,
-                color: Colors.blue[700],
-                size: 24,
-              ),
+            Icon(
+              Icons.tune,
+              size: 18,
+              color: Colors.grey[800],
             ),
-            const SizedBox(width: 16),
-
-            // Übungsdetails
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' • ${exercise.secondaryMuscleGroup}' : ''}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${exercise.numberOfSets} Sätze • ${exercise.restPeriodSeconds}s Pause • ${exercise.standardIncrease} kg Steigerung',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Edit-Icon
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.edit,
-                color: Colors.grey[700],
-                size: 20,
+            const SizedBox(width: 8),
+            Text(
+              'Übungseinstellungen bearbeiten',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[800],
+                letterSpacing: -0.3,
               ),
             ),
           ],

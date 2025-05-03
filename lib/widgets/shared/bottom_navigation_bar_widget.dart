@@ -28,8 +28,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
     }
 
     return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8.0,
+      // Shape entfernt, da kein FAB mehr in der Mitte platziert wird
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -49,8 +48,6 @@ class BottomNavigationBarWidget extends StatelessWidget {
                 : Colors.grey,
             onPressed: () => navigationProvider.setCurrentIndex(1),
           ),
-          // Platzhalter für den zentralen Button
-          const SizedBox(width: 40),
           // Trainingspläne
           IconButton(
             icon: const Icon(Icons.calendar_today),

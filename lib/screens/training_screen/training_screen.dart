@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/shared/navigation_provider.dart';
 import '../../providers/training_plans_screen/training_plans_screen_provider.dart';
 import '../../widgets/training_screen/active_plan_card_widget.dart';
+import '../create_training_plan_screen/create_training_plan_screen.dart';
 
 class TrainingScreen extends StatelessWidget {
   const TrainingScreen({Key? key}) : super(key: key);
@@ -39,6 +40,20 @@ class TrainingScreen extends StatelessWidget {
                 ],
               )
             : _buildNoActivePlanState(context),
+      ),
+      // Neuer FloatingActionButton im Training-Screen
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'training_create_plan',
+        onPressed: () {
+          // Navigation to create a new training plan
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const CreateTrainingPlanScreen(),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+        backgroundColor: Theme.of(context).primaryColor,
       ),
     );
   }

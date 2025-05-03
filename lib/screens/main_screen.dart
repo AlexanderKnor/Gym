@@ -5,7 +5,6 @@ import 'training_screen/training_screen.dart';
 import 'progression_manager_screen/progression_manager_screen.dart';
 import 'training_plans_screen/training_plans_screen.dart';
 import 'profile_screen/profile_screen.dart';
-import 'create_training_plan_screen/create_training_plan_screen.dart';
 import '../widgets/shared/bottom_navigation_bar_widget.dart';
 
 class MainScreen extends StatelessWidget {
@@ -24,23 +23,9 @@ class MainScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      // AppBar wurde entfernt
       body: screens[navigationProvider.currentIndex],
       bottomNavigationBar: const BottomNavigationBarWidget(),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'main_create_plan',
-        onPressed: () {
-          // Navigation to create a new training plan
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const CreateTrainingPlanScreen(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
-        backgroundColor: Theme.of(context).primaryColor,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // FloatingActionButton wurde entfernt
     );
   }
 }

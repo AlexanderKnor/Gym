@@ -361,7 +361,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     );
   }
 
-// Elegante Wertanzeige ohne Icons
+  // Elegante Wertanzeige ohne Icons
   Widget _buildConfigValue(
     BuildContext context,
     String label,
@@ -411,14 +411,34 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     );
   }
 
-  // Eigener Header für die Regel-Liste im konsistenten Design
+  // Vertikaler Separator zwischen den Konfigurationsitems
+  Widget _buildConfigSeparator() {
+    return Container(
+      height: 32,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.grey[200]!.withOpacity(0.0),
+            Colors.grey[300]!.withOpacity(0.7),
+            Colors.grey[200]!.withOpacity(0.0),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Eigener Header für die Regel-Liste
   Widget _buildCustomRuleListHeader(
     BuildContext context,
     ProgressionManagerProvider provider,
     ThemeData theme,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -434,11 +454,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             icon: const Icon(Icons.add, size: 16),
             label: const Text('Neue Regel'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black,
+              foregroundColor: Colors.grey[800],
               side: BorderSide(color: Colors.grey[300]!),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               visualDensity: VisualDensity.compact,
               textStyle: const TextStyle(
@@ -453,7 +473,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     );
   }
 
-  // Angepasste Regelliste ohne Header, um Dopplung zu vermeiden
+  // Angepasste Regelliste mit elegantem Kettendesign
   Widget _buildCustomRuleList(
     BuildContext context,
     ProgressionManagerProvider provider,
@@ -469,93 +489,126 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
     // Leere Liste oder Regelliste
     return profil.rules.isEmpty
-        ? _buildEmptyRulesList()
+        ? _buildEmptyRulesList(context, provider)
         : Column(
             children: [
+              // Subtiles Info-Banner
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Colors.grey[50],
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: Colors.grey[200]!),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Regeln werden wie if/else-if von oben nach unten ausgewertet. Nur die erste zutreffende Regel wird angewendet.',
+                        'Regeln werden von oben nach unten geprüft. Nur die erste zutreffende Regel wird ausgeführt.',
                         style: TextStyle(
                           fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                          height: 1.4,
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // Container für die Regelliste mit eleganter Kette
               Container(
                 decoration: BoxDecoration(
+                  color: Colors.white,
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
                   ),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border(
+                    left: BorderSide(color: Colors.grey[200]!),
+                    right: BorderSide(color: Colors.grey[200]!),
+                    bottom: BorderSide(color: Colors.grey[200]!),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: profil.rules.length,
-                  separatorBuilder: (context, index) =>
-                      Divider(height: 1, color: Colors.grey[300]),
-                  itemBuilder: (context, index) {
-                    final rule = profil.rules[index];
-                    return _buildRuleCard(
-                        context, provider, rule, index, profil.rules.length);
-                  },
+                child: Column(
+                  children: List.generate(profil.rules.length, (i) {
+                    final rule = profil.rules[i];
+                    final isLastRule = i == profil.rules.length - 1;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Regelkarte
+                        _buildElegantRuleCard(
+                            context, provider, rule, i, profil.rules.length),
+
+                        // Verbindungselement zwischen den Karten, außer bei der letzten Karte
+                        if (!isLastRule) _buildRuleConnection(),
+                      ],
+                    );
+                  }),
                 ),
               ),
             ],
           );
   }
 
-  // Leere Regel-Liste
-  Widget _buildEmptyRulesList() {
+  // Verbindungselement zwischen den Regelkarten
+  Widget _buildRuleConnection() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
+      height: 40,
+      margin: const EdgeInsets.only(left: 32),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Icon(
-            Icons.rule_folder,
-            size: 48,
-            color: Colors.grey[400],
+          // Vertikale Verbindungslinie
+          Container(
+            width: 1,
+            height: double.infinity,
+            color: Colors.grey[300],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Keine Regeln definiert',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Füge eine Regel hinzu, um das Progressionsverhalten zu definieren',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
+
+          // "Sonst" Indikator als subtiler Pill-Button auf der Linie
+          Positioned(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Text(
+                'sonst',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[700],
+                  letterSpacing: -0.2,
+                ),
+              ),
             ),
           ),
         ],
@@ -563,277 +616,491 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     );
   }
 
-  // Regelkarte
-  Widget _buildRuleCard(
+  // Leere Regel-Liste
+  Widget _buildEmptyRulesList(
+      BuildContext context, ProgressionManagerProvider provider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Leichter Grauton für das Icon
+          Icon(
+            Icons.rule,
+            size: 48,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Keine Regeln definiert',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              letterSpacing: -0.3,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Definiere Regeln, um festzulegen, wie sich deine Trainingsparameter entwickeln sollen.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              height: 1.4,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => provider.openRuleEditor(null),
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Erste Regel erstellen'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey[800],
+              backgroundColor: Colors.grey[50],
+              side: BorderSide(color: Colors.grey[300]!),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Elegante und dezente Regel-Karte
+  Widget _buildElegantRuleCard(
       BuildContext context,
       ProgressionManagerProvider provider,
       dynamic rule,
       int index,
       int totalRules) {
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        onTap: () => provider.openRuleEditor(rule),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+    final bool isCondition = rule.type == 'condition';
 
-                  // Regel-Typ anzeigen
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: rule.type == 'condition'
-                          ? Colors.blue[100]
-                          : Colors.green[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      rule.type == 'condition' ? 'WENN' : 'SETZE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: rule.type == 'condition'
-                            ? Colors.blue[800]
-                            : Colors.green[800],
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Bearbeiten & Löschen Buttons
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(1, 0, 1, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[100]!,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => provider.openRuleEditor(rule),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Linke Spalte mit Nummer und Verbindungslinie
+                SizedBox(
+                  width: 64,
+                  child: Column(
                     children: [
-                      // Reorder Buttons - nur anzeigen wenn mehr als eine Regel
-                      if (totalRules > 1) ...[
-                        // Nach oben Button - nicht für erste Regel
-                        if (index > 0)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_upward, size: 18),
-                            onPressed: () async {
-                              await _moveRule(provider, rule, index, index - 1);
-                            },
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 30,
-                              minHeight: 30,
+                      // Nummerierter Kreis mit subtiler Unterscheidung zwischen Regeltypen
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border: Border.all(
+                            color: isCondition
+                                ? Colors.grey[400]!
+                                : Colors.grey[400]!,
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[800],
                             ),
                           ),
-
-                        // Nach unten Button - nicht für letzte Regel
-                        if (index < totalRules - 1)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_downward, size: 18),
-                            onPressed: () async {
-                              await _moveRule(provider, rule, index, index + 1);
-                            },
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 30,
-                              minHeight: 30,
-                            ),
-                          ),
-                      ],
-
-                      IconButton(
-                        icon: const Icon(Icons.delete, size: 18),
-                        color: Colors.red[700],
-                        onPressed: () async {
-                          await _confirmDeleteRule(context, provider, rule.id);
-                        },
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 30,
-                          minHeight: 30,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              // Regel-Inhalt
-              if (rule.type == 'condition') ...[
-                // Bedingungstext
-                Wrap(
-                  children:
-                      rule.conditions.asMap().entries.map<Widget>((entry) {
-                    int i = entry.key;
-                    final condition = entry.value;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          if (i > 0) ...[
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'UND',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue[700],
-                                ),
-                              ),
-                            ),
-                          ],
-                          Expanded(
-                            child: Text(
-                              _buildConditionText(provider, condition),
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
                 ),
 
-                const SizedBox(height: 4),
+                // Rechte Spalte mit Regelinhalt
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header mit Regeltyp und Aktionsbuttons
+                      Row(
+                        children: [
+                          // Regeltyp als dezenter Text
+                          Text(
+                            isCondition
+                                ? 'Wenn-Dann Regel'
+                                : 'Direkte Zuweisung',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[800],
+                              letterSpacing: -0.3,
+                            ),
+                          ),
 
-                // Dann-Teil (Aktionen)
-                if (rule.children.isNotEmpty) ...[
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.only(left: 8),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        left: BorderSide(
-                          color: Colors.grey[400]!,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: rule.children.map<Widget>((action) {
-                        if (action.type != 'assignment') {
-                          return const SizedBox.shrink();
-                        }
+                          const Spacer(),
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 2),
-                          child: Row(
+                          // Aktionsbuttons
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: _getTargetColor(action.target)[0],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  provider
-                                      .getTargetLabel(action.target)
-                                      .toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: _getTargetColor(action.target)[1],
+                              // Reorder Buttons - minimalistischer
+                              if (totalRules > 1) ...[
+                                if (index > 0)
+                                  _buildMinimalIconButton(
+                                    icon: Icons.arrow_upward,
+                                    tooltip: 'Nach oben',
+                                    onPressed: () async {
+                                      await _handleRuleReorder(
+                                          provider, rule, index, index - 1);
+                                    },
                                   ),
-                                ),
+                                if (index < totalRules - 1)
+                                  _buildMinimalIconButton(
+                                    icon: Icons.arrow_downward,
+                                    tooltip: 'Nach unten',
+                                    onPressed: () async {
+                                      await _handleRuleReorder(
+                                          provider, rule, index, index + 1);
+                                    },
+                                  ),
+                              ],
+
+                              _buildMinimalIconButton(
+                                icon: Icons.edit_outlined,
+                                tooltip: 'Bearbeiten',
+                                onPressed: () => provider.openRuleEditor(rule),
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '= ${provider.renderValueNode(action.value)}',
-                                  style: const TextStyle(fontSize: 12),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+
+                              _buildMinimalIconButton(
+                                icon: Icons.delete_outline,
+                                tooltip: 'Löschen',
+                                onPressed: () async {
+                                  await _showDeleteRuleDialog(
+                                      context, provider, rule.id);
+                                },
+                                color: Colors.grey[700],
                               ),
                             ],
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ] else if (rule.type == 'assignment' &&
-                  rule.children.isNotEmpty) ...[
-                // Direkte Zuweisungen (für Typ "assignment")
-                ...rule.children.map<Widget>((action) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _getTargetColor(action.target)[0],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            provider
-                                .getTargetLabel(action.target)
-                                .toUpperCase(),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Regelinhalt
+                      if (isCondition) ...[
+                        // WENN-Teil (Bedingungen) mit dezenter Darstellung
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Wenn:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[600],
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            ...rule.conditions
+                                .asMap()
+                                .entries
+                                .map<Widget>((entry) {
+                              int i = entry.key;
+                              final condition = entry.value;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (i > 0) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 4),
+                                      child: Text(
+                                        'UND',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                    margin: const EdgeInsets.only(bottom: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[50],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border:
+                                          Border.all(color: Colors.grey[200]!),
+                                    ),
+                                    child: Text(
+                                      _formatConditionText(provider, condition),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey[800],
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Eleganter Trennstrich mit Pfeil
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                color: Colors.grey[200],
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey[100],
+                                border: Border.all(color: Colors.grey[300]!),
+                              ),
+                              child: Icon(
+                                Icons.arrow_downward,
+                                size: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                color: Colors.grey[200],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // DANN-Teil (Aktionen) mit dezenter Darstellung
+                        if (rule.children.isNotEmpty) ...[
+                          Text(
+                            'Dann:',
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: _getTargetColor(action.target)[1],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[600],
+                              letterSpacing: -0.2,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            '= ${provider.renderValueNode(action.value)}',
-                            style: const TextStyle(fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 6),
+                          ...rule.children.map<Widget>((action) {
+                            if (action.type != 'assignment') {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              margin: const EdgeInsets.only(bottom: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Zieltyp mit dezenter Darstellung
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(4),
+                                      border:
+                                          Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: Text(
+                                      provider.getTargetLabel(action.target),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 12),
+
+                                  // Zuweisung
+                                  Expanded(
+                                    child: Text(
+                                      '= ${provider.renderValueNode(action.value)}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey[800],
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ] else if (rule.type == 'assignment' &&
+                          rule.children.isNotEmpty) ...[
+                        // Direkte Zuweisungen mit dezenter Darstellung
+                        Text(
+                          'Setze Werte:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                            letterSpacing: -0.2,
                           ),
                         ),
+                        const SizedBox(height: 6),
+                        ...rule.children.map<Widget>((action) {
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            margin: const EdgeInsets.only(bottom: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Row(
+                              children: [
+                                // Zieltyp mit dezenter Darstellung
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(4),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: Text(
+                                    provider.getTargetLabel(action.target),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                // Zuweisung
+                                Expanded(
+                                  child: Text(
+                                    '= ${provider.renderValueNode(action.value)}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[800],
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ],
-                    ),
-                  );
-                }).toList(),
+                    ],
+                  ),
+                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Hilfsfunktion für Bedingungstext
-  String _buildConditionText(
+  // Minimalistischer Icon-Button ohne Farbe
+  Widget _buildMinimalIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: color ?? Colors.grey[500],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Hilfsfunktion für Bedingungstext - umbenannt um Namenskonflikte zu vermeiden
+  String _formatConditionText(
       ProgressionManagerProvider provider, dynamic condition) {
     final leftLabel = provider.getVariableLabel(condition.left['value']);
     final operatorLabel = provider.getOperatorLabel(condition.operator);
@@ -844,23 +1111,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     return '$leftLabel $operatorLabel $rightLabel';
   }
 
-  // Hilfsfunktion für zielbasierte Farben
-  List<Color> _getTargetColor(String target) {
-    switch (target) {
-      case 'kg':
-        return [Colors.grey[200]!, Colors.grey[800]!];
-      case 'reps':
-        return [Colors.grey[200]!, Colors.grey[800]!];
-      case 'rir':
-        return [Colors.grey[200]!, Colors.grey[800]!];
-      default:
-        return [Colors.grey[200]!, Colors.grey[800]!];
-    }
-  }
-
-  // Regel-Reihenfolge ändern
-  Future<void> _moveRule(ProgressionManagerProvider provider, dynamic rule,
-      int oldIndex, int newIndex) async {
+  // Regel-Reihenfolge ändern - umbenannt um Namenskonflikte zu vermeiden
+  Future<void> _handleRuleReorder(ProgressionManagerProvider provider,
+      dynamic rule, int oldIndex, int newIndex) async {
     provider.handleDragStart(rule.id);
 
     if (oldIndex < newIndex) {
@@ -874,8 +1127,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     }
   }
 
-  // Bestätigungsdialog zum Löschen
-  Future<void> _confirmDeleteRule(BuildContext context,
+  // Bestätigungsdialog zum Löschen - umbenannt um Namenskonflikte zu vermeiden
+  Future<void> _showDeleteRuleDialog(BuildContext context,
       ProgressionManagerProvider provider, String ruleId) async {
     final result = await showDialog<bool>(
       context: context,
@@ -901,81 +1154,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     if (result == true) {
       await provider.deleteRule(ruleId);
     }
-  }
-
-  // Verfeinertes Konfigurations-Item
-  Widget _buildConfigItemRefined(
-    BuildContext context,
-    String label,
-    String value,
-    String unit,
-    IconData icon,
-  ) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.grey[600],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 6),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[900],
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                TextSpan(
-                  text: unit.isNotEmpty ? ' $unit' : '',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Vertikaler Separator zwischen den Konfigurationsitems
-  Widget _buildConfigSeparator() {
-    return Container(
-      height: 32,
-      width: 1,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.grey[200]!.withOpacity(0.0),
-            Colors.grey[300]!.withOpacity(0.7),
-            Colors.grey[200]!.withOpacity(0.0),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildDemoTab(

@@ -16,11 +16,14 @@ import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
 class ExerciseTabWidget extends StatefulWidget {
   final int exerciseIndex;
   final bool showDetails;
+  final Function?
+      onExerciseRemoved; // NEU: Callback für TabController-Aktualisierung
 
   const ExerciseTabWidget({
     Key? key,
     required this.exerciseIndex,
     this.showDetails = false,
+    this.onExerciseRemoved, // NEU: Parameter hinzugefügt
   }) : super(key: key);
 
   @override
@@ -35,6 +38,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   String? _exerciseProfileId;
   bool _showStandardIncrementWheel = false;
   bool _showRestPeriodWheel = false;
+  bool _isProcessingDeletion = false; // NEU: Flag für Löschvorgang
 
   @override
   void initState() {
@@ -163,60 +167,116 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             child: ElevatedButton.icon(
-                              onPressed: () async {
-                                // GEÄNDERT: Dialog NICHT sofort schließen
-                                // Stattdessen Bestätigungsdialog über dem aktuellen Dialog anzeigen
-                                bool confirmDelete = await showDialog<bool>(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (confirmContext) => AlertDialog(
-                                        title: const Text('Übung löschen?'),
-                                        content: const Text(
-                                            'Möchtest du diese Übung wirklich löschen? Dies kann später im Trainingsplan gespeichert werden.'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              // Bei Abbruch nur den Bestätigungsdialog schließen
-                                              // und zum Editor zurückkehren
-                                              Navigator.of(confirmContext)
-                                                  .pop(false);
-                                            },
-                                            child: const Text('Abbrechen'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              // Bei Bestätigung true zurückgeben
-                                              Navigator.of(confirmContext)
-                                                  .pop(true);
-                                            },
-                                            style: ElevatedButton.styleFrom(
+                              onPressed: _isProcessingDeletion
+                                  ? null // Deaktivieren während Löschvorgang läuft
+                                  : () async {
+                                      // NEU: Verarbeitung des Löschvorgangs
+                                      setDialogState(() {
+                                        _isProcessingDeletion = true;
+                                      });
+
+                                      try {
+                                        // Bestätigungsdialog anzeigen
+                                        bool confirmDelete =
+                                            await showDialog<bool>(
+                                                  context: context,
+                                                  barrierDismissible: false,
+                                                  builder: (confirmContext) =>
+                                                      AlertDialog(
+                                                    title: const Text(
+                                                        'Übung löschen?'),
+                                                    content: const Text(
+                                                        'Möchtest du diese Übung wirklich löschen? Dies kann später im Trainingsplan gespeichert werden.'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    confirmContext)
+                                                                .pop(false),
+                                                        child: const Text(
+                                                            'Abbrechen'),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    confirmContext)
+                                                                .pop(true),
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                        ),
+                                                        child: const Text(
+                                                            'Löschen'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ) ??
+                                                false;
+
+                                        // Wenn Benutzer abgebrochen hat, Dialog-Status zurücksetzen
+                                        if (!confirmDelete) {
+                                          setDialogState(() {
+                                            _isProcessingDeletion = false;
+                                          });
+                                          return;
+                                        }
+
+                                        // Erst Dialog schließen
+                                        Navigator.pop(context);
+
+                                        // Kurze Verzögerung vor Löschoperation
+                                        await Future.delayed(
+                                            const Duration(milliseconds: 300));
+
+                                        // Dann die Übung löschen
+                                        final success = await sessionProvider
+                                            .removeExerciseFromSession(
+                                          widget.exerciseIndex,
+                                          onTabsChanged:
+                                              widget.onExerciseRemoved,
+                                        );
+
+                                        // Haptisches Feedback, wenn erfolgreich
+                                        if (success && mounted) {
+                                          HapticFeedback.mediumImpact();
+                                        }
+                                      } catch (e) {
+                                        print(
+                                            'Fehler beim Löschen der Übung: $e');
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  'Fehler beim Löschen: $e'),
                                               backgroundColor: Colors.red,
                                             ),
-                                            child: const Text('Löschen'),
-                                          ),
-                                        ],
+                                          );
+                                        }
+
+                                        // Bei Fehler auch den Dialog-Status zurücksetzen
+                                        if (mounted) {
+                                          setState(() {
+                                            _isProcessingDeletion = false;
+                                          });
+                                        }
+                                      }
+                                    },
+                              icon: _isProcessingDeletion
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
                                       ),
-                                    ) ??
-                                    false;
-
-                                // Wenn der Benutzer bestätigt hat
-                                if (confirmDelete) {
-                                  // Zuerst den Editor-Dialog schließen
-                                  Navigator.pop(context);
-
-                                  // Dann die Übung löschen
-                                  await sessionProvider
-                                      .removeExerciseFromSession(
-                                          widget.exerciseIndex);
-
-                                  // Haptisches Feedback
-                                  HapticFeedback.mediumImpact();
-                                }
-                                // Wenn der Benutzer abgebrochen hat, bleibt der Editor-Dialog offen
-                              },
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Colors.white),
-                              label: const Text('Übung löschen'),
+                                    )
+                                  : const Icon(Icons.delete_outline,
+                                      color: Colors.white),
+                              label: Text(_isProcessingDeletion
+                                  ? 'Wird gelöscht...'
+                                  : 'Übung löschen'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,

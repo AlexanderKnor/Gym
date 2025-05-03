@@ -1475,11 +1475,12 @@ class TrainingSessionProvider with ChangeNotifier {
   }
 
   // NEU: Methode zum Löschen einer Übung aus der Session
-  Future<bool> removeExerciseFromSession(int exerciseIndex) async {
+  Future<bool> removeExerciseFromSession(int exerciseIndex,
+      {Function? onTabsChanged}) async {
     try {
       if (_trainingDay == null || _trainingPlan == null) return false;
 
-      // Sicherstellen, dass wir mehr als eine Übung haben
+      // Sicherstellen, dass mindestens eine Übung bleibt
       if (_trainingDay!.exercises.length <= 1) {
         _log(
             'Löschen nicht möglich: Es muss mindestens eine Übung vorhanden sein');
@@ -1490,51 +1491,65 @@ class TrainingSessionProvider with ChangeNotifier {
       if (_isProcessingConfig) return false;
       _isProcessingConfig = true;
 
-      _log('Entferne Übung mit Index $exerciseIndex');
+      try {
+        _log('Entferne Übung mit Index $exerciseIndex');
 
-      // Die zu löschende Übung speichern, um sie später verfolgen zu können
-      final exerciseToDelete = _trainingDay!.exercises[exerciseIndex];
-      _deletedExercises.add(exerciseToDelete);
+        // Die zu löschende Übung speichern
+        final exerciseToDelete = _trainingDay!.exercises[exerciseIndex];
+        _deletedExercises.add(exerciseToDelete);
 
-      // Übung aus dem Trainingstag entfernen
-      final updatedExercises =
-          List<ExerciseModel>.from(_trainingDay!.exercises);
-      updatedExercises.removeAt(exerciseIndex);
+        // Übung aus dem Trainingstag entfernen
+        final updatedExercises =
+            List<ExerciseModel>.from(_trainingDay!.exercises);
+        updatedExercises.removeAt(exerciseIndex);
 
-      // Trainingstag aktualisieren
-      final updatedDay = _trainingDay!.copyWith(
-        exercises: updatedExercises,
-      );
+        // Trainingstag aktualisieren
+        final updatedDay = _trainingDay!.copyWith(
+          exercises: updatedExercises,
+        );
 
-      // Trainingsplan aktualisieren
-      final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
-      updatedDays[_dayIndex] = updatedDay;
+        // Trainingsplan aktualisieren
+        final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
+        updatedDays[_dayIndex] = updatedDay;
 
-      final updatedPlan = _trainingPlan!.copyWith(
-        days: updatedDays,
-      );
+        final updatedPlan = _trainingPlan!.copyWith(
+          days: updatedDays,
+        );
 
-      // Provider-Status aktualisieren
-      _trainingPlan = updatedPlan;
-      _trainingDay = updatedDay;
+        // Provider-Status aktualisieren
+        _trainingPlan = updatedPlan;
+        _trainingDay = updatedDay;
 
-      // Tracking-Daten anpassen
-      _adjustTrackingDataAfterExerciseRemoval(exerciseIndex);
+        // Tracking-Daten anpassen
+        _adjustTrackingDataAfterExerciseRemoval(exerciseIndex);
 
-      // Zur nächsten offenen Übung navigieren
-      int nextExerciseIndex = findNextOpenExerciseIndex();
+        // NEU: Erst TabController aktualisieren
+        if (onTabsChanged != null) {
+          await Future.microtask(() => onTabsChanged());
+        }
 
-      // Falls nächste Übung die gerade gelöschte wäre, nehmen wir die erste verfügbare
-      if (nextExerciseIndex >= updatedExercises.length) {
-        nextExerciseIndex =
-            updatedExercises.isEmpty ? 0 : updatedExercises.length - 1;
+        // Verzögerung, um UI-Updates abzuschließen
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Erst JETZT zur nächsten offenen Übung navigieren
+        int nextExerciseIndex = findNextOpenExerciseIndex();
+        if (nextExerciseIndex >= _trainingDay!.exercises.length) {
+          nextExerciseIndex = _trainingDay!.exercises.isEmpty
+              ? 0
+              : _trainingDay!.exercises.length - 1;
+        }
+        _currentExerciseIndex = nextExerciseIndex;
+
+        // Status aktualisieren, erst NACHDEM alles andere erledigt ist
+        _isProcessingConfig = false;
+        notifyListeners();
+
+        return true;
+      } catch (e) {
+        _log('Fehler im Löschvorgang: $e');
+        _isProcessingConfig = false;
+        return false;
       }
-
-      _currentExerciseIndex = nextExerciseIndex;
-
-      _isProcessingConfig = false;
-      notifyListeners();
-      return true;
     } catch (e) {
       _log('Fehler beim Entfernen der Übung: $e');
       _isProcessingConfig = false;

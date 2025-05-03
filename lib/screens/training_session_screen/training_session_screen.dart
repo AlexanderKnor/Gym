@@ -121,6 +121,61 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     }
   }
 
+  // NEU: Methode zum Neuerstellen des TabControllers nach dem Löschen einer Übung
+  void _recreateTabController() {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Verzögerung hinzufügen, damit alle vorherigen Updates abgeschlossen werden
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+
+      try {
+        final sessionProvider =
+            Provider.of<TrainingSessionProvider>(context, listen: false);
+        final exerciseCount = sessionProvider.exercises.length;
+
+        // Alten Controller bereinigen
+        _tabController?.dispose();
+        _tabController = null;
+
+        // Neuen Controller erstellen
+        if (exerciseCount > 0) {
+          _tabController = TabController(
+            length: exerciseCount,
+            vsync: this,
+          );
+
+          _tabController!.addListener(() {
+            if (!_tabController!.indexIsChanging) {
+              sessionProvider.selectExercise(_tabController!.index);
+            }
+          });
+
+          // Animation zum nächsten Tab
+          _tabController!.animateTo(sessionProvider.currentExerciseIndex);
+        }
+
+        if (mounted) {
+          setState(() {
+            _initialized = true;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        print('Fehler bei TabController-Aktualisierung: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
     _tabController?.dispose();
@@ -367,6 +422,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                         (index) => ExerciseTabWidget(
                           exerciseIndex: index,
                           showDetails: _showExerciseDetails,
+                          onExerciseRemoved:
+                              _recreateTabController, // NEU: Callback übergeben
                         ),
                       ),
                     ),
@@ -707,7 +764,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     );
   }
 
-// NEU: Dialog zum Hinzufügen einer Übung anzeigen
+  // NEU: Dialog zum Hinzufügen einer Übung anzeigen
   void _showAddExerciseDialog(
       BuildContext context, TrainingSessionProvider sessionProvider) {
     showDialog(

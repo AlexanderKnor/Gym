@@ -1,3 +1,4 @@
+// lib/screens/progression_manager_screen/rule_editor_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/progression_manager_screen/progression_manager_provider.dart';
@@ -1115,32 +1116,55 @@ class RuleEditorContent extends StatelessWidget {
       ProgressionManagerProvider provider, String leftVariableId) {
     final relatedIds = <String>[];
 
-    if (leftVariableId == 'lastKg') {
-      relatedIds.add('previousKg');
-    } else if (leftVariableId == 'lastReps') {
-      relatedIds.addAll(['targetRepsMin', 'targetRepsMax', 'previousReps']);
-    } else if (leftVariableId == 'lastRIR') {
-      relatedIds.addAll(['targetRIRMin', 'targetRIRMax', 'previousRIR']);
-    } else if (leftVariableId == 'last1RM') {
-      relatedIds.add('previous1RM');
-    } else if (leftVariableId == 'previousKg') {
-      relatedIds.add('lastKg');
-    } else if (leftVariableId == 'previousReps') {
-      relatedIds.add('lastReps');
-    } else if (leftVariableId == 'previousRIR') {
-      relatedIds.add('lastRIR');
-    } else if (leftVariableId == 'previous1RM') {
-      relatedIds.add('last1RM');
-    } else if (leftVariableId.startsWith('target')) {
-      // Bei Zielvariablen andere Zielvariablen hinzufügen
-      provider.verfuegbareVariablen
-          .where((v) => v.id.startsWith('target') && v.id != leftVariableId)
-          .forEach((v) => relatedIds.add(v.id));
+    // Variablen nach Typen gruppieren
+    final repetitionVariables = [
+      'lastReps',
+      'previousReps',
+      'targetRepsMin',
+      'targetRepsMax'
+    ];
+    final rirVariables = [
+      'lastRIR',
+      'previousRIR',
+      'targetRIRMin',
+      'targetRIRMax'
+    ];
+    final weightVariables = ['lastKg', 'previousKg', 'increment'];
+    final rmVariables = ['last1RM', 'previous1RM'];
+
+    // Logische Zuordnung basierend auf dem Variablentyp
+    if (repetitionVariables.contains(leftVariableId)) {
+      // Wenn die linke Seite eine Wiederholungsvariable ist, nur andere Wiederholungsvariablen anzeigen
+      relatedIds.addAll(repetitionVariables);
+    } else if (rirVariables.contains(leftVariableId)) {
+      // Wenn die linke Seite eine RIR-Variable ist, nur andere RIR-Variablen anzeigen
+      relatedIds.addAll(rirVariables);
+    } else if (weightVariables.contains(leftVariableId)) {
+      // Wenn die linke Seite eine Gewichtsvariable ist, nur andere Gewichtsvariablen anzeigen
+      relatedIds.addAll(weightVariables);
+    } else if (rmVariables.contains(leftVariableId)) {
+      // Wenn die linke Seite eine 1RM-Variable ist, nur andere 1RM-Variablen anzeigen
+      relatedIds.addAll(rmVariables);
     }
+
+    // Die ausgewählte Variable selbst entfernen, da man sie nicht mit sich selbst vergleichen sollte
+    relatedIds.remove(leftVariableId);
 
     // Falls keine passenden Variablen gefunden wurden, mindestens eine Standardvariable hinzufügen
     if (relatedIds.isEmpty) {
-      relatedIds.add('targetRepsMax');
+      // Je nach Präfix einen sinnvollen Standardwert hinzufügen
+      if (leftVariableId.startsWith('last')) {
+        relatedIds.add('previous' + leftVariableId.substring(4));
+      } else if (leftVariableId.startsWith('previous')) {
+        relatedIds.add('last' + leftVariableId.substring(8));
+      } else if (leftVariableId.startsWith('targetReps')) {
+        relatedIds.addAll(['lastReps', 'previousReps']);
+      } else if (leftVariableId.startsWith('targetRIR')) {
+        relatedIds.addAll(['lastRIR', 'previousRIR']);
+      } else {
+        // Fallback: Einige Standard-Vergleichsvariablen
+        relatedIds.add('targetRepsMax');
+      }
     }
 
     return provider.verfuegbareVariablen

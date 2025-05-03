@@ -309,7 +309,7 @@ class _ProgressionManagerScreenContentState
                     Navigator.of(context).pop();
                     _showProfileSelectionSheet(context, provider);
                   },
-                  isPrimary: true,
+                  isPrimary: false,
                 ),
               ],
             ),

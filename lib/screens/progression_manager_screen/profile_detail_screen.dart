@@ -241,151 +241,169 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     ThemeData theme,
   ) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Action Bar - Apple-Stil
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Container(
-              height: 38,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profilinformationen Card mit integriertem "Bearbeiten"-Button
+            Container(
+              margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey[200]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Profil bearbeiten Button
-                  Expanded(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          provider.openProfileEditor(widget.profile);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          height: 38,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.edit_outlined,
-                                size: 18,
-                                color: Colors.grey[800],
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Profil bearbeiten',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey[800],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                  // Header mit Titel und Button
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Profilinformationen',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.5,
                           ),
                         ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            provider.openProfileEditor(widget.profile);
+                          },
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Bearbeiten'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.black87,
+                            side: BorderSide(color: Colors.grey[300]!),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Beschreibung
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Text(
+                      widget.profile.description,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                        height: 1.4,
                       ),
+                    ),
+                  ),
+
+                  // Trennlinie
+                  Divider(color: Colors.grey[200]),
+
+                  // Konfigurationswerte in moderner Darstellung
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        _buildConfigValue(
+                          context,
+                          'Wiederholungen',
+                          '${widget.profile.config['targetRepsMin']} - ${widget.profile.config['targetRepsMax']}',
+                          'Wdh',
+                        ),
+                        _buildConfigSeparator(),
+                        _buildConfigValue(
+                          context,
+                          'RIR-Bereich',
+                          '${widget.profile.config['targetRIRMin']} - ${widget.profile.config['targetRIRMax']}',
+                          'RIR',
+                        ),
+                        _buildConfigSeparator(),
+                        _buildConfigValue(
+                          context,
+                          'Steigerung',
+                          '${widget.profile.config['increment']}',
+                          'kg',
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+
+            // Angepasste Regel-Liste mit eigenem Header
+            _buildCustomRuleListHeader(context, provider, theme),
+
+            // Regel-Liste ohne eigenen Header
+            _buildCustomRuleList(context, provider, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+// Elegante Wertanzeige ohne Icons
+  Widget _buildConfigValue(
+    BuildContext context,
+    String label,
+    String value,
+    String unit,
+  ) {
+    return Expanded(
+      child: Column(
+        children: [
+          // Label
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[600],
+              letterSpacing: -0.3,
+            ),
           ),
-
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Profilinformationen Card
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[200]!),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Profilinformationen',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                widget.profile.description,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.grey[600],
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Divider(color: Colors.grey[200]),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              _buildConfigItemRefined(
-                                context,
-                                'Wiederholungen',
-                                '${widget.profile.config['targetRepsMin']} - ${widget.profile.config['targetRepsMax']}',
-                                'Wdh',
-                                Icons.repeat_rounded,
-                              ),
-                              _buildConfigSeparator(),
-                              _buildConfigItemRefined(
-                                context,
-                                'RIR-Bereich',
-                                '${widget.profile.config['targetRIRMin']} - ${widget.profile.config['targetRIRMax']}',
-                                'RIR',
-                                Icons.battery_5_bar_rounded,
-                              ),
-                              _buildConfigSeparator(),
-                              _buildConfigItemRefined(
-                                context,
-                                'Steigerung',
-                                '${widget.profile.config['increment']}',
-                                'kg',
-                                Icons.fitness_center_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+          const SizedBox(height: 8),
+          // Wert mit Einheit
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[900],
+                    letterSpacing: -0.5,
                   ),
-
-                  // Angepasste Regel-Liste mit eigenem Header
-                  _buildCustomRuleListHeader(context, provider, theme),
-
-                  // Regel-Liste ohne eigenen Header
-                  _buildCustomRuleList(context, provider, theme),
-                ],
-              ),
+                ),
+                TextSpan(
+                  text: unit.isNotEmpty ? ' $unit' : '',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -943,7 +961,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   // Vertikaler Separator zwischen den Konfigurationsitems
   Widget _buildConfigSeparator() {
     return Container(
-      height: 36,
+      height: 32,
       width: 1,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(

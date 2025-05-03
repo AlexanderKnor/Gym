@@ -528,7 +528,9 @@ class ProfileCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: isSystemProfile ? Colors.blue[50] : Colors.grey[100],
+                    color: isSystemProfile
+                        ? Colors.blue[50]
+                        : const Color.fromARGB(255, 241, 198, 250),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -536,8 +538,9 @@ class ProfileCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color:
-                          isSystemProfile ? Colors.blue[700] : Colors.grey[700],
+                      color: isSystemProfile
+                          ? Colors.blue[700]
+                          : const Color.fromARGB(255, 152, 0, 240),
                     ),
                   ),
                 ),
@@ -639,7 +642,7 @@ class ProfileCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.play_circle_outline,
+                      Icons.chevron_right,
                       size: 16,
                       color: Colors.grey[800],
                     ),

@@ -1,6 +1,7 @@
 // lib/screens/progression_manager_screen/profile_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui'; // Import für BackdropFilter
 import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../widgets/progression_manager_screen/components/rule_list_widget.dart';
@@ -78,7 +79,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   }
 
   bool _hasCompletedSets(ProgressionManagerProvider provider) {
-    return provider.saetze.any((satz) => satz.abgeschlossen);
+    // Prüfen, ob es unter den ersten 3 Sätzen abgeschlossene gibt
+    return provider.saetze.take(3).any((satz) => satz.abgeschlossen);
   }
 
   void _showActionsMenu(
@@ -205,21 +207,50 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.profile.name),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(
-              icon: Icon(Icons.edit_outlined),
-              text: 'Bearbeiten',
+        elevation: 0, // Kein Schatten
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+              ),
             ),
-            Tab(
-              icon: Icon(Icons.science_outlined),
-              text: 'Demo',
+            child: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Bearbeiten'),
+                Tab(text: 'Demo'),
+              ],
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.grey[400],
+              indicatorWeight: 3,
+              indicatorColor: Colors.black,
+              labelStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.3,
+              ),
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(color: Colors.black, width: 3),
+                insets: const EdgeInsets.symmetric(horizontal: 24),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                (Set<MaterialState> states) {
+                  return states.contains(MaterialState.focused)
+                      ? null
+                      : Colors.transparent;
+                },
+              ),
             ),
-          ],
-          labelColor: Colors.black,
-          indicatorColor: Colors.black,
-          unselectedLabelColor: Colors.grey[700],
+          ),
         ),
       ),
       body: TabBarView(
@@ -325,7 +356,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                       children: [
                         _buildConfigValue(
                           context,
-                          'Wiederholungen',
+                          'Wdh',
                           '${widget.profile.config['targetRepsMin']} - ${widget.profile.config['targetRepsMax']}',
                           'Wdh',
                         ),
@@ -525,8 +556,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                 ),
               ),
 
-              // Container für die Regelliste mit eleganter Kette
+              // Container für alle Regeln mit Padding
               Container(
+                padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: const BorderRadius.only(
@@ -538,13 +570,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                     right: BorderSide(color: Colors.grey[200]!),
                     bottom: BorderSide(color: Colors.grey[200]!),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Column(
                   children: List.generate(profil.rules.length, (i) {
@@ -552,9 +577,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                     final isLastRule = i == profil.rules.length - 1;
 
                     return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Regelkarte
+                        // Regelkarte mit Rahmen
                         _buildElegantRuleCard(
                             context, provider, rule, i, profil.rules.length),
 
@@ -573,15 +598,17 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   Widget _buildRuleConnection() {
     return Container(
       height: 40,
-      margin: const EdgeInsets.only(left: 32),
+      margin: const EdgeInsets.symmetric(horizontal: 1),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Vertikale Verbindungslinie
-          Container(
-            width: 1,
-            height: double.infinity,
-            color: Colors.grey[300],
+          // Vertikale Verbindungslinie - jetzt breiter und sichtbarer
+          Center(
+            child: Container(
+              width: 2,
+              height: double.infinity,
+              color: Colors.grey[300],
+            ),
           ),
 
           // "Sonst" Indikator als subtiler Pill-Button auf der Linie
@@ -594,7 +621,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -693,20 +720,27 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(1, 0, 1, 0),
+      margin: const EdgeInsets.fromLTRB(1, 4, 1, 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey[100]!,
-            width: 1,
-          ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => provider.openRuleEditor(rule),
+          borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             child: Column(
@@ -957,7 +991,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                                           Border.all(color: Colors.grey[300]!),
                                     ),
                                     child: Text(
-                                      provider.getTargetLabel(action.target),
+                                      // Ersetzt "Wiederholungen" mit "Wdh" wenn nötig
+                                      _getCustomTargetLabel(
+                                          provider, action.target),
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -1030,7 +1066,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                                         Border.all(color: Colors.grey[300]!),
                                   ),
                                   child: Text(
-                                    provider.getTargetLabel(action.target),
+                                    // Ersetzt "Wiederholungen" mit "Wdh" wenn nötig
+                                    _getCustomTargetLabel(
+                                        provider, action.target),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -1067,6 +1105,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
         ),
       ),
     );
+  }
+
+  // Hilfsmethode, um "Wiederholungen" durch "Wdh" zu ersetzen
+  String _getCustomTargetLabel(
+      ProgressionManagerProvider provider, String target) {
+    String originalLabel = provider.getTargetLabel(target);
+    return originalLabel == 'Wiederholungen' ? 'Wdh' : originalLabel;
   }
 
   // Minimalistischer Icon-Button ohne Farbe
@@ -1125,49 +1170,147 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     }
   }
 
-  // Bestätigungsdialog zum Löschen - umbenannt um Namenskonflikte zu vermeiden
+  // Verbesserte Methode für den Löschdialog - jetzt mit Bottom Sheet und Blur-Effekt
   Future<void> _showDeleteRuleDialog(BuildContext context,
       ProgressionManagerProvider provider, String ruleId) async {
-    final result = await showDialog<bool>(
+    // Haptisches Feedback für bessere Interaktion
+    HapticFeedback.mediumImpact();
+
+    final result = await showModalBottomSheet<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Regel löschen'),
-        content: const Text('Möchtest du diese Regel wirklich löschen?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Löschen'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
-        ],
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: Colors.red[700],
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Regel löschen',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Möchtest du diese Regel wirklich löschen?',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    // Löschen-Button (jetzt links)
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          provider.deleteRule(ruleId);
+                          Navigator.of(context).pop(true);
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.red[600],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Löschen',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Abbrechen-Button (jetzt rechts)
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Abbrechen',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
 
-    if (result == true) {
-      await provider.deleteRule(ruleId);
-    }
+    // Das Ergebnis wird direkt vom Button-Handler gesetzt,
+    // daher brauchen wir hier keine weitere Prüfung
   }
 
   Widget _buildDemoTab(
       BuildContext context, ProgressionManagerProvider provider) {
+    // Nur die ersten 3 Sätze berücksichtigen
+    final displayedSets = provider.saetze.take(3).toList();
+
     final bool allSetsCompleted =
-        provider.saetze.every((satz) => satz.abgeschlossen);
-    final bool hasMoreSets = provider.saetze.any((satz) => !satz.abgeschlossen);
+        displayedSets.every((satz) => satz.abgeschlossen);
+    final bool hasMoreSets = displayedSets.any((satz) => !satz.abgeschlossen);
     final bool hasCompletedSets = _hasCompletedSets(provider);
     final bool hasRecommendation =
         provider.sollEmpfehlungAnzeigen(provider.aktiverSatz);
+
+    // Angepasste Logik: Ein Training gilt als abgeschlossen, wenn alle angezeigten Sätze abgeschlossen sind
+    final bool isTrainingCompleted = allSetsCompleted;
 
     return Scaffold(
       body: Column(
         children: [
           // Action Bar - Apple-Stil
-          if (!provider.trainingAbgeschlossen)
+          if (!isTrainingCompleted)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Container(
@@ -1287,8 +1430,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Sätze-Karten
-                  ...provider.saetze.map((satz) => SetCardWidget(satz: satz)),
+                  // Sätze-Karten - nur die ersten 3 anzeigen
+                  ...displayedSets.map((satz) => SetCardWidget(satz: satz)),
                 ],
               ),
             ),
@@ -1299,18 +1442,18 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           // Progress indicator - nur anzeigen, wenn das Training noch nicht abgeschlossen ist
-          if (!provider.trainingAbgeschlossen)
+          if (!isTrainingCompleted)
             LinearProgressIndicator(
-              value: provider.saetze.isEmpty
+              value: displayedSets.isEmpty
                   ? 0.0
-                  : provider.saetze.where((satz) => satz.abgeschlossen).length /
-                      provider.saetze.length,
+                  : displayedSets.where((satz) => satz.abgeschlossen).length /
+                      displayedSets.length,
               minHeight: 2,
               backgroundColor: Colors.grey[200],
               color: Colors.black,
             ),
 
-          // Hauptbutton
+          // Hauptbutton - angepasste Logik
           SafeArea(
             child: Padding(
               padding:
@@ -1319,7 +1462,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: provider.trainingAbgeschlossen
+                  onPressed: isTrainingCompleted
                       ? () => provider.trainingZuruecksetzen(
                           resetRecommendations: true)
                       : allSetsCompleted
@@ -1334,7 +1477,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                     ),
                   ),
                   child: Text(
-                    provider.trainingAbgeschlossen
+                    isTrainingCompleted
                         ? 'Demo zurücksetzen'
                         : allSetsCompleted
                             ? 'Training abschließen'

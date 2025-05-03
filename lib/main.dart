@@ -20,11 +20,21 @@ void main() async {
   // Ensure Flutter widgets are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Setze die Orientierung auf nur Portrait-Modus
+  // Set orientation to portrait mode only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // Set system UI overlay style for clean appearance
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   // Initialize Firebase with project-specific options
   await Firebase.initializeApp(
@@ -45,7 +55,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Füge einen globalen Interceptor für den Zurück-Button hinzu
+    // Add global back button interceptor
     BackButtonInterceptor.add(myInterceptor);
   }
 
@@ -55,10 +65,10 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  // Diese Funktion gibt 'true' zurück, um anzuzeigen, dass der Zurück-Button-Event
-  // abgefangen wurde und nicht weiter verarbeitet werden soll
+  // Returns 'true' to indicate that the back button event
+  // was intercepted and should not be processed further
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    return true; // Stoppt den Zurück-Button-Event
+    return true; // Stops the back button event
   }
 
   @override
@@ -81,15 +91,15 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (context) => TrainingSessionProvider(),
         ),
-        // Provider für das Profil-Bildschirm
+        // Provider for profile screen
         ChangeNotifierProvider(
           create: (context) => ProfileProvider(),
         ),
-        // Provider für die Freundschaftsfunktion
+        // Provider for friendship functionality
         ChangeNotifierProvider(
           create: (context) => FriendshipProvider(),
         ),
-        // NEU: Provider für die Freundesprofil-Anzeige
+        // Provider for friend profile display
         ChangeNotifierProvider(
           create: (context) => FriendProfileProvider(),
         ),
@@ -97,18 +107,138 @@ class _MyAppState extends State<MyApp> {
       child: MaterialApp(
         title: 'Prover',
         theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
+          // Set color scheme to match training session screen
+          colorScheme: ColorScheme.light(
+            primary: Colors.black,
+            secondary: Colors.grey[800]!,
+            onPrimary: Colors.white,
+            onSecondary: Colors.white,
+            surface: Colors.white,
+            background: Colors.white,
+            error: Colors.red[700]!,
           ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+
+          // Clean, modern typography
+          textTheme: TextTheme(
+            titleLarge: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+              color: Colors.grey[900],
+            ),
+            titleMedium: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+              color: Colors.grey[900],
+            ),
+            titleSmall: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[900],
+            ),
+            bodyLarge: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey[800],
+            ),
+            bodyMedium: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey[800],
+            ),
+            bodySmall: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey[600],
             ),
           ),
+
+          // Clean app bar style
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.grey[900],
+            elevation: 0,
+            centerTitle: true,
+            titleTextStyle: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+              color: Colors.grey[900],
+            ),
+            iconTheme: IconThemeData(
+              color: Colors.grey[900],
+              size: 22,
+            ),
+          ),
+
+          // Modern button style
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+
+          // Matching text button style
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[800],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[800],
+              ),
+            ),
+          ),
+
+          // Card style with subtle shadows
+          cardTheme: CardTheme(
+            color: Colors.white,
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+
+          // Input decoration
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.grey[100],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            hintStyle: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 15,
+            ),
+          ),
+
+          // Global scaffold background
+          scaffoldBackgroundColor: Colors.white,
+
+          // Visual density
+          visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: const AuthCheckerScreen(),
         debugShowCheckedModeBanner: false,

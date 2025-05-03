@@ -69,20 +69,6 @@ class _ProgressionManagerScreenContentState
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Progressionsprofile',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              letterSpacing: -0.3,
-            )),
-        centerTitle: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black.withOpacity(0.05),
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
       body: RefreshIndicator(
         color: Colors.black,
         strokeWidth: 2,

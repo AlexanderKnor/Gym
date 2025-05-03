@@ -1,8 +1,13 @@
+// lib/widgets/progression_manager_screen/components/set_card_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../../models/progression_manager_screen/training_set_model.dart';
 import '../../../services/progression_manager_screen/one_rm_calculator_service.dart';
+import '../../shared/weight_wheel_input_widget.dart';
+import '../../shared/repetition_wheel_input_widget.dart';
+import '../../shared/rir_wheel_input_widget.dart';
 
 class SetCardWidget extends StatelessWidget {
   final TrainingSetModel satz;
@@ -39,282 +44,446 @@ class SetCardWidget extends StatelessWidget {
     // Prüfe, ob die Empfehlung angezeigt werden soll
     final sollEmpfehlungAnzeigen = provider.sollEmpfehlungAnzeigen(satz.id);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Card(
-        elevation: 1,
-        color: istAktiv
-            ? Colors.blue[50]
-            : istAbgeschlossen
-                ? Colors.green[50]
-                : Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // Schatten definieren basierend auf dem Status
+    final List<BoxShadow> cardShadows = istAktiv
+        ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              offset: const Offset(0, 2),
+              blurRadius: 8,
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              offset: const Offset(0, 1),
+              blurRadius: 4,
+              spreadRadius: 0,
+            ),
+          ]
+        : istAbgeschlossen
+            ? [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.08),
+                  offset: const Offset(0, 1),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  offset: const Offset(0, 1),
+                  blurRadius: 3,
+                  spreadRadius: 0,
+                ),
+              ];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: istAktiv
+              ? Colors.black
+              : istAbgeschlossen
+                  ? Colors.green[300]!
+                  : Colors.grey[200]!,
+          width: istAktiv ? 1.5 : 1,
+        ),
+        boxShadow: cardShadows,
+      ),
+      child: Column(
+        children: [
+          // Header mit Set-Nummer und Status
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(15),
+              topRight: Radius.circular(15),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: istAktiv
+                      ? [Colors.black, Colors.black.withOpacity(0.9)]
+                      : istAbgeschlossen
+                          ? [
+                              Colors.green.withOpacity(0.12),
+                              Colors.green.withOpacity(0.05)
+                            ]
+                          : [
+                              Colors.grey.withOpacity(0.12),
+                              Colors.grey.withOpacity(0.05)
+                            ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: istAktiv
+                        ? Colors.black.withOpacity(0.1)
+                        : Colors.transparent,
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: istAktiv
-                              ? Colors.blue
-                              : istAbgeschlossen
-                                  ? Colors.green
-                                  : Colors.grey[300],
-                          shape: BoxShape.circle,
+                  // Set-Nummer mit verbessertem Design
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: istAktiv
+                          ? Colors.white
+                          : istAbgeschlossen
+                              ? Colors.green
+                              : Colors.grey[400],
+                      boxShadow: [
+                        BoxShadow(
+                          color: (istAktiv
+                                  ? Colors.black
+                                  : istAbgeschlossen
+                                      ? Colors.green
+                                      : Colors.grey[400])!
+                              .withOpacity(0.2),
+                          offset: const Offset(0, 1),
+                          blurRadius: 2,
                         ),
-                        child: Center(
-                          child: Text(
-                            '${satz.id}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        istAktiv
-                            ? 'Aktueller Satz'
-                            : istAbgeschlossen
-                                ? 'Satz abgeschlossen'
-                                : 'Satz ${satz.id}',
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${satz.id}',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: istAktiv
-                              ? Colors.blue
-                              : istAbgeschlossen
-                                  ? Colors.green[700]
-                                  : Colors.grey[600],
+                          fontWeight: FontWeight.w700,
+                          color: istAktiv ? Colors.black : Colors.white,
                         ),
                       ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Status-Text mit verbesserter Typografie
+                  Text(
+                    istAktiv
+                        ? 'Aktueller Satz'
+                        : istAbgeschlossen
+                            ? 'Abgeschlossen'
+                            : 'Satz ${satz.id}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                      color: istAktiv
+                          ? Colors.white
+                          : istAbgeschlossen
+                              ? Colors.green[700]
+                              : Colors.grey[700],
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // Status-Icon: Nur Haken für abgeschlossene Sätze
+                  if (istAbgeschlossen)
+                    Icon(
+                      Icons.check_rounded,
+                      color: Colors.green[700],
+                      size: 20,
+                    )
+                  else if (istAktiv)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // Widget für Werte - unterschiedliches Layout je nach Zustand
+          if (istAktiv)
+            // Spinner-Widgets für Werte im aktiven Zustand
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Gewicht-Spinner
+                  Expanded(
+                    flex: 3,
+                    child: WeightSpinnerWidget(
+                      value: satz.kg,
+                      onChanged: (value) =>
+                          provider.handleChange(satz.id, 'kg', value),
+                      isEnabled: istAktiv && !istAbgeschlossen,
+                      isCompleted: istAbgeschlossen,
+                      recommendationValue:
+                          sollEmpfehlungAnzeigen && satz.empfKg != null
+                              ? satz.empfKg!.toString()
+                              : null,
+                      onRecommendationApplied: (value) {
+                        double? parsedValue = double.tryParse(value);
+                        if (parsedValue != null) {
+                          HapticFeedback.mediumImpact();
+                          provider.handleChange(satz.id, 'kg', parsedValue);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+
+                  // Wiederholungen-Spinner
+                  Expanded(
+                    flex: 2,
+                    child: RepetitionSpinnerWidget(
+                      value: satz.wiederholungen,
+                      onChanged: (value) => provider.handleChange(
+                          satz.id, 'wiederholungen', value),
+                      isEnabled: istAktiv && !istAbgeschlossen,
+                      isCompleted: istAbgeschlossen,
+                      recommendationValue: sollEmpfehlungAnzeigen &&
+                              satz.empfWiederholungen != null
+                          ? satz.empfWiederholungen!.toString()
+                          : null,
+                      onRecommendationApplied: (value) {
+                        int? parsedValue = int.tryParse(value);
+                        if (parsedValue != null) {
+                          HapticFeedback.mediumImpact();
+                          provider.handleChange(
+                              satz.id, 'wiederholungen', parsedValue);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+
+                  // RIR-Spinner
+                  Expanded(
+                    flex: 2,
+                    child: RirSpinnerWidget(
+                      value: satz.rir,
+                      onChanged: (value) =>
+                          provider.handleChange(satz.id, 'rir', value),
+                      isEnabled: istAktiv && !istAbgeschlossen,
+                      isCompleted: istAbgeschlossen,
+                      recommendationValue:
+                          sollEmpfehlungAnzeigen && satz.empfRir != null
+                              ? satz.empfRir!.toString()
+                              : null,
+                      onRecommendationApplied: (value) {
+                        int? parsedValue = int.tryParse(value);
+                        if (parsedValue != null) {
+                          HapticFeedback.mediumImpact();
+                          provider.handleChange(satz.id, 'rir', parsedValue);
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-
-              // Eingabefelder oder Werte, je nach Status
-              Row(
+            )
+          else
+            // Elegante kompakte Darstellung für nicht-aktive Sätze
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   // Gewicht
-                  Expanded(
-                    child: _buildInputField(
-                      context,
-                      'Gewicht',
-                      satz.kg.toString(),
-                      'kg',
-                      istAktiv,
-                      (value) => provider.handleChange(satz.id, 'kg', value),
-                      'kg',
-                    ),
+                  _buildMinimalValueDisplay(
+                    context: context,
+                    label: 'Gewicht',
+                    value: '${satz.kg}',
+                    unit: 'kg',
+                    isCompleted: istAbgeschlossen,
+                    flex: 3,
                   ),
-                  const SizedBox(width: 8),
+
+                  // Vertikaler Trenner
+                  _buildMinimalSeparator(isCompleted: istAbgeschlossen),
 
                   // Wiederholungen
-                  Expanded(
-                    child: _buildInputField(
-                      context,
-                      'Wdh.',
-                      satz.wiederholungen.toString(),
-                      '',
-                      istAktiv,
-                      (value) => provider.handleChange(
-                          satz.id, 'wiederholungen', value),
-                      'wiederholungen',
-                    ),
+                  _buildMinimalValueDisplay(
+                    context: context,
+                    label: 'Wdh',
+                    value: '${satz.wiederholungen}',
+                    unit: '',
+                    isCompleted: istAbgeschlossen,
+                    flex: 2,
                   ),
-                  const SizedBox(width: 8),
+
+                  // Vertikaler Trenner
+                  _buildMinimalSeparator(isCompleted: istAbgeschlossen),
 
                   // RIR
-                  Expanded(
-                    child: _buildInputField(
-                      context,
-                      'RIR',
-                      satz.rir.toString(),
-                      '',
-                      istAktiv,
-                      (value) => provider.handleChange(satz.id, 'rir', value),
-                      'rir',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 1RM als Read-Only Feld
-                  Expanded(
-                    child: _build1RMField(
-                      context,
-                      einRM,
-                      empfohlener1RM,
-                      sollEmpfehlungAnzeigen, // Die gleiche Bedingung verwenden wie bei anderen Werten
-                    ),
+                  _buildMinimalValueDisplay(
+                    context: context,
+                    label: 'RIR',
+                    value: '${satz.rir}',
+                    unit: '',
+                    isCompleted: istAbgeschlossen,
+                    flex: 2,
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+
+          // 1RM Info als elegante Fußzeile
+          if (einRM > 0 || (istAktiv && empfohlener1RM != null))
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(15),
+                  bottomRight: Radius.circular(15),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.grey[200]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // 1RM mit besserem Styling
+                  Text(
+                    '1RM: ${einRM.toStringAsFixed(1)} kg',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[700],
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+
+                  // Empfohlene 1RM mit verbessertem Design
+                  if (istAktiv &&
+                      empfohlener1RM != null &&
+                      sollEmpfehlungAnzeigen)
+                    Container(
+                      margin: const EdgeInsets.only(left: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${empfohlener1RM.toStringAsFixed(1)} kg',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Minimalistischer Trenner
+  Widget _buildMinimalSeparator({required bool isCompleted}) {
+    return Container(
+      height: 36,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.grey[200]!.withOpacity(0.0),
+            isCompleted
+                ? Colors.green[200]!.withOpacity(0.7)
+                : Colors.grey[300]!.withOpacity(0.7),
+            Colors.grey[200]!.withOpacity(0.0),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildInputField(
-    BuildContext context,
-    String label,
-    String value,
-    String suffix,
-    bool isEnabled,
-    Function(String) onChanged,
-    String feldTyp,
-  ) {
-    final provider = Provider.of<ProgressionManagerProvider>(context);
-    final istAktiv =
-        satz.id == provider.aktiverSatz && !provider.trainingAbgeschlossen;
-    final sollEmpfehlungAnzeigen = provider.sollEmpfehlungAnzeigen(satz.id);
+  // Hilfsmethode für die minimalistische Werteanzeige ohne Icons
+  Widget _buildMinimalValueDisplay({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required String unit,
+    required bool isCompleted,
+    required int flex,
+  }) {
+    final Color valueColor =
+        isCompleted ? Colors.green[700]! : Colors.grey[900]!;
+    final Color labelColor =
+        isCompleted ? Colors.green[600]! : Colors.grey[600]!;
 
-    // Den richtigen Empfehlungswert basierend auf dem Feldtyp auswählen
-    String? empfehlungWert;
-    if (sollEmpfehlungAnzeigen && istAktiv) {
-      switch (feldTyp) {
-        case 'kg':
-          empfehlungWert = satz.empfKg?.toString();
-          break;
-        case 'wiederholungen':
-          empfehlungWert = satz.empfWiederholungen?.toString();
-          break;
-        case 'rir':
-          empfehlungWert = satz.empfRir?.toString();
-          break;
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextField(
-          controller: TextEditingController(text: value),
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            suffixText: suffix,
-            isDense: true,
-            enabled: isEnabled,
-          ),
-          onChanged: onChanged,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isEnabled ? Colors.black : Colors.grey[600],
-          ),
-        ),
-        if (istAktiv && sollEmpfehlungAnzeigen && empfehlungWert != null) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.arrow_upward,
-                size: 12,
-                color: Colors.purple[700],
-              ),
-              const SizedBox(width: 2),
-              Text(
-                suffix.isNotEmpty ? '$empfehlungWert $suffix' : empfehlungWert,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.purple[700],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  // 1RM-Feld mit korrigierter Anzeigelogik
-  Widget _build1RMField(
-    BuildContext context,
-    double currentRM,
-    double? suggestedRM,
-    bool showSuggestion, // Parameter für die Konsistenz mit anderen Feldern
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '1RM',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[400]!),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.grey[100],
-          ),
-          width: double.infinity,
-          child: Text(
-            currentRM > 0 ? '${currentRM.toStringAsFixed(1)} kg' : '-',
+    return Expanded(
+      flex: flex,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label
+          Text(
+            label,
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: labelColor,
+              letterSpacing: -0.3,
             ),
           ),
-        ),
-        // Nur Empfehlung anzeigen, wenn auch andere Empfehlungen angezeigt werden
-        if (showSuggestion && suggestedRM != null && suggestedRM > 0) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.arrow_upward,
-                size: 12,
-                color: Colors.purple[700],
-              ),
-              const SizedBox(width: 2),
-              Expanded(
-                child: Text(
-                  '${suggestedRM.toStringAsFixed(1)} kg',
+          const SizedBox(height: 8),
+
+          // Wert mit Einheit
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.purple[700],
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: valueColor,
+                    letterSpacing: -0.5,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                if (unit.isNotEmpty)
+                  TextSpan(
+                    text: ' $unit',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isCompleted ? Colors.green[600] : Colors.grey[600],
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
-      ],
+      ),
     );
   }
 }

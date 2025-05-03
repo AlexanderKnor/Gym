@@ -1,4 +1,6 @@
+// lib/screens/progression_manager_screen/profile_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../widgets/progression_manager_screen/components/rule_list_widget.dart';
@@ -70,6 +72,117 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     super.dispose();
   }
 
+  bool _hasCompletedSets(ProgressionManagerProvider provider) {
+    return provider.saetze.any((satz) => satz.abgeschlossen);
+  }
+
+  void _showActionsMenu(
+      BuildContext context, ProgressionManagerProvider provider) {
+    // Prüfen, ob es abgeschlossene Sätze gibt
+    if (!_hasCompletedSets(provider)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Keine abgeschlossenen Sätze vorhanden'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Haptisches Feedback
+    HapticFeedback.mediumImpact();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Satz-Optionen',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Training zurücksetzen
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    // Start training anew for demo mode
+                    provider.trainingZuruecksetzen(resetRecommendations: false);
+                    Navigator.pop(context);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.replay_rounded,
+                          size: 24,
+                          color: Colors.black,
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Training zurücksetzen',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
@@ -106,7 +219,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
           // Tab 1: Editor
           _buildEditorTab(context, provider),
 
-          // Tab 2: Demo
+          // Tab 2: Demo mit verbesserter UI
           _buildDemoTab(context, provider),
         ],
       ),
@@ -188,7 +301,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
           const SizedBox(height: 24),
 
-          // Regelliste - Hier wurden die redundanten Elemente entfernt
+          // Regelliste
           const RuleListWidget(),
         ],
       ),
@@ -220,177 +333,202 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
   Widget _buildDemoTab(
       BuildContext context, ProgressionManagerProvider provider) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final bool allSetsCompleted =
+        provider.saetze.every((satz) => satz.abgeschlossen);
+    final bool hasMoreSets = provider.saetze.any((satz) => !satz.abgeschlossen);
+    final bool hasCompletedSets = _hasCompletedSets(provider);
+    final bool hasRecommendation =
+        provider.sollEmpfehlungAnzeigen(provider.aktiverSatz);
+
+    return Scaffold(
+      body: Column(
         children: [
-          // Profil-Info
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.purple[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.purple[100]!),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          // Action Bar - Apple-Stil
+          if (!provider.trainingAbgeschlossen)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  16, 8, 16, 4), // Unterer Abstand reduziert
+              child: Container(
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
                   children: [
-                    Icon(Icons.science, color: Colors.purple[700]),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Demo: ${widget.profile.name}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple[800],
+                    // Kraftrechner Button (Progress)
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: (!hasRecommendation || allSetsCompleted)
+                              ? null
+                              : () {
+                                  if (hasRecommendation) {
+                                    HapticFeedback.mediumImpact();
+                                    provider.empfehlungUebernehmen();
+                                  }
+                                },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Opacity(
+                            opacity: (!hasRecommendation || allSetsCompleted)
+                                ? 0.5
+                                : 1.0,
+                            child: Container(
+                              height: 38,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.bolt,
+                                    size: 18,
+                                    color: Colors.grey[800],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Progress',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[800],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Trennlinie
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: Colors.grey[300],
+                    ),
+
+                    // Zurück-Button
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: !hasCompletedSets
+                              ? null
+                              : () => _showActionsMenu(context, provider),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Opacity(
+                            opacity: !hasCompletedSets ? 0.5 : 1.0,
+                            child: Container(
+                              height: 38,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.replay_rounded,
+                                    size: 18,
+                                    color: Colors.grey[800],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Zurück',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[800],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Diese Demo ermöglicht dir, die Progressionsregeln mit Beispieldaten zu testen. Trage Werte ein und schließe Sätze ab, um zu sehen, wie die Progression funktioniert.',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Demo-Sätze
-          const Text(
-            'Demo Übung',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Training-Status
-          provider.trainingAbgeschlossen
-              ? _buildCompletedTrainingUI(context, provider)
-              : _buildActiveTrainingUI(context, provider),
-
-          const SizedBox(height: 16),
-
-          // Sätze-Karten
-          ...provider.saetze.map((satz) => SetCardWidget(satz: satz)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletedTrainingUI(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Card(
-      color: Colors.green[50],
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 32,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'Training abgeschlossen!',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  provider.trainingZuruecksetzen(resetRecommendations: true),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Demo zurücksetzen'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 48),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildActiveTrainingUI(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Aktueller Satz: ',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    Text(
-                      '${provider.aktiverSatz}/4',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                  16, 8, 16, 16), // Oberer Abstand reduziert
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Sätze-Karten mit verbesserter UI
+                  ...provider.saetze.map((satz) => SetCardWidget(satz: satz)),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: provider.empfehlungUebernehmen,
-                    icon: const Icon(Icons.auto_fix_high),
-                    label: const Text('Empfehlung übernehmen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 48),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Progress indicator - nur anzeigen, wenn das Training noch nicht abgeschlossen ist
+          if (!provider.trainingAbgeschlossen)
+            LinearProgressIndicator(
+              value: provider.saetze.isEmpty
+                  ? 0.0
+                  : provider.saetze.where((satz) => satz.abgeschlossen).length /
+                      provider.saetze.length,
+              minHeight: 2,
+              backgroundColor: Colors.grey[200],
+              color: Colors.black,
+            ),
+
+          // Hauptbutton
+          SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: provider.trainingAbgeschlossen
+                      ? () => provider.trainingZuruecksetzen(
+                          resetRecommendations: true)
+                      : allSetsCompleted
+                          ? null
+                          : provider.satzAbschliessen,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    provider.trainingAbgeschlossen
+                        ? 'Demo zurücksetzen'
+                        : allSetsCompleted
+                            ? 'Training abschließen'
+                            : 'Satz abschließen',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: provider.satzAbschliessen,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Satz abschließen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 48),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -8,40 +8,6 @@ import '../../widgets/progression_manager_screen/components/set_card_widget.dart
 import 'rule_editor_screen.dart';
 import 'profile_editor_screen.dart';
 
-// Klasse zum Zeichnen der gestrichelten Linie - jetzt auf oberster Ebene
-class DashedLinePainter extends CustomPainter {
-  final Color color;
-  final double dashWidth;
-  final double dashSpace;
-
-  DashedLinePainter({
-    required this.color,
-    required this.dashWidth,
-    required this.dashSpace,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    double startY = 0;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = size.width
-      ..style = PaintingStyle.stroke;
-
-    while (startY < size.height) {
-      canvas.drawLine(
-        Offset(size.width / 2, startY),
-        Offset(size.width / 2, startY + dashWidth),
-        paint,
-      );
-      startY += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
 class ProfileDetailScreen extends StatefulWidget {
   final dynamic profile;
   final int initialTab;
@@ -603,133 +569,45 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
           );
   }
 
-  // Verbesserte Kettenverbindung zwischen den Regelkarten
+  // Verbindungselement zwischen den Regelkarten
   Widget _buildRuleConnection() {
     return Container(
-      height: 60,
-      width: double.infinity,
+      height: 40,
+      margin: const EdgeInsets.only(left: 32),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Oberes Kettenglied
+          // Vertikale Verbindungslinie
+          Container(
+            width: 1,
+            height: double.infinity,
+            color: Colors.grey[300],
+          ),
+
+          // "Sonst" Indikator als subtiler Pill-Button auf der Linie
           Positioned(
-            top: 0,
             child: Container(
-              width: 16,
-              height: 8,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Vertikale Kettenverbindung mit gestrichelter Linie
-          Center(
-            child: Container(
-              width: 2,
-              height: double.infinity,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: CustomPaint(
-                painter: DashedLinePainter(
-                  color: Colors.grey[400]!,
-                  dashWidth: 3,
-                  dashSpace: 3,
-                ),
-              ),
-            ),
-          ),
-
-          // "Sonst" Indikator als Kettenglied
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 3,
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
                 ],
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.grey[50]!,
-                    Colors.grey[100]!,
-                  ],
-                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'sonst',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[700],
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Unteres Kettenglied
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: 16,
-              height: 8,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
+              child: Text(
+                'sonst',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[700],
+                  letterSpacing: -0.2,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 2,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
               ),
             ),
           ),

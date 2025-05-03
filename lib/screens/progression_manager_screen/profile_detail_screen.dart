@@ -8,6 +8,40 @@ import '../../widgets/progression_manager_screen/components/set_card_widget.dart
 import 'rule_editor_screen.dart';
 import 'profile_editor_screen.dart';
 
+// Klasse zum Zeichnen der gestrichelten Linie - jetzt auf oberster Ebene
+class DashedLinePainter extends CustomPainter {
+  final Color color;
+  final double dashWidth;
+  final double dashSpace;
+
+  DashedLinePainter({
+    required this.color,
+    required this.dashWidth,
+    required this.dashSpace,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double startY = 0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = size.width
+      ..style = PaintingStyle.stroke;
+
+    while (startY < size.height) {
+      canvas.drawLine(
+        Offset(size.width / 2, startY),
+        Offset(size.width / 2, startY + dashWidth),
+        paint,
+      );
+      startY += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
 class ProfileDetailScreen extends StatefulWidget {
   final dynamic profile;
   final int initialTab;
@@ -569,45 +603,133 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
           );
   }
 
-  // Verbindungselement zwischen den Regelkarten
+  // Verbesserte Kettenverbindung zwischen den Regelkarten
   Widget _buildRuleConnection() {
     return Container(
-      height: 40,
-      margin: const EdgeInsets.only(left: 32),
+      height: 60,
+      width: double.infinity,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Vertikale Verbindungslinie
-          Container(
-            width: 1,
-            height: double.infinity,
-            color: Colors.grey[300],
-          ),
-
-          // "Sonst" Indikator als subtiler Pill-Button auf der Linie
+          // Oberes Kettenglied
           Positioned(
+            top: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              width: 16,
+              height: 8,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey[100],
                 border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
                     offset: const Offset(0, 1),
                   ),
                 ],
               ),
-              child: Text(
-                'sonst',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[700],
-                  letterSpacing: -0.2,
+            ),
+          ),
+
+          // Vertikale Kettenverbindung mit gestrichelter Linie
+          Center(
+            child: Container(
+              width: 2,
+              height: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: CustomPaint(
+                painter: DashedLinePainter(
+                  color: Colors.grey[400]!,
+                  dashWidth: 3,
+                  dashSpace: 3,
                 ),
+              ),
+            ),
+          ),
+
+          // "Sonst" Indikator als Kettenglied
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.grey[50]!,
+                    Colors.grey[100]!,
+                  ],
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'sonst',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Unteres Kettenglied
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: 16,
+              height: 8,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(0, -1),
+                  ),
+                ],
               ),
             ),
           ),
@@ -682,7 +804,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     );
   }
 
-  // Elegante und dezente Regel-Karte
+  // Optimierte Version für elegante und dezente Regel-Karte
   Widget _buildElegantRuleCard(
       BuildContext context,
       ProgressionManagerProvider provider,
@@ -708,227 +830,217 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
         child: InkWell(
           onTap: () => provider.openRuleEditor(rule),
           child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Linke Spalte mit Nummer und Verbindungslinie
-                SizedBox(
-                  width: 64,
-                  child: Column(
+                // Header mit Nummer, Typ und Aktionsbuttons
+                Row(
+                  children: [
+                    // Nummerierter Kreis
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(
+                          color: isCondition
+                              ? Colors.grey[400]!
+                              : Colors.grey[400]!,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Regeltyp
+                    Text(
+                      isCondition ? 'Wenn-Dann Regel' : 'Direkte Zuweisung',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[800],
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Aktionsbuttons
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Reorder Buttons
+                        if (totalRules > 1) ...[
+                          if (index > 0)
+                            _buildMinimalIconButton(
+                              icon: Icons.arrow_upward,
+                              tooltip: 'Nach oben',
+                              onPressed: () async {
+                                await _handleRuleReorder(
+                                    provider, rule, index, index - 1);
+                              },
+                            ),
+                          if (index < totalRules - 1)
+                            _buildMinimalIconButton(
+                              icon: Icons.arrow_downward,
+                              tooltip: 'Nach unten',
+                              onPressed: () async {
+                                await _handleRuleReorder(
+                                    provider, rule, index, index + 1);
+                              },
+                            ),
+                        ],
+
+                        _buildMinimalIconButton(
+                          icon: Icons.edit_outlined,
+                          tooltip: 'Bearbeiten',
+                          onPressed: () => provider.openRuleEditor(rule),
+                        ),
+
+                        _buildMinimalIconButton(
+                          icon: Icons.delete_outline,
+                          tooltip: 'Löschen',
+                          onPressed: () async {
+                            await _showDeleteRuleDialog(
+                                context, provider, rule.id);
+                          },
+                          color: Colors.grey[700],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Regelinhalt mit voller Breite
+                if (isCondition) ...[
+                  // WENN-Teil (Bedingungen)
+                  Container(
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Wenn:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ...rule.conditions.asMap().entries.map<Widget>((entry) {
+                          int i = entry.key;
+                          final condition = entry.value;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (i > 0) ...[
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: Text(
+                                    'UND',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                margin: const EdgeInsets.only(bottom: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Text(
+                                  _formatConditionText(provider, condition),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[800],
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Eleganter Trennstrich mit Pfeil
+                  Row(
                     children: [
-                      // Nummerierter Kreis mit subtiler Unterscheidung zwischen Regeltypen
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey[200],
+                        ),
+                      ),
                       Container(
-                        width: 32,
-                        height: 32,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                            color: isCondition
-                                ? Colors.grey[400]!
-                                : Colors.grey[400]!,
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                          color: Colors.grey[100],
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
-                        child: Center(
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
-                            ),
-                          ),
+                        child: Icon(
+                          Icons.arrow_downward,
+                          size: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey[200],
                         ),
                       ),
                     ],
                   ),
-                ),
 
-                // Rechte Spalte mit Regelinhalt
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header mit Regeltyp und Aktionsbuttons
-                      Row(
+                  const SizedBox(height: 16),
+
+                  // DANN-Teil (Aktionen)
+                  if (rule.children.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Regeltyp als dezenter Text
-                          Text(
-                            isCondition
-                                ? 'Wenn-Dann Regel'
-                                : 'Direkte Zuweisung',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-
-                          const Spacer(),
-
-                          // Aktionsbuttons
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Reorder Buttons - minimalistischer
-                              if (totalRules > 1) ...[
-                                if (index > 0)
-                                  _buildMinimalIconButton(
-                                    icon: Icons.arrow_upward,
-                                    tooltip: 'Nach oben',
-                                    onPressed: () async {
-                                      await _handleRuleReorder(
-                                          provider, rule, index, index - 1);
-                                    },
-                                  ),
-                                if (index < totalRules - 1)
-                                  _buildMinimalIconButton(
-                                    icon: Icons.arrow_downward,
-                                    tooltip: 'Nach unten',
-                                    onPressed: () async {
-                                      await _handleRuleReorder(
-                                          provider, rule, index, index + 1);
-                                    },
-                                  ),
-                              ],
-
-                              _buildMinimalIconButton(
-                                icon: Icons.edit_outlined,
-                                tooltip: 'Bearbeiten',
-                                onPressed: () => provider.openRuleEditor(rule),
-                              ),
-
-                              _buildMinimalIconButton(
-                                icon: Icons.delete_outline,
-                                tooltip: 'Löschen',
-                                onPressed: () async {
-                                  await _showDeleteRuleDialog(
-                                      context, provider, rule.id);
-                                },
-                                color: Colors.grey[700],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Regelinhalt
-                      if (isCondition) ...[
-                        // WENN-Teil (Bedingungen) mit dezenter Darstellung
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Wenn:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[600],
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            ...rule.conditions
-                                .asMap()
-                                .entries
-                                .map<Widget>((entry) {
-                              int i = entry.key;
-                              final condition = entry.value;
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (i > 0) ...[
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 4),
-                                      child: Text(
-                                        'UND',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 10),
-                                    margin: const EdgeInsets.only(bottom: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[50],
-                                      borderRadius: BorderRadius.circular(8),
-                                      border:
-                                          Border.all(color: Colors.grey[200]!),
-                                    ),
-                                    child: Text(
-                                      _formatConditionText(provider, condition),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey[800],
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Eleganter Trennstrich mit Pfeil
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.grey[200],
-                              ),
-                            ),
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey[100],
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Icon(
-                                Icons.arrow_downward,
-                                size: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.grey[200],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // DANN-Teil (Aktionen) mit dezenter Darstellung
-                        if (rule.children.isNotEmpty) ...[
                           Text(
                             'Dann:',
                             style: TextStyle(
@@ -978,7 +1090,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
                                   const SizedBox(width: 12),
 
-                                  // Zuweisung
+                                  // Zuweisung mit Expanded, um den Rest der Breite zu nutzen
                                   Expanded(
                                     child: Text(
                                       '= ${provider.renderValueNode(action.value)}',
@@ -995,9 +1107,17 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                             );
                           }).toList(),
                         ],
-                      ] else if (rule.type == 'assignment' &&
-                          rule.children.isNotEmpty) ...[
-                        // Direkte Zuweisungen mit dezenter Darstellung
+                      ),
+                    ),
+                  ],
+                ] else if (rule.type == 'assignment' &&
+                    rule.children.isNotEmpty) ...[
+                  // Direkte Zuweisungen für den gesamten verfügbaren Platz
+                  Container(
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
                           'Setze Werte:',
                           style: TextStyle(
@@ -1021,7 +1141,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                             ),
                             child: Row(
                               children: [
-                                // Zieltyp mit dezenter Darstellung
+                                // Zieltyp
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 2),
@@ -1043,7 +1163,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
                                 const SizedBox(width: 12),
 
-                                // Zuweisung
+                                // Zuweisung mit Expanded
                                 Expanded(
                                   child: Text(
                                     '= ${provider.renderValueNode(action.value)}',
@@ -1060,9 +1180,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                           );
                         }).toList(),
                       ],
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

@@ -82,19 +82,36 @@ class RuleEvaluatorService {
             return 0;
         }
       } else if (valueNode['type'] == 'oneRM') {
-        final lastKg = variables['lastKg'] ?? 0.0;
-        final lastReps = variables['lastReps'] ?? 0;
-        final lastRIR = variables['lastRIR'] ?? 0;
+        // Quelle für 1RM bestimmen: 'last' (Standard) oder 'previous'
+        final String source = valueNode['source'] ?? 'last';
 
-        // 1RM aus aktuellen Werten berechnen
-        final currentRM = OneRMCalculatorService.calculate1RM(
-            lastKg.toDouble(), lastReps, lastRIR);
+        // Werte basierend auf der Quelle auswählen
+        final double kg;
+        final int reps;
+        final int rir;
+
+        if (source == 'previous') {
+          // Werte vom vorherigen Satz verwenden
+          kg = variables['previousKg'] ?? 0.0;
+          reps = variables['previousReps'] ?? 0;
+          rir = variables['previousRIR'] ?? 0;
+          print(
+              'Verwende 1RM vom vorherigen Satz: $kg kg, $reps reps, $rir RIR');
+        } else {
+          // Werte vom letzten (aktuellen) Satz verwenden
+          kg = variables['lastKg'] ?? 0.0;
+          reps = variables['lastReps'] ?? 0;
+          rir = variables['lastRIR'] ?? 0;
+          print('Verwende 1RM vom letzten Satz: $kg kg, $reps reps, $rir RIR');
+        }
+
+        // 1RM aus den ausgewählten Werten berechnen
+        final currentRM =
+            OneRMCalculatorService.calculate1RM(kg.toDouble(), reps, rir);
 
         // Dynamische Bestimmung von targetReps und targetRIR aus den anderen Actions der Regel
-        int targetReps = variables['targetRepsMin'] ??
-            8; // Standardwert falls nichts gefunden
-        int targetRIR =
-            variables['targetRIRMin'] ?? 1; // Geändert zu Min als Standardwert
+        int targetReps = variables['targetRepsMin'] ?? 8;
+        int targetRIR = variables['targetRIRMin'] ?? 1;
 
         // Regel-Aktionen durchsuchen, wenn verfügbar
         if (ruleActions != null && ruleActions.isNotEmpty) {
@@ -124,7 +141,7 @@ class RuleEvaluatorService {
         // Prozentuale Anpassung beachten
         double percentageAdjustment = valueNode['percentage'] ?? 0.0;
 
-        // Gewicht basierend auf dem aktuellen 1RM und den Zielwerten berechnen
+        // Gewicht basierend auf dem gewählten 1RM und den Zielwerten berechnen
         final calculatedWeight =
             OneRMCalculatorService.calculateWeightFromTargetRM(
                 currentRM, targetReps, targetRIR, percentageAdjustment);

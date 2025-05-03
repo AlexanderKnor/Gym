@@ -32,6 +32,7 @@ class ProgressionRuleProvider with ChangeNotifier {
     'value': 2.5,
     'valueType': 'constant', // 'constant' oder 'config'
     'rmPercentage': 2.5,
+    'source': 'last', // 'last' oder 'previous'
   };
 
   Map<String, dynamic> _repsAktion = {
@@ -155,6 +156,7 @@ class ProgressionRuleProvider with ChangeNotifier {
         'value': 2.5,
         'valueType': 'constant',
         'rmPercentage': 2.5,
+        'source': 'last',
       };
 
       _repsAktion = {
@@ -269,6 +271,8 @@ class ProgressionRuleProvider with ChangeNotifier {
         'value': 0.0,
         'valueType': 'constant',
         'rmPercentage': kgAction.value['percentage'] ?? 2.5,
+        'source':
+            kgAction.value['source'] ?? 'last', // Neue Option für die Quelle
       };
     } else if (kgAction.value['type'] == 'operation') {
       // Prüfen, ob es sich um eine variable 'increment' handelt
@@ -282,6 +286,7 @@ class ProgressionRuleProvider with ChangeNotifier {
         'value': isConfigValue ? 0.0 : kgAction.value['right']['value'],
         'valueType': isConfigValue ? 'config' : 'constant',
         'rmPercentage': 2.5,
+        'source': 'last',
       };
     } else {
       _kgAktion = {
@@ -295,6 +300,7 @@ class ProgressionRuleProvider with ChangeNotifier {
             : 0.0,
         'valueType': 'constant',
         'rmPercentage': 2.5,
+        'source': 'last',
       };
     }
 
@@ -461,6 +467,9 @@ class ProgressionRuleProvider with ChangeNotifier {
       case 'rmPercentage':
         updatedAktion['rmPercentage'] = double.tryParse(wert.toString()) ?? 2.5;
         break;
+      case 'source':
+        updatedAktion['source'] = wert;
+        break;
     }
 
     _kgAktion = updatedAktion;
@@ -536,6 +545,7 @@ class ProgressionRuleProvider with ChangeNotifier {
             value: {
               'type': 'oneRM',
               'percentage': _kgAktion['rmPercentage'],
+              'source': _kgAktion['source'] ?? 'last', // Neue Option hinzufügen
             },
           ),
         );
@@ -886,7 +896,10 @@ class ProgressionRuleProvider with ChangeNotifier {
       case 'operation':
         return '${renderValueNode(node['left'])} ${getOperatorLabel(node['operator'])} ${renderValueNode(node['right'])}';
       case 'oneRM':
-        return '1RM +${node['percentage']}% (nach Epley-Formel)';
+        final source = node['source'] ?? 'last';
+        final sourceText =
+            source == 'previous' ? 'vorherigen Satz' : 'aktuellen Satz';
+        return '1RM vom $sourceText +${node['percentage']}% (nach Epley-Formel)';
       default:
         return 'Unbekannter Wert';
     }

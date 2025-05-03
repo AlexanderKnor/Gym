@@ -739,6 +739,33 @@ class RuleEditorContent extends StatelessWidget {
           ),
         ] else if (provider.kgAktion['type'] == 'oneRM') ...[
           // 1RM-basierte Berechnung
+          const Text('1RM Quelle:', style: TextStyle(fontSize: 12)),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<String>(
+            value: provider.kgAktion['source'] ?? 'last',
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              isDense: true,
+            ),
+            items: const [
+              DropdownMenuItem<String>(
+                value: 'last',
+                child: Text('Aktueller/Letzter Satz'),
+              ),
+              DropdownMenuItem<String>(
+                value: 'previous',
+                child: Text('Vorheriger Satz'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                provider.updateKgAktion('source', value);
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+
           const Text('1RM Steigerung:'),
           const SizedBox(height: 4),
           TextField(

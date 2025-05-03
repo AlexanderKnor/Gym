@@ -592,6 +592,7 @@ class ProgressionProfileProvider with ChangeNotifier {
     if (profil != null) {
       _bearbeitetesProfil = profil.copyWith();
     } else {
+      // Hier wird ein leeres Profil erstellt - rules sollte eine leere Liste sein
       _bearbeitetesProfil = ProgressionProfileModel.empty(
           'profile_${DateTime.now().millisecondsSinceEpoch}');
     }

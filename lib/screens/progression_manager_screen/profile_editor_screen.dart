@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/progression_manager_screen/progression_manager_provider.dart';
+import 'profile_detail_screen.dart'; // Import für den ProfileDetailScreen
 
 /// Ein universeller Editor für Progressionsprofile, der sowohl als eigenständiger Screen
 /// als auch als Dialog verwendet werden kann.
@@ -19,13 +20,26 @@ class ProfileEditorScreen extends StatelessWidget {
     final profil = provider.bearbeitetesProfil;
 
     if (profil == null) {
+      // Timeout-Mechanismus, um aus dem Ladezustand zu kommen, falls etwas schief geht
+      Future.delayed(const Duration(seconds: 3), () {
+        if (context.mounted && provider.bearbeitetesProfil == null) {
+          provider.closeProfileEditor();
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        }
+      });
+
       return Scaffold(
         appBar: AppBar(
           title: const Text('Profil wird geladen...'),
           leading: IconButton(
             icon: const Icon(Icons.close),
             onPressed: () {
-              Navigator.of(context).pop();
+              provider.closeProfileEditor();
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
             },
           ),
         ),
@@ -86,14 +100,72 @@ class ProfileEditorScreen extends StatelessWidget {
             icon: const Icon(Icons.close),
             onPressed: () {
               provider.closeProfileEditor();
-              // Entferne Navigator.pop() hier, damit wir auf der gleichen Seite bleiben
+              // Wenn möglich, Pop aufrufen
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
             },
           ),
           actions: [
             TextButton.icon(
               onPressed: () async {
-                await provider.saveProfile();
-                // Entferne Navigator.pop() hier, damit wir auf der gleichen Seite bleiben
+                // Lade-Indikator anzeigen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Speichere Profil...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+
+                final result = await provider.saveProfile();
+
+                if (context.mounted) {
+                  // Navigationsplan erstellen, aber erst später ausführen
+                  final bool isSuccess = result['success'] == true;
+                  final String? profileId = result['profileId'];
+                  final bool isNewProfile = result['isNewProfile'] ?? false;
+
+                  // Wichtig: Erst Editor schließen
+                  provider.closeProfileEditor();
+
+                  // Kurze Verzögerung einbauen, damit der State sich aktualisieren kann
+                  // und der Widget-Baum stabil ist
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (context.mounted) {
+                      // Erneut prüfen, ob der Context noch gültig ist
+                      if (isSuccess && isNewProfile && profileId != null) {
+                        // Bei einem neuen Profil zum Detailscreen navigieren
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+
+                          // Verzögerte Navigation zum Detailscreen, nach dem Pop abgeschlossen ist
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (context.mounted) {
+                              // Profil aus dem Provider holen, nachdem der State aktualisiert wurde
+                              final updatedProfile = provider.profileProvider
+                                  .getProfileById(profileId);
+                              if (updatedProfile != null) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ProfileDetailScreen(
+                                      profile: updatedProfile,
+                                      initialTab: 0, // Editor-Tab
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          });
+                        }
+                      } else {
+                        // Bei einem bearbeiteten Profil oder Fehler einfach zurück
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        }
+                      }
+                    }
+                  });
+                }
               },
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(
@@ -410,12 +482,25 @@ class ProfileEditorContent extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         OutlinedButton(
-          onPressed: provider.closeProfileEditor,
+          onPressed: () {
+            provider.closeProfileEditor();
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
           child: const Text('Abbrechen'),
         ),
         const SizedBox(width: 16),
         ElevatedButton(
-          onPressed: provider.saveProfile,
+          onPressed: () async {
+            await provider.saveProfile();
+            if (context.mounted) {
+              provider.closeProfileEditor();
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.purple,
           ),

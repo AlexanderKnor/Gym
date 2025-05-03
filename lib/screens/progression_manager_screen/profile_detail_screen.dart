@@ -44,6 +44,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeDemoProfile();
       });
+    } else {
+      // Auch im Editor-Tab das aktuelle Profil initialisieren
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeDemoProfile();
+      });
     }
   }
 

@@ -310,11 +310,21 @@ class ProgressionManagerProvider with ChangeNotifier {
       profileProvider.updateProfile(feld, wert);
 
   // VERBESSERTE METHODE: saveProfile mit verbesserter Aktualisierungslogik
-  Future<void> saveProfile() async {
-    if (bearbeitetesProfil == null) return;
+  // Erweiterter saveProfile-Rückgabewert, der Navigationsinformationen enthält
+  Future<Map<String, dynamic>> saveProfile() async {
+    if (bearbeitetesProfil == null) {
+      return {'success': false, 'profileId': null};
+    }
 
     try {
       print('Starte Speichern des Profils...');
+      final String profileId =
+          bearbeitetesProfil!.id; // Speichern der ID vor dem Speichern
+
+      // GEÄNDERT: Erkenne sowohl neue als auch duplizierte Profile
+      final bool isNewProfile =
+          profileId.contains('profile_') || // Neue Profile
+              profileId.contains('-copy-'); // Duplizierte Profile
 
       // Profil speichern und Editor schließen
       await profileProvider.saveProfile(_uiProvider);
@@ -325,12 +335,30 @@ class ProgressionManagerProvider with ChangeNotifier {
       // Profile explizit neu laden
       await refreshProfiles();
 
+      // WICHTIG: Wenn es ein neues Profil ist, setzen wir es als aktuelles Profil
+      if (isNewProfile) {
+        final savedProfile = profileProvider.progressionsProfile.firstWhere(
+          (p) => p.id == profileId,
+          orElse: () => profileProvider.progressionsProfile.first,
+        );
+
+        // Das neue Profil als aktuelles Profil setzen
+        setDemoProfileId(savedProfile.id);
+      }
+
       // Zusätzliche Benachrichtigung für die UI
       notifyListeners();
 
       print('Profil erfolgreich gespeichert und UI aktualisiert');
+      return {
+        'success': true,
+        'profileId': profileId,
+        'isNewProfile': isNewProfile,
+      };
     } catch (e) {
       print('Fehler beim Speichern des Profils: $e');
+      closeProfileEditor();
+      return {'success': false, 'profileId': null};
     }
   }
 

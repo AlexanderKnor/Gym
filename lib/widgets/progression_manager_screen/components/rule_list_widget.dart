@@ -18,7 +18,10 @@ class RuleListWidget extends StatelessWidget {
       );
     }
 
+    // KEY FIX: Stelle sicher, dass die Regelliste immer neu ausgewertet wird
+    // Füge einen Schlüssel hinzu, der vom Profil-State abhängt
     return Column(
+      key: ValueKey('rules_${profil.id}_${profil.rules.length}'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -48,6 +51,7 @@ class RuleListWidget extends StatelessWidget {
         const SizedBox(height: 8),
 
         // Leere Liste oder Regelliste
+        // IMPORTANT FIX: Stelle sicher, dass Rules Länge korrekt überprüft wird
         profil.rules.isEmpty
             ? _buildEmptyRulesList()
             : _buildRuleCards(context, provider, profil),

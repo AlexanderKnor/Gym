@@ -102,22 +102,42 @@ class ProgressionCalculatorService {
 
       bool ruleApplied = false;
 
+      print(
+          'Starte Regelauswertung für Satz ${satz.id} mit Werten: ${satz.kg}kg, ${satz.wiederholungen} Wdh, ${satz.rir} RIR');
+
       for (int i = 0; i < rules.length; i++) {
         final rule = rules[i];
 
-        if (ruleApplied) continue;
+        print('Prüfe Regel ${i + 1}: ${rule.type}');
 
-        if (istErsterSatz && regelVerwendetVorherige(rule)) continue;
+        if (ruleApplied) {
+          print('Regel übersprungen - bereits eine Regel angewendet');
+          continue;
+        }
+
+        if (istErsterSatz && regelVerwendetVorherige(rule)) {
+          print('Regel übersprungen - erster Satz verwendet vorherige Werte');
+          continue;
+        }
 
         if (rule.type == 'condition') {
           final conditionResult = RuleEvaluatorService.evaluateConditions(
               rule.conditions, variables, rule.logicalOperator);
 
+          print('Bedingungsergebnis: $conditionResult');
+
           if (conditionResult && rule.children.isNotEmpty) {
+            // Aktionen auswerten und Werte berechnen
+            print('Regel hat zutreffende Bedingungen, wende Aktionen an:');
+
             for (var action in rule.children) {
               if (action.type == 'assignment') {
-                final wert =
-                    RuleEvaluatorService.evaluateValue(action.value, variables);
+                // Den Wert mit Zugriff auf alle Aktionen berechnen für dynamische 1RM-Berechnung
+                final wert = RuleEvaluatorService.evaluateValue(
+                    action.value, variables,
+                    ruleActions: rule.children);
+
+                print('Aktion für ${action.target}: ${wert}');
 
                 if (action.target == 'kg')
                   neueKg = wert.toDouble();
@@ -128,12 +148,19 @@ class ProgressionCalculatorService {
             }
 
             ruleApplied = true;
+            print('Regel angewendet!');
           }
         } else if (rule.type == 'assignment' && rule.children.isNotEmpty) {
+          print('Direkte Zuweisung, wende Aktionen an:');
+
           for (var action in rule.children) {
             if (action.type == 'assignment') {
-              final wert =
-                  RuleEvaluatorService.evaluateValue(action.value, variables);
+              // Den Wert mit Zugriff auf alle Aktionen berechnen
+              final wert = RuleEvaluatorService.evaluateValue(
+                  action.value, variables,
+                  ruleActions: rule.children);
+
+              print('Aktion für ${action.target}: ${wert}');
 
               if (action.target == 'kg')
                 neueKg = wert.toDouble();
@@ -144,11 +171,15 @@ class ProgressionCalculatorService {
           }
 
           ruleApplied = true;
+          print('Regel angewendet!');
         }
       }
 
       final neuer1RM = OneRMCalculatorService.calculate1RM(
           neueKg, neueWiederholungen, neuerRir);
+
+      print(
+          'Berechnungsergebnis: ${neueKg}kg, ${neueWiederholungen} Wdh, ${neuerRir} RIR, 1RM: ${neuer1RM}kg');
 
       return {
         'kg': neueKg,

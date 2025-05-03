@@ -1321,7 +1321,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                 ),
                 child: Row(
                   children: [
-                    // Kraftrechner Button (Progress)
+                    // Kraftrechner Button (Progress) - jetzt über volle Breite
                     Expanded(
                       child: Material(
                         color: Colors.transparent,
@@ -1369,55 +1369,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                         ),
                       ),
                     ),
-
-                    // Trennlinie
-                    Container(
-                      width: 1,
-                      height: 24,
-                      color: Colors.grey[300],
-                    ),
-
-                    // Zurück-Button
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: !hasCompletedSets
-                              ? null
-                              : () => _showActionsMenu(context, provider),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Opacity(
-                            opacity: !hasCompletedSets ? 0.5 : 1.0,
-                            child: Container(
-                              height: 38,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.replay_rounded,
-                                    size: 18,
-                                    color: Colors.grey[800],
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Zurück',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey[800],
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Trennlinie und Zurück-Button wurden entfernt
                   ],
                 ),
               ),

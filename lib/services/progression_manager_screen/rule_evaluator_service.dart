@@ -1,4 +1,5 @@
 import '../../models/progression_manager_screen/progression_condition_model.dart';
+import '../../models/progression_manager_screen/progression_action_model.dart';
 import 'one_rm_calculator_service.dart';
 
 class RuleEvaluatorService {
@@ -49,7 +50,8 @@ class RuleEvaluatorService {
   }
 
   static dynamic evaluateValue(
-      Map<String, dynamic> valueNode, Map<String, dynamic> variables) {
+      Map<String, dynamic> valueNode, Map<String, dynamic> variables,
+      {List<ProgressionActionModel>? ruleActions}) {
     try {
       if (valueNode['type'] == 'variable') {
         if (variables[valueNode['value']] == null) {
@@ -84,14 +86,53 @@ class RuleEvaluatorService {
         final lastReps = variables['lastReps'] ?? 0;
         final lastRIR = variables['lastRIR'] ?? 0;
 
+        // 1RM aus aktuellen Werten berechnen
         final currentRM = OneRMCalculatorService.calculate1RM(
             lastKg.toDouble(), lastReps, lastRIR);
 
-        final targetReps = variables['targetRepsMin'] ?? 8;
-        final targetRIR = variables['targetRIRMax'] ?? 2;
+        // Dynamische Bestimmung von targetReps und targetRIR aus den anderen Actions der Regel
+        int targetReps = variables['targetRepsMin'] ??
+            8; // Standardwert falls nichts gefunden
+        int targetRIR =
+            variables['targetRIRMin'] ?? 1; // Geändert zu Min als Standardwert
 
-        return OneRMCalculatorService.calculateWeightFromTargetRM(
-            currentRM, targetReps, targetRIR, valueNode['percentage'] ?? 2.5);
+        // Regel-Aktionen durchsuchen, wenn verfügbar
+        if (ruleActions != null && ruleActions.isNotEmpty) {
+          for (var action in ruleActions) {
+            if (action.type == 'assignment') {
+              // Zielwerte aus expliziten Regelaktionen holen
+              if (action.target == 'reps') {
+                // Die genauen Wiederholungswerte aus der Regel extrahieren
+                var repsValue = evaluateValue(action.value, variables);
+                if (repsValue is num) {
+                  targetReps = repsValue.toInt();
+                  print(
+                      'Dynamische Wiederholungen für 1RM-Berechnung: $targetReps');
+                }
+              } else if (action.target == 'rir') {
+                // Die genauen RIR-Werte aus der Regel extrahieren
+                var rirValue = evaluateValue(action.value, variables);
+                if (rirValue is num) {
+                  targetRIR = rirValue.toInt();
+                  print('Dynamischer RIR für 1RM-Berechnung: $targetRIR');
+                }
+              }
+            }
+          }
+        }
+
+        // Prozentuale Anpassung beachten
+        double percentageAdjustment = valueNode['percentage'] ?? 0.0;
+
+        // Gewicht basierend auf dem aktuellen 1RM und den Zielwerten berechnen
+        final calculatedWeight =
+            OneRMCalculatorService.calculateWeightFromTargetRM(
+                currentRM, targetReps, targetRIR, percentageAdjustment);
+
+        print(
+            '1RM-Berechnung: $currentRM 1RM mit $targetReps Wdh, $targetRIR RIR, $percentageAdjustment% = $calculatedWeight kg');
+
+        return calculatedWeight;
       }
 
       return 0;

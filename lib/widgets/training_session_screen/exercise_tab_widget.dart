@@ -90,8 +90,13 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final progressionProvider =
         Provider.of<ProgressionManagerProvider>(context, listen: false);
 
+    // KORRIGIERT: Verwende die für den aktuellen Mikrozyklus angepasste Übung
+    // anstatt der Standardübung direkt zu verwenden
+    final adaptedExercise =
+        sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
+
     // Merken wir uns das aktuelle Profil, um später zu überprüfen, ob es geändert wurde
-    final String? originalProfileId = exercise.progressionProfileId;
+    final String? originalProfileId = adaptedExercise.progressionProfileId;
 
     // Prüfen, ob mehr als eine Übung vorhanden ist
     final bool canDeleteExercise = sessionProvider.exercises.length > 1;
@@ -114,9 +119,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Form Widget
+                        // Form Widget mit der angepassten Übung
                         ExerciseFormWidget(
-                          initialExercise: exercise,
+                          initialExercise: adaptedExercise,
                           onSave: (updatedExercise) async {
                             // Übung im Provider aktualisieren
                             await sessionProvider.updateExerciseFullDetails(
@@ -491,7 +496,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       return const Center(child: Text('Übung nicht gefunden'));
     }
 
-    final exercise = sessionProvider.exercises[widget.exerciseIndex];
+    // KORRIGIERT: Verwende die für den aktuellen Mikrozyklus angepasste Übung
+    final exercise =
+        sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
     final bool allSetsCompleted = isActiveExercise &&
         sessionProvider.areAllSetsCompletedForCurrentExercise();
 
@@ -720,8 +727,15 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   // Neuer Button zum Öffnen des Übungseditors
   Widget _buildExerciseDetailsButton(
       BuildContext context, ExerciseModel exercise) {
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+
+    // KORRIGIERT: Verwende die für den aktuellen Mikrozyklus angepasste Übung
+    final adaptedExercise =
+        sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
+
     return InkWell(
-      onTap: () => _showExerciseEditor(context, exercise),
+      onTap: () => _showExerciseEditor(context, adaptedExercise),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),

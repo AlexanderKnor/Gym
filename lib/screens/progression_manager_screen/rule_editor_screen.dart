@@ -519,13 +519,23 @@ class RuleEditorContent extends StatelessWidget {
                     child: bedingung.right['type'] == 'variable'
                         ? _buildRightVariableSelector(
                             context, provider, index, bedingung)
-                        : _buildInputField(
+                        : _buildNumberButton(
                             value: bedingung.right['value'].toString(),
-                            keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true),
-                            onChanged: (value) {
-                              provider.updateRegelBedingung(
-                                  index, 'rightValue', value);
+                            onPressed: () {
+                              _showNumberInputDialog(
+                                context: context,
+                                title: 'Vergleichswert eingeben',
+                                initialValue:
+                                    bedingung.right['value'].toString(),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                suffix: '',
+                                onValueChanged: (value) {
+                                  provider.updateRegelBedingung(
+                                      index, 'rightValue', value);
+                                },
+                              );
                             },
                           ),
                   ),
@@ -857,15 +867,24 @@ class RuleEditorContent extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildInputField(
+                              child: _buildNumberButton(
                                 value: provider.kgAktion['value'].toString(),
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                onChanged: (value) {
-                                  provider.updateKgAktion('value', value);
-                                },
                                 suffix: 'kg',
+                                onPressed: () {
+                                  _showNumberInputDialog(
+                                    context: context,
+                                    title: 'Gewichtswert eingeben',
+                                    initialValue:
+                                        provider.kgAktion['value'].toString(),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    suffix: 'kg',
+                                    onValueChanged: (value) {
+                                      provider.updateKgAktion('value', value);
+                                    },
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -950,14 +969,22 @@ class RuleEditorContent extends StatelessWidget {
           _buildEditorField(
             context,
             '1RM Steigerung',
-            _buildInputField(
+            _buildNumberButton(
               value: provider.kgAktion['rmPercentage'].toString(),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (value) {
-                provider.updateKgAktion('rmPercentage', value);
-              },
               suffix: '%',
+              onPressed: () {
+                _showNumberInputDialog(
+                  context: context,
+                  title: '1RM Prozentsatz eingeben',
+                  initialValue: provider.kgAktion['rmPercentage'].toString(),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  suffix: '%',
+                  onValueChanged: (value) {
+                    provider.updateKgAktion('rmPercentage', value);
+                  },
+                );
+              },
             ),
           ),
 
@@ -1076,11 +1103,18 @@ class RuleEditorContent extends StatelessWidget {
               // Wert (nur wenn ein Operator gewählt ist)
               if (provider.repsAktion['operator'] != 'none') ...[
                 const SizedBox(height: 12),
-                _buildInputField(
+                _buildNumberButton(
                   value: provider.repsAktion['value'].toString(),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    provider.updateRepsAktion('value', value);
+                  onPressed: () {
+                    _showNumberInputDialog(
+                      context: context,
+                      title: 'Wiederholungswert eingeben',
+                      initialValue: provider.repsAktion['value'].toString(),
+                      keyboardType: TextInputType.number,
+                      onValueChanged: (value) {
+                        provider.updateRepsAktion('value', value);
+                      },
+                    );
                   },
                 ),
               ],
@@ -1189,11 +1223,18 @@ class RuleEditorContent extends StatelessWidget {
               // Wert (nur wenn ein Operator gewählt ist)
               if (provider.rirAktion['operator'] != 'none') ...[
                 const SizedBox(height: 12),
-                _buildInputField(
+                _buildNumberButton(
                   value: provider.rirAktion['value'].toString(),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    provider.updateRirAktion('value', value);
+                  onPressed: () {
+                    _showNumberInputDialog(
+                      context: context,
+                      title: 'RIR-Wert eingeben',
+                      initialValue: provider.rirAktion['value'].toString(),
+                      keyboardType: TextInputType.number,
+                      onValueChanged: (value) {
+                        provider.updateRirAktion('value', value);
+                      },
+                    );
                   },
                 ),
               ],
@@ -1453,42 +1494,249 @@ class RuleEditorContent extends StatelessWidget {
     );
   }
 
-  // Hilfsmethode: Einheitliches Eingabefeld
-  Widget _buildInputField({
+  // NEUE METHODE: Button für Zahleneingabe
+  Widget _buildNumberButton({
     required String value,
-    required TextInputType keyboardType,
-    required void Function(String) onChanged,
-    String? suffix,
+    required VoidCallback onPressed,
+    String suffix = '',
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: TextField(
-        controller: TextEditingController(text: value),
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 12,
-          ),
-          border: InputBorder.none,
-          isDense: true,
-          suffixText: suffix,
-          suffixStyle: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF757575),
-          ),
+    // Format-Überprüfung: Ist es eine Dezimalzahl?
+    final double? doubleValue = double.tryParse(value);
+    String displayValue = value;
+
+    // Wenn es eine ganze Zahl ist, entferne die Dezimalstellen für die Anzeige
+    if (doubleValue != null && doubleValue == doubleValue.toInt().toDouble()) {
+      displayValue = doubleValue.toInt().toString();
+    }
+
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
         ),
-        style: const TextStyle(
-          fontSize: 14,
-          color: Color(0xFF212121),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              suffix.isNotEmpty ? '$displayValue $suffix' : displayValue,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF212121),
+              ),
+            ),
+            const Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: Color(0xFF757575),
+            ),
+          ],
         ),
-        onChanged: onChanged,
       ),
     );
+  }
+
+  // NEUE METHODE: Dialog für Zahleneingabe
+  void _showNumberInputDialog({
+    required BuildContext context,
+    required String title,
+    required String initialValue,
+    required TextInputType keyboardType,
+    String suffix = '',
+    required Function(String) onValueChanged,
+  }) {
+    final TextEditingController controller =
+        TextEditingController(text: initialValue);
+
+    HapticFeedback.mediumImpact();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Dialog Header
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey[200],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Input Field
+                TextField(
+                  controller: controller,
+                  keyboardType: keyboardType,
+                  autofocus: true,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    suffixText: suffix,
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.black,
+                        width: 1.5,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.red[400]!,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  onSubmitted: (_) {
+                    _applyInputValue(
+                        dialogContext, controller.text, onValueChanged);
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    // Cancel button
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[800],
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Abbrechen',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Confirm button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _applyInputValue(
+                              dialogContext, controller.text, onValueChanged);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Bestätigen',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // NEUE METHODE: Wert aus Dialog anwenden
+  void _applyInputValue(BuildContext dialogContext, String text,
+      Function(String) onValueChanged) {
+    // Komma zu Punkt konvertieren für korrekte Verarbeitung
+    final String normalizedText = text.replaceAll(',', '.');
+
+    // Wert parsen je nach Typ (Integer oder Double)
+    bool isValid = false;
+
+    if (double.tryParse(normalizedText) != null) {
+      isValid = true;
+    }
+
+    if (isValid) {
+      // Wert anwenden und Dialog schließen
+      onValueChanged(normalizedText);
+      Navigator.pop(dialogContext);
+
+      // Haptisches Feedback
+      HapticFeedback.selectionClick();
+    } else {
+      // Bei ungültiger Eingabe eine Benachrichtigung anzeigen
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        SnackBar(
+          content: const Text('Bitte gib einen gültigen Wert ein'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   // Hilfsmethode: Selektierbare Radio-Option

@@ -777,6 +777,10 @@ class TrainingSessionProvider with ChangeNotifier {
 
     final set = sets[setIndex];
 
+    // WICHTIG: Holen Sie das richtige Profil für die aktuelle Woche
+    final exercise = getExerciseForMicrocycle(exerciseIndex);
+    final actualProfileId = exercise.progressionProfileId ?? profileId;
+
     // Nur berechnen, wenn noch nicht berechnet wurde oder eine Neuberechnung erzwungen wird
     if (!set.empfehlungBerechnet || forceRecalculation) {
       try {
@@ -838,7 +842,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
         // Empfehlung berechnen mit den historischen Werten
         final empfehlung = progressionProvider.berechneEmpfehlungMitProfil(
-            historicalSet, profileId, historicalSets,
+            historicalSet, actualProfileId, historicalSets,
             customIncrement: customIncrement);
 
         // Empfehlung im aktuellen Set speichern
@@ -1785,7 +1789,7 @@ class TrainingSessionProvider with ChangeNotifier {
     }
   }
 
-// Hilfsmethode zum Aktualisieren der Übungshistorie mit allen Details
+  // Hilfsmethode zum Aktualisieren der Übungshistorie mit allen Details
   void _updateExerciseHistoryFull(int exerciseIndex, ExerciseModel exercise) {
     if (_currentSession == null ||
         exerciseIndex >= _currentSession!.exercises.length) return;

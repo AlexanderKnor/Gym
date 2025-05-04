@@ -48,6 +48,12 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initializeProgressionManager();
+  }
+
   void _initializeProgressionManager() {
     final sessionProvider =
         Provider.of<TrainingSessionProvider>(context, listen: false);
@@ -55,7 +61,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         Provider.of<ProgressionManagerProvider>(context, listen: false);
 
     if (widget.exerciseIndex < sessionProvider.exercises.length) {
-      final exercise = sessionProvider.exercises[widget.exerciseIndex];
+      // WICHTIG: Verwende die angepasste Übung für den aktuellen Mikrozyklus
+      final exercise =
+          sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
 
       if (exercise.progressionProfileId != null &&
           exercise.progressionProfileId!.isNotEmpty) {

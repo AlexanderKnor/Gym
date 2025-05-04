@@ -1,8 +1,9 @@
 // lib/providers/training_plans_screen/training_plans_screen_provider.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:async'; // Für StreamSubscription
+import 'dart:async';
 import '../../models/training_plan_screen/training_plan_model.dart';
+import '../../models/training_plan_screen/periodization_model.dart';
 import '../../services/training_plan_screen/training_plan_service.dart';
 
 class TrainingPlansProvider extends ChangeNotifier {
@@ -10,12 +11,16 @@ class TrainingPlansProvider extends ChangeNotifier {
   List<TrainingPlanModel> _trainingPlans = [];
   bool _isLoading = false;
 
+  // Neue Variable für Periodisierung
+  int _currentWeekIndex = 0;
+
   // Subscription für den Auth-Listener
   late final StreamSubscription<User?> _authSubscription;
 
   // Getter
   List<TrainingPlanModel> get trainingPlans => _trainingPlans;
   bool get isLoading => _isLoading;
+  int get currentWeekIndex => _currentWeekIndex;
 
   TrainingPlanModel? get activePlan {
     try {
@@ -24,6 +29,10 @@ class TrainingPlansProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  // Neue Getter für Periodisierung
+  bool get isActivePlanPeriodized => activePlan?.isPeriodized ?? false;
+  int get activePlanWeeks => activePlan?.numberOfWeeks ?? 1;
 
   // Konstruktor mit Initialisierung und Auth-Listener
   TrainingPlansProvider() {
@@ -120,6 +129,9 @@ class TrainingPlansProvider extends ChangeNotifier {
           .map((p) => p.copyWith(isActive: p.id == planId))
           .toList();
 
+      // Setze aktive Woche auf 0 (erste Woche)
+      _currentWeekIndex = 0;
+
       // Im Speicher sichern
       await _trainingPlanService.saveTrainingPlans(_trainingPlans);
       print('Trainingsplan (ID: $planId) erfolgreich aktiviert');
@@ -129,6 +141,16 @@ class TrainingPlansProvider extends ChangeNotifier {
     } catch (e) {
       print('Fehler beim Aktivieren des Trainingsplans: $e');
       return false;
+    }
+  }
+
+  // Neue Methode zum Setzen der aktuellen Woche
+  void setCurrentWeekIndex(int weekIndex) {
+    if (activePlan != null && activePlan!.isPeriodized) {
+      if (weekIndex >= 0 && weekIndex < activePlan!.numberOfWeeks) {
+        _currentWeekIndex = weekIndex;
+        notifyListeners();
+      }
     }
   }
 

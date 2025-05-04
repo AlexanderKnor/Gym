@@ -1,0 +1,436 @@
+// lib/widgets/create_training_plan_screen/microcycle_exercise_form_widget.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../models/training_plan_screen/exercise_model.dart';
+import '../../providers/progression_manager_screen/progression_manager_provider.dart';
+
+class MicrocycleExerciseFormWidget extends StatefulWidget {
+  final ExerciseModel? initialExercise;
+  final int weekIndex;
+  final int weekCount;
+  final Function(ExerciseModel) onSave;
+  final Function()? onFormLoaded;
+
+  const MicrocycleExerciseFormWidget({
+    Key? key,
+    this.initialExercise,
+    required this.weekIndex,
+    required this.weekCount,
+    required this.onSave,
+    this.onFormLoaded,
+  }) : super(key: key);
+
+  @override
+  _MicrocycleExerciseFormWidgetState createState() =>
+      _MicrocycleExerciseFormWidgetState();
+}
+
+class _MicrocycleExerciseFormWidgetState
+    extends State<MicrocycleExerciseFormWidget> {
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController _nameController;
+  late TextEditingController _primaryMuscleController;
+  late TextEditingController _secondaryMuscleController;
+  late TextEditingController _standardIncreaseController;
+  late TextEditingController _restPeriodController;
+  late TextEditingController _numberOfSetsController;
+  String? _selectedProfileId;
+  bool _isLoading = true;
+  late ProgressionManagerProvider _progressionProvider;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Controller initialisieren
+    _nameController = TextEditingController(
+      text: widget.initialExercise?.name ?? '',
+    );
+    _primaryMuscleController = TextEditingController(
+      text: widget.initialExercise?.primaryMuscleGroup ?? '',
+    );
+    _secondaryMuscleController = TextEditingController(
+      text: widget.initialExercise?.secondaryMuscleGroup ?? '',
+    );
+    _standardIncreaseController = TextEditingController(
+      text: widget.initialExercise?.standardIncrease.toString() ?? '2.5',
+    );
+    _restPeriodController = TextEditingController(
+      text: widget.initialExercise?.restPeriodSeconds.toString() ?? '90',
+    );
+    _numberOfSetsController = TextEditingController(
+      text: widget.initialExercise?.numberOfSets.toString() ?? '3',
+    );
+
+    // WICHTIG: Profil-ID temporär speichern
+    final tempProfileId = widget.initialExercise?.progressionProfileId;
+
+    // Eigenen Provider erstellen
+    _progressionProvider = ProgressionManagerProvider();
+
+    // Profile später laden
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProfilesAndVerifySelection(tempProfileId);
+    });
+  }
+
+  // Methode zum Laden der Profile und Überprüfen der Auswahl
+  Future<void> _loadProfilesAndVerifySelection(String? tempProfileId) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Warten auf das Laden der Profile vom Provider
+      await _progressionProvider.refreshProfiles();
+
+      // Nach dem Laden der Profile überprüfen, ob das Profil existiert
+      if (tempProfileId != null) {
+        final profileExists = _progressionProvider.progressionsProfile
+            .any((profile) => profile.id == tempProfileId);
+
+        // Nur wenn das Profil existiert, es setzen
+        _selectedProfileId = profileExists ? tempProfileId : null;
+
+        // Debug-Ausgabe
+        print('Profil überprüft: ID=$tempProfileId, existiert=$profileExists');
+        print(
+            'Verfügbare Profile: ${_progressionProvider.progressionsProfile.map((p) => "${p.id}: ${p.name}").join(', ')}');
+      }
+    } catch (e) {
+      print('Fehler beim Laden der Profile: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Signalisieren, dass das Formular geladen ist
+        if (widget.onFormLoaded != null) {
+          widget.onFormLoaded!();
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _primaryMuscleController.dispose();
+    _secondaryMuscleController.dispose();
+    _standardIncreaseController.dispose();
+    _restPeriodController.dispose();
+    _numberOfSetsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Verwende den lokalen Provider statt des geerbten
+    final progressionProfiles = _progressionProvider.progressionsProfile;
+
+    // Zeige Ladeindikator während Profile geladen werden
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Profile werden geladen...'),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header mit Wochenanzeige
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.purple[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.purple[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today,
+                        size: 16, color: Colors.purple[700]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Woche ${widget.weekIndex + 1} von ${widget.weekCount}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Text(
+                widget.initialExercise != null
+                    ? 'Übung bearbeiten'
+                    : 'Neue Übung',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Übungsname
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Übungsname',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Bitte gib einen Namen ein';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Primäre Muskelgruppe
+              TextFormField(
+                controller: _primaryMuscleController,
+                decoration: const InputDecoration(
+                  labelText: 'Primäre Muskelgruppe',
+                  border: OutlineInputBorder(),
+                  hintText: 'z.B. Brust, Rücken, Beine',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Bitte gib die primäre Muskelgruppe ein';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Sekundäre Muskelgruppe
+              TextFormField(
+                controller: _secondaryMuscleController,
+                decoration: const InputDecoration(
+                  labelText: 'Sekundäre Muskelgruppe (optional)',
+                  border: OutlineInputBorder(),
+                  hintText: 'z.B. Schultern, Trizeps',
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Anzahl der Sätze für diese Woche
+              TextFormField(
+                controller: _numberOfSetsController,
+                decoration: const InputDecoration(
+                  labelText: 'Anzahl Sätze (in dieser Woche)',
+                  border: OutlineInputBorder(),
+                  hintText: 'z.B. 3, 4, 5',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Bitte gib die Anzahl der Sätze ein';
+                  }
+                  final sets = int.tryParse(value);
+                  if (sets == null || sets < 1) {
+                    return 'Bitte gib eine gültige Zahl ein (mindestens 1)';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Standard Gewichtssteigerung
+              TextFormField(
+                controller: _standardIncreaseController,
+                decoration: const InputDecoration(
+                  labelText: 'Standard Steigerung (kg)',
+                  border: OutlineInputBorder(),
+                  suffixText: 'kg',
+                ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Bitte gib die Standard-Steigerung ein';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Bitte gib eine gültige Zahl ein';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Satzpause
+              TextFormField(
+                controller: _restPeriodController,
+                decoration: const InputDecoration(
+                  labelText: 'Satzpause (Sekunden)',
+                  border: OutlineInputBorder(),
+                  suffixText: 'Sekunden',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Bitte gib die Satzpause ein';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Bitte gib eine gültige Zahl ein';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Progressionsprofil-Auswahl
+              const Text(
+                'Progressionsprofil für diese Woche (optional)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Wähle ein Progressionsprofil für Woche ${widget.weekIndex + 1}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+
+              // Dropdown für die Profil-Auswahl
+              DropdownButtonFormField<String?>(
+                value: _selectedProfileId,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  hintText: 'Kein Profil (Standard)',
+                  helperText: '${progressionProfiles.length} Profile verfügbar',
+                ),
+                items: [
+                  // "Kein Profil" Option
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Kein Profil (Standard)'),
+                  ),
+                  // Alle verfügbaren Profile
+                  ...progressionProfiles
+                      .map((profile) => DropdownMenuItem<String?>(
+                            value: profile.id,
+                            child: Text(profile.name),
+                          )),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProfileId = value;
+                  });
+                },
+              ),
+
+              // Profildetails
+              if (_selectedProfileId != null) ...[
+                const SizedBox(height: 8),
+                ...progressionProfiles
+                    .where((p) => p.id == _selectedProfileId)
+                    .map((selectedProfile) => Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.purple[50],
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.purple[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.info_outline,
+                                      size: 16, color: Colors.purple[700]),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      selectedProfile.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.purple[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                selectedProfile.description,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.purple[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Abbrechen'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _saveExercise,
+                    child: const Text('Speichern'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _saveExercise() {
+    if (_formKey.currentState!.validate()) {
+      final exerciseId = widget.initialExercise?.id ??
+          'exercise_${DateTime.now().millisecondsSinceEpoch}';
+
+      final exercise = ExerciseModel(
+        id: exerciseId,
+        name: _nameController.text.trim(),
+        primaryMuscleGroup: _primaryMuscleController.text.trim(),
+        secondaryMuscleGroup: _secondaryMuscleController.text.trim(),
+        standardIncrease:
+            double.tryParse(_standardIncreaseController.text) ?? 2.5,
+        restPeriodSeconds: int.tryParse(_restPeriodController.text) ?? 90,
+        numberOfSets: int.tryParse(_numberOfSetsController.text) ?? 3,
+        progressionProfileId: _selectedProfileId,
+      );
+
+      widget.onSave(exercise);
+    }
+  }
+}

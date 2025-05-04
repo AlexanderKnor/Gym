@@ -16,11 +16,13 @@ import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
 class TrainingSessionScreen extends StatefulWidget {
   final TrainingPlanModel trainingPlan;
   final int dayIndex;
+  final int weekIndex; // Neuer Parameter für den Mikrozyklus
 
   const TrainingSessionScreen({
     Key? key,
     required this.trainingPlan,
     required this.dayIndex,
+    this.weekIndex = 0, // Standard: erste Woche
   }) : super(key: key);
 
   @override
@@ -29,13 +31,12 @@ class TrainingSessionScreen extends StatefulWidget {
 
 class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     with TickerProviderStateMixin {
-  // Hier wurde SingleTickerProviderStateMixin zu TickerProviderStateMixin geändert
   TabController? _tabController;
   bool _initialized = false;
   bool _startupComplete = false;
   bool _isLoading = true;
   int _lastKnownExerciseIndex = 0;
-  bool _showExerciseDetails = true; // Standardmäßig auf true setzen
+  bool _showExerciseDetails = true;
   bool _isNavigatingExercises = false;
 
   @override
@@ -70,8 +71,9 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       final sessionProvider =
           Provider.of<TrainingSessionProvider>(context, listen: false);
 
+      // Übergebe den Mikrozyklus-Index an den Provider
       await sessionProvider.startTrainingSession(
-          widget.trainingPlan, widget.dayIndex);
+          widget.trainingPlan, widget.dayIndex, widget.weekIndex);
 
       if (mounted) {
         _initializeTabController();
@@ -121,7 +123,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     }
   }
 
-  // NEU: Methode zum Neuerstellen des TabControllers nach dem Löschen einer Übung
+  // Methode zum Neuerstellen des TabControllers nach dem Löschen einer Übung
   void _recreateTabController() {
     if (!mounted) return;
 
@@ -293,6 +295,33 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
         final exercise =
             sessionProvider.exercises[sessionProvider.currentExerciseIndex];
 
+        // Mikrozyklus-Anzeige erstellen (falls periodisiert)
+        Widget? microcycleIndicator;
+        if (widget.trainingPlan.isPeriodized) {
+          microcycleIndicator = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.purple[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.calendar_today, size: 12, color: Colors.purple[700]),
+                const SizedBox(width: 4),
+                Text(
+                  'Woche ${widget.weekIndex + 1}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.purple[700],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: PreferredSize(
@@ -333,18 +362,28 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                                 // Title
                                 Expanded(
                                   child: Center(
-                                    child: Text(
-                                      sessionProvider.trainingDay?.name ?? "",
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: -0.5,
-                                      ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          sessionProvider.trainingDay?.name ??
+                                              "",
+                                          style: const TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: -0.5,
+                                          ),
+                                        ),
+                                        // NEU: Mikrozyklus-Anzeige
+                                        if (microcycleIndicator != null) ...[
+                                          const SizedBox(width: 8),
+                                          microcycleIndicator,
+                                        ],
+                                      ],
                                     ),
                                   ),
                                 ),
 
-                                // Info-Button wurde entfernt
                                 const SizedBox(width: 48), // Platzhalter
                               ],
                             ),
@@ -423,7 +462,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                           exerciseIndex: index,
                           showDetails: _showExerciseDetails,
                           onExerciseRemoved:
-                              _recreateTabController, // NEU: Callback übergeben
+                              _recreateTabController, // Callback übergeben
                         ),
                       ),
                     ),
@@ -791,8 +830,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
             }
 
             Navigator.pop(context);
-
-            // Die SnackBar-Benachrichtigung wurde entfernt
           },
         ),
       ),

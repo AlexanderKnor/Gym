@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
-import '../../services/training_plan_screen/training_plan_service.dart'; // Neu importiert
+import '../../models/training_plan_screen/periodization_model.dart';
+import '../../services/training_plan_screen/training_plan_service.dart';
 
 class CreateTrainingPlanProvider extends ChangeNotifier {
   // Service für Löschoperationen
-  final TrainingPlanService _trainingPlanService =
-      TrainingPlanService(); // Neu hinzugefügt
+  final TrainingPlanService _trainingPlanService = TrainingPlanService();
 
   // Zustand für den ersten Screen
   String _planName = '';
@@ -19,18 +19,23 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     'Tag 3'
   ]; // Initialisieren mit Standardwerten
 
+  // Neue Felder für Periodisierung
+  bool _isPeriodized = false;
+  int _numberOfWeeks = 4; // Standard: 4 Wochen
+  int _activeWeekIndex = 0; // Aktive Woche für Bearbeitung
+
   // Zustand für den zweiten Screen
   TrainingPlanModel? _draftPlan;
   int _selectedDayIndex = 0;
 
-  // Modus-Tracking - neu hinzugefügt
+  // Modus-Tracking
   bool _isEditMode = false;
   String? _editingPlanId;
 
-  // Neu: Set zum Verfolgen von gelöschten Übungs-IDs
+  // Set zum Verfolgen von gelöschten Übungs-IDs
   final Set<String> _deletedExerciseIds = {};
 
-  // Neu: Set zum Verfolgen von gelöschten Trainingstag-IDs
+  // Set zum Verfolgen von gelöschten Trainingstag-IDs
   final Set<String> _deletedDayIds = {};
 
   // Getter
@@ -39,8 +44,13 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   List<String> get dayNames => _dayNames;
   TrainingPlanModel? get draftPlan => _draftPlan;
   int get selectedDayIndex => _selectedDayIndex;
-  bool get isEditMode => _isEditMode; // Neuer Getter
-  String? get editingPlanId => _editingPlanId; // Neuer Getter
+  bool get isEditMode => _isEditMode;
+  String? get editingPlanId => _editingPlanId;
+
+  // Neue Getter für Periodisierung
+  bool get isPeriodized => _isPeriodized;
+  int get numberOfWeeks => _numberOfWeeks;
+  int get activeWeekIndex => _activeWeekIndex;
 
   // Konstruktor mit Initialisierung
   CreateTrainingPlanProvider() {
@@ -75,6 +85,27 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
+  // Neue Methoden für Periodisierung
+  void setIsPeriodized(bool value) {
+    _isPeriodized = value;
+    notifyListeners();
+  }
+
+  void setNumberOfWeeks(int weeks) {
+    if (weeks >= 1 && weeks <= 16) {
+      // Max 16 Wochen erlauben
+      _numberOfWeeks = weeks;
+      notifyListeners();
+    }
+  }
+
+  void setActiveWeekIndex(int weekIndex) {
+    if (weekIndex >= 0 && weekIndex < _numberOfWeeks) {
+      _activeWeekIndex = weekIndex;
+      notifyListeners();
+    }
+  }
+
   // Sicherstellen, dass die Tagnamen-Liste korrekt initialisiert ist
   void _ensureDayNamesInitialized() {
     // Wenn die Liste leer ist oder nicht die richtige Größe hat
@@ -101,36 +132,69 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     // Stellen wir sicher, dass die Tagnamen richtig initialisiert sind
     _ensureDayNamesInitialized();
 
-    final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
+    // Entscheiden, ob ein periodisierter oder normaler Plan erstellt wird
+    if (_isPeriodized) {
+      final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
 
-    // Sicherstellen, dass wir keine Index-Fehler bekommen
-    final days = List<TrainingDayModel>.generate(
-      _frequency,
-      (index) => TrainingDayModel(
-        id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
-        name: index < _dayNames.length ? _dayNames[index] : 'Tag ${index + 1}',
-        exercises: [],
-      ),
-    );
+      // Sicherstellen, dass wir keine Index-Fehler bekommen
+      final days = List<TrainingDayModel>.generate(
+        _frequency,
+        (index) => TrainingDayModel(
+          id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
+          name:
+              index < _dayNames.length ? _dayNames[index] : 'Tag ${index + 1}',
+          exercises: [],
+        ),
+      );
 
-    _draftPlan = TrainingPlanModel(
-      id: id,
-      name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
-      days: days,
-      isActive: false,
-    );
+      _draftPlan = TrainingPlanModel(
+        id: id,
+        name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
+        days: days,
+        isActive: false,
+        isPeriodized: true,
+        numberOfWeeks: _numberOfWeeks,
+        periodization: PeriodizationModel(
+          weeks: _numberOfWeeks,
+          dayConfigurations: {},
+        ),
+      );
+    } else {
+      // Normaler Plan ohne Periodisierung
+      final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Sicherstellen, dass wir keine Index-Fehler bekommen
+      final days = List<TrainingDayModel>.generate(
+        _frequency,
+        (index) => TrainingDayModel(
+          id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
+          name:
+              index < _dayNames.length ? _dayNames[index] : 'Tag ${index + 1}',
+          exercises: [],
+        ),
+      );
+
+      _draftPlan = TrainingPlanModel(
+        id: id,
+        name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
+        days: days,
+        isActive: false,
+      );
+    }
 
     Future.microtask(() {
       notifyListeners();
     });
   }
 
-  // NEU: Methode zum Laden eines existierenden Plans zum Bearbeiten
+  // Methode zum Laden eines existierenden Plans zum Bearbeiten
   void loadExistingPlanForEditing(TrainingPlanModel plan) {
     _isEditMode = true;
     _editingPlanId = plan.id;
     _planName = plan.name;
     _frequency = plan.days.length;
+    _isPeriodized = plan.isPeriodized;
+    _numberOfWeeks = plan.numberOfWeeks;
 
     // Tagnamen aus dem Plan übernehmen
     _dayNames = plan.days.map((day) => day.name).toList();
@@ -172,6 +236,32 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
       _draftPlan = _draftPlan!.copyWith(days: updatedDays);
 
+      // Wenn periodisiert, füge Standardkonfigurationen für jede Woche hinzu
+      if (_draftPlan!.isPeriodized) {
+        final dayId = currentDay.id;
+        final exerciseId = exercise.id;
+
+        for (int weekIndex = 0; weekIndex < _numberOfWeeks; weekIndex++) {
+          if (weekIndex == _activeWeekIndex) {
+            // Für die aktive Woche verwenden wir die Standardwerte der Übung
+            _draftPlan!.addExerciseMicrocycle(
+                exerciseId,
+                _selectedDayIndex,
+                weekIndex,
+                exercise.numberOfSets,
+                exercise.progressionProfileId);
+          } else {
+            // Für andere Wochen kopieren wir erstmal die Werte
+            _draftPlan!.addExerciseMicrocycle(
+                exerciseId,
+                _selectedDayIndex,
+                weekIndex,
+                exercise.numberOfSets,
+                exercise.progressionProfileId);
+          }
+        }
+      }
+
       Future.microtask(() {
         notifyListeners();
       });
@@ -185,6 +275,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
       if (exerciseIndex >= 0 && exerciseIndex < currentDay.exercises.length) {
         final updatedExercises = List<ExerciseModel>.from(currentDay.exercises);
+        final originalExercise = updatedExercises[exerciseIndex];
         updatedExercises[exerciseIndex] = updatedExercise;
 
         updatedDays[_selectedDayIndex] = currentDay.copyWith(
@@ -193,6 +284,16 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
         _draftPlan = _draftPlan!.copyWith(days: updatedDays);
 
+        // Wenn periodisiert, aktualisiere die Mikrozyklus-Konfiguration für die aktuelle Woche
+        if (_draftPlan!.isPeriodized) {
+          _draftPlan!.addExerciseMicrocycle(
+              updatedExercise.id,
+              _selectedDayIndex,
+              _activeWeekIndex,
+              updatedExercise.numberOfSets,
+              updatedExercise.progressionProfileId);
+        }
+
         Future.microtask(() {
           notifyListeners();
         });
@@ -200,7 +301,24 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
-  // GEÄNDERT: Übung entfernen ohne sofortiges Löschen der Historie
+  // Methode zum Aktualisieren einer Mikrozyklus-Konfiguration
+  void updateMicrocycle(int exerciseIndex, int weekIndex, int numberOfSets,
+      String? progressionProfileId) {
+    if (_draftPlan != null && _draftPlan!.isPeriodized) {
+      final currentDay = _draftPlan!.days[_selectedDayIndex];
+
+      if (exerciseIndex >= 0 && exerciseIndex < currentDay.exercises.length) {
+        final exercise = currentDay.exercises[exerciseIndex];
+
+        _draftPlan!.addExerciseMicrocycle(exercise.id, _selectedDayIndex,
+            weekIndex, numberOfSets, progressionProfileId);
+
+        notifyListeners();
+      }
+    }
+  }
+
+  // Übung entfernen ohne sofortiges Löschen der Historie
   void removeExercise(int exerciseIndex) {
     if (_draftPlan != null) {
       final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
@@ -222,6 +340,15 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
         _draftPlan = _draftPlan!.copyWith(days: updatedDays);
 
+        // Wenn periodisiert, entferne alle Mikrozyklus-Konfigurationen für diese Übung
+        if (_draftPlan!.isPeriodized && _draftPlan!.periodization != null) {
+          final dayId = currentDay.id;
+          if (_draftPlan!.periodization!.dayConfigurations.containsKey(dayId)) {
+            _draftPlan!.periodization!.dayConfigurations[dayId]
+                ?.remove(exerciseId);
+          }
+        }
+
         Future.microtask(() {
           notifyListeners();
         });
@@ -229,7 +356,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
-  // NEU: Trainingstag hinzufügen
+  // Trainingstag hinzufügen
   void addTrainingDay(String dayName) {
     if (_draftPlan != null) {
       final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
@@ -262,7 +389,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
-  // NEU: Trainingstag entfernen
+  // Trainingstag entfernen
   void removeTrainingDay(int dayIndex) {
     if (_draftPlan != null && _draftPlan!.days.length > 1) {
       final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
@@ -277,6 +404,11 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
         // Für alle Übungen in diesem Tag die IDs zur Löschliste hinzufügen
         for (final exercise in updatedDays[dayIndex].exercises) {
           _deletedExerciseIds.add(exercise.id);
+        }
+
+        // Wenn periodisiert, entferne alle Mikrozyklus-Konfigurationen für diesen Tag
+        if (_draftPlan!.isPeriodized && _draftPlan!.periodization != null) {
+          _draftPlan!.periodization!.dayConfigurations.remove(dayId);
         }
 
         // Tag entfernen
@@ -301,7 +433,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
-  // NEU: Gelöschte Übungen aus der Datenbank entfernen
+  // Gelöschte Übungen aus der Datenbank entfernen
   Future<void> cleanupDeletedExercises() async {
     // Lösche alle Übungen, die seit dem letzten Speichern entfernt wurden
     for (final exerciseId in _deletedExerciseIds) {
@@ -312,7 +444,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _deletedExerciseIds.clear();
   }
 
-  // NEU: Gelöschte Trainingstage aus der Datenbank entfernen
+  // Gelöschte Trainingstage aus der Datenbank entfernen
   Future<void> cleanupDeletedDays() async {
     // Lösche alle Trainingstage, die seit dem letzten Speichern entfernt wurden
     for (final dayId in _deletedDayIds) {
@@ -323,10 +455,44 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _deletedDayIds.clear();
   }
 
-  // NEU: Kombinierte Cleanup-Methode für vereinfachten Aufruf
+  // Kombinierte Cleanup-Methode für vereinfachten Aufruf
   Future<void> cleanupDeletedItems() async {
     await cleanupDeletedExercises();
     await cleanupDeletedDays();
+  }
+
+  // Methode zum Kopieren aller Mikrozyklen von einer Woche zur anderen
+  void copyMicrocycleSettings(int fromWeekIndex, int toWeekIndex) {
+    if (_draftPlan == null ||
+        !_draftPlan!.isPeriodized ||
+        _draftPlan!.periodization == null) return;
+
+    if (fromWeekIndex < 0 ||
+        fromWeekIndex >= _numberOfWeeks ||
+        toWeekIndex < 0 ||
+        toWeekIndex >= _numberOfWeeks) return;
+
+    // Für jeden Tag im Plan
+    for (int dayIndex = 0; dayIndex < _draftPlan!.days.length; dayIndex++) {
+      final dayId = _draftPlan!.days[dayIndex].id;
+
+      // Für jede Übung in diesem Tag
+      for (final exercise in _draftPlan!.days[dayIndex].exercises) {
+        final exerciseId = exercise.id;
+
+        // Prüfe, ob es für diese Übung eine Konfiguration in der Quellwoche gibt
+        final sourceConfig = _draftPlan!
+            .getExerciseMicrocycle(exerciseId, dayIndex, fromWeekIndex);
+
+        if (sourceConfig != null) {
+          // Kopiere die Konfiguration zur Zielwoche
+          _draftPlan!.addExerciseMicrocycle(exerciseId, dayIndex, toWeekIndex,
+              sourceConfig.numberOfSets, sourceConfig.progressionProfileId);
+        }
+      }
+    }
+
+    notifyListeners();
   }
 
   // Zustand zurücksetzen, wenn fertig
@@ -338,11 +504,41 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _selectedDayIndex = 0;
     _isEditMode = false;
     _editingPlanId = null;
-    _deletedExerciseIds.clear(); // Leere die Liste der gelöschten Übungen
-    _deletedDayIds.clear(); // Leere die Liste der gelöschten Trainingstage
+    _deletedExerciseIds.clear();
+    _deletedDayIds.clear();
+    _isPeriodized = false;
+    _numberOfWeeks = 4;
+    _activeWeekIndex = 0;
 
     Future.microtask(() {
       notifyListeners();
     });
+  }
+
+  // Methode zum Abrufen der Übungskonfiguration für die aktuelle Woche im Editor
+  ExerciseModel getExerciseForCurrentWeek(int exerciseIndex) {
+    if (_draftPlan == null ||
+        !_draftPlan!.isPeriodized ||
+        exerciseIndex < 0 ||
+        _selectedDayIndex >= _draftPlan!.days.length ||
+        exerciseIndex >= _draftPlan!.days[_selectedDayIndex].exercises.length) {
+      // Wenn keine Periodisierung oder ungültiger Index, gib die Originalübung zurück
+      return _draftPlan!.days[_selectedDayIndex].exercises[exerciseIndex];
+    }
+
+    final exercise =
+        _draftPlan!.days[_selectedDayIndex].exercises[exerciseIndex];
+    final config = _draftPlan!.getExerciseMicrocycle(
+        exercise.id, _selectedDayIndex, _activeWeekIndex);
+
+    if (config == null) {
+      return exercise;
+    }
+
+    // Erstelle eine Kopie der Übung mit den Werten aus der Mikrozyklus-Konfiguration
+    return exercise.copyWith(
+      numberOfSets: config.numberOfSets,
+      progressionProfileId: config.progressionProfileId,
+    );
   }
 }

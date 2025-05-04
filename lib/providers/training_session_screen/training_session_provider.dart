@@ -6,6 +6,7 @@ import 'package:flutter/services.dart'; // Für Vibrationsfeedback
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
+import '../../models/training_plan_screen/periodization_model.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import '../../models/progression_manager_screen/progression_profile_model.dart';
 import '../../models/training_history/training_session_model.dart';
@@ -21,6 +22,7 @@ class TrainingSessionProvider with ChangeNotifier {
   TrainingPlanModel? _trainingPlan;
   TrainingDayModel? _trainingDay;
   int _dayIndex = 0;
+  int _weekIndex = 0; // NEU: Variable für den aktuellen Mikrozyklus
 
   // Tracking für aktuelle Übung und Sätze
   int _currentExerciseIndex = 0;
@@ -46,27 +48,27 @@ class TrainingSessionProvider with ChangeNotifier {
   // Service für die Trainingshistorie
   final TrainingHistoryService _historyService = TrainingHistoryService();
 
-  // NEU: Tracking für Übungsänderungen
+  // Tracking für Übungsänderungen
   final Map<int, ExerciseModel> _originalExercises =
       {}; // Speichert Original-Konfigurationen
   final Map<int, bool> _exerciseConfigModified =
       {}; // Markiert geänderte Übungen
 
-  // NEU: Service für das Updaten des Trainingsplans
+  // Service für das Updaten des Trainingsplans
   final TrainingPlanService _trainingPlanService = TrainingPlanService();
 
-  // NEU: Tracking für hinzugefügte Übungen
+  // Tracking für hinzugefügte Übungen
   final List<ExerciseModel> _addedExercises = [];
   bool get hasAddedExercises => _addedExercises.isNotEmpty;
 
-  // NEU: Liste für gelöschte Übungen
+  // Liste für gelöschte Übungen
   final List<ExerciseModel> _deletedExercises = [];
   bool get hasDeletedExercises => _deletedExercises.isNotEmpty;
 
-  // FIX: Flag für Debug-Logging
+  // Flag für Debug-Logging
   final bool _debugMode = true;
 
-  // Neue Variablen zum Verhindern von wiederholten Updates
+  // Variablen zum Verhindern von wiederholten Updates
   bool _isUpdatingExerciseConfig = false;
   bool _isProcessingConfig = false;
 
@@ -79,6 +81,7 @@ class TrainingSessionProvider with ChangeNotifier {
   TrainingPlanModel? get trainingPlan => _trainingPlan;
   TrainingDayModel? get trainingDay => _trainingDay;
   int get dayIndex => _dayIndex;
+  int get weekIndex => _weekIndex; // NEU: Getter für den Mikrozyklus-Index
 
   int get currentExerciseIndex => _currentExerciseIndex;
   ExerciseModel? get currentExercise => _trainingDay != null &&
@@ -102,28 +105,29 @@ class TrainingSessionProvider with ChangeNotifier {
 
   List<ExerciseModel> get exercises => _trainingDay?.exercises ?? [];
 
-  // NEU: Getter für Übungsänderungen
+  // Getter für Übungsänderungen
   bool get hasModifiedExercises =>
       _exerciseConfigModified.values.any((modified) => modified);
 
   TrainingSessionModel? get currentSession => _currentSession;
 
-  // FIX: Debug-Logging Methode
+  // Debug-Logging Methode
   void _log(String message) {
     if (_debugMode) {
       print('TrainingSessionProvider: $message');
     }
   }
 
-  // Initialisiert eine neue Trainings-Session
-  Future<void> startTrainingSession(
-      TrainingPlanModel plan, int dayIndex) async {
+  // Initialisiert eine neue Trainings-Session mit optionalem Mikrozyklus-Index
+  Future<void> startTrainingSession(TrainingPlanModel plan, int dayIndex,
+      [int weekIndex = 0]) async {
     // Vollständiges Zurücksetzen sicherstellen
     _completeReset();
 
     // Setze die Trainingsplan-Daten
     _trainingPlan = plan;
     _dayIndex = dayIndex;
+    _weekIndex = weekIndex; // NEU: Mikrozyklus-Index speichern
 
     if (dayIndex < plan.days.length) {
       _trainingDay = plan.days[dayIndex];
@@ -139,34 +143,48 @@ class TrainingSessionProvider with ChangeNotifier {
       for (int i = 0; i < _trainingDay!.exercises.length; i++) {
         final exercise = _trainingDay!.exercises[i];
 
-        // NEU: Originalkonfiguration speichern
-        _originalExercises[i] = exercise;
+        // NEU: Wenn der Plan periodisiert ist, prüfe auf Mikrozyklus-spezifische Konfiguration
+        ExerciseModel adjustedExercise = exercise;
+        if (plan.isPeriodized && plan.periodization != null) {
+          final config =
+              plan.getExerciseMicrocycle(exercise.id, dayIndex, weekIndex);
+          if (config != null) {
+            // Erstelle eine angepasste Version der Übung mit den Werten aus dem Mikrozyklus
+            adjustedExercise = exercise.copyWith(
+              numberOfSets: config.numberOfSets,
+              progressionProfileId: config.progressionProfileId,
+            );
+          }
+        }
+
+        // Originalkonfiguration speichern (angepasst für Mikrozyklus)
+        _originalExercises[i] = adjustedExercise;
         _exerciseConfigModified[i] = false;
 
         _log(
-            'Originalübung gespeichert: ${exercise.name} (${exercise.id}) - Pause: ${exercise.restPeriodSeconds} sek, Steigerung: ${exercise.standardIncrease} kg');
+            'Originalübung gespeichert: ${adjustedExercise.name} (${adjustedExercise.id}) - Pause: ${adjustedExercise.restPeriodSeconds} sek, Steigerung: ${adjustedExercise.standardIncrease} kg');
 
         // Übungshistorie erstellen
         final exerciseHistory = ExerciseHistoryModel.fromExerciseModel(
-          exercise.id,
-          exercise.name,
-          exercise.primaryMuscleGroup,
-          exercise.secondaryMuscleGroup,
-          exercise.standardIncrease,
-          exercise.restPeriodSeconds,
-          exercise.progressionProfileId,
+          adjustedExercise.id,
+          adjustedExercise.name,
+          adjustedExercise.primaryMuscleGroup,
+          adjustedExercise.secondaryMuscleGroup,
+          adjustedExercise.standardIncrease,
+          adjustedExercise.restPeriodSeconds,
+          adjustedExercise.progressionProfileId,
         );
 
         // Zur Session hinzufügen
         _currentSession!.exercises.add(exerciseHistory);
 
         // Lade die letzten Trainingsdaten für diese Übung
-        List<SetHistoryModel> lastSetData =
-            await _historyService.getLastTrainingDataForExercise(exercise.id);
+        List<SetHistoryModel> lastSetData = await _historyService
+            .getLastTrainingDataForExercise(adjustedExercise.id);
 
-        // Erstelle die Sets für diese Übung
+        // Erstelle die Sets für diese Übung - mit Anzahl aus dem Mikrozyklus
         List<TrainingSetModel> sets = List.generate(
-          exercise.numberOfSets,
+          adjustedExercise.numberOfSets,
           (setIndex) {
             // Versuche, die Daten aus dem letzten Training zu verwenden
             double lastKg = 0;
@@ -207,6 +225,7 @@ class TrainingSessionProvider with ChangeNotifier {
     _trainingPlan = null;
     _trainingDay = null;
     _dayIndex = 0;
+    _weekIndex = 0; // NEU: Mikrozyklus-Index zurücksetzen
     _currentExerciseIndex = 0;
     _exerciseSets = {};
     _activeSetByExercise = {};
@@ -222,9 +241,7 @@ class TrainingSessionProvider with ChangeNotifier {
     _isUpdatingExerciseConfig = false;
     _isProcessingConfig = false;
     _addedExercises.clear();
-    _deletedExercises.clear(); // NEU: Gelöschte Übungen zurücksetzen
-
-    // NEU: Tracking für Übungsänderungen zurücksetzen
+    _deletedExercises.clear();
     _originalExercises.clear();
     _exerciseConfigModified.clear();
   }
@@ -609,7 +626,7 @@ class TrainingSessionProvider with ChangeNotifier {
   void startRestTimer() {
     if (_trainingDay == null || currentExercise == null) return;
 
-    // FIX: Verwende die aktualisierte Pausenzeit aus dem aktuellen Übungsmodell
+    // Verwende die aktualisierte Pausenzeit aus dem aktuellen Übungsmodell
     _restTimeRemaining = currentExercise!.restPeriodSeconds;
     _log('Starte Ruhe-Timer mit ${_restTimeRemaining} Sekunden');
 
@@ -1354,7 +1371,7 @@ class TrainingSessionProvider with ChangeNotifier {
       _log(
           'Speichere Änderungen am Trainingsplan: ${_trainingPlan!.id} - ${_trainingPlan!.name}');
 
-      // FIX: Stelle sicher, dass wir einen vollständigen Deep-Copy des Trainingsplans speichern
+      // Stelle sicher, dass wir einen vollständigen Deep-Copy des Trainingsplans speichern
       final planToSave = _trainingPlan!.copyWith();
 
       // Speichere den aktualisierten Trainingsplan
@@ -1523,7 +1540,7 @@ class TrainingSessionProvider with ChangeNotifier {
         // Tracking-Daten anpassen
         _adjustTrackingDataAfterExerciseRemoval(exerciseIndex);
 
-        // NEU: Erst TabController aktualisieren
+        // Erst TabController aktualisieren
         if (onTabsChanged != null) {
           await Future.microtask(() => onTabsChanged());
         }
@@ -1820,5 +1837,33 @@ class TrainingSessionProvider with ChangeNotifier {
 
     _exerciseSets[exerciseIndex] = updatedSets;
     notifyListeners();
+  }
+
+  // Hilfsmethode, um eine Übung für den aktuellen Mikrozyklus zu bekommen
+  ExerciseModel getExerciseForMicrocycle(int exerciseIndex) {
+    if (_trainingPlan == null ||
+        !_trainingPlan!.isPeriodized ||
+        _trainingDay == null ||
+        exerciseIndex < 0 ||
+        exerciseIndex >= _trainingDay!.exercises.length) {
+      // Wenn keine Periodisierung oder ungültiger Index, gib die Originalübung zurück
+      return _trainingDay!.exercises[exerciseIndex];
+    }
+
+    final exercise = _trainingDay!.exercises[exerciseIndex];
+
+    // Prüfe, ob es eine Mikrozyklus-spezifische Konfiguration gibt
+    final config = _trainingPlan!
+        .getExerciseMicrocycle(exercise.id, _dayIndex, _weekIndex);
+
+    if (config == null) {
+      return exercise; // Keine spezifische Konfiguration vorhanden
+    }
+
+    // Erstelle eine angepasste Version der Übung mit den Werten aus dem Mikrozyklus
+    return exercise.copyWith(
+      numberOfSets: config.numberOfSets,
+      progressionProfileId: config.progressionProfileId,
+    );
   }
 }

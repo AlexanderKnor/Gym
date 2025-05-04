@@ -121,6 +121,91 @@ class _CreateTrainingPlanFormWidgetState
             ),
             const SizedBox(height: 24),
 
+            // NEU: Periodisierung aktivieren
+            const Text(
+              'Periodisierung',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Möchtest du einen periodisierten Trainingsplan erstellen?',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Plan periodisieren'),
+              subtitle: Text(
+                provider.isPeriodized
+                    ? 'Plan wird in Wochen (Mikrozyklen) unterteilt'
+                    : 'Normaler Trainingsplan ohne Periodisierung',
+              ),
+              value: provider.isPeriodized,
+              onChanged: (value) => provider.setIsPeriodized(value),
+              activeColor: Theme.of(context).primaryColor,
+            ),
+            const SizedBox(height: 16),
+
+            // NEU: Anzahl der Wochen (nur anzeigen, wenn periodisiert)
+            if (provider.isPeriodized) ...[
+              const Text(
+                'Mesozyklus-Länge',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Aus wie vielen Wochen (Mikrozyklen) soll dein Mesozyklus bestehen?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: provider.numberOfWeeks.toDouble(),
+                      min: 1,
+                      max: 16,
+                      divisions: 15,
+                      label:
+                          '${provider.numberOfWeeks} ${provider.numberOfWeeks == 1 ? "Woche" : "Wochen"}',
+                      onChanged: (value) =>
+                          provider.setNumberOfWeeks(value.round()),
+                    ),
+                  ),
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.purple[600],
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${provider.numberOfWeeks}',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Trainingstage
             const Text(
               'Trainingstage',
@@ -217,7 +302,9 @@ class _CreateTrainingPlanFormWidgetState
                     print("Validierung fehlgeschlagen");
                   }
                 },
-                child: const Text('Weiter zu den Übungen'),
+                child: Text(provider.isPeriodized
+                    ? 'Weiter zum Mesozyklus-Editor'
+                    : 'Weiter zu den Übungen'),
               ),
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
+import '../../models/training_plan_screen/periodization_model.dart';
 import '../training_history/training_history_service.dart';
 
 class TrainingPlanService {
@@ -176,7 +177,7 @@ class TrainingPlanService {
     }
   }
 
-  // NEU: Trainingstag löschen
+  // Trainingstag löschen
   Future<bool> deleteTrainingDay(String dayId) async {
     try {
       final userId = _getUserId();
@@ -252,12 +253,31 @@ class TrainingPlanService {
           updatedDays.add(day.copyWith(exercises: updatedExercises));
         }
 
+        // Auch in Periodisierungsmodell aktualisieren, falls vorhanden
+        if (plan.isPeriodized && plan.periodization != null) {
+          plan.periodization!.dayConfigurations.forEach((dayId, exerciseMap) {
+            exerciseMap.forEach((exerciseId, weekMap) {
+              weekMap.forEach((weekIndex, config) {
+                if (config.progressionProfileId == profileId) {
+                  plan.periodization!
+                          .dayConfigurations[dayId]![exerciseId]![weekIndex] =
+                      MicrocycleConfiguration(
+                          numberOfSets: config.numberOfSets,
+                          progressionProfileId: null);
+                  planUpdated = true;
+                }
+              });
+            });
+          });
+        }
+
         // Wenn Übungen im Plan aktualisiert wurden, Plan speichern
         if (planUpdated) {
-          final updatedPlan = plan.copyWith(days: updatedDays);
+          final updatedPlan = plan.copyWith(
+              days: updatedDays, periodization: plan.periodization);
 
           try {
-            // WICHTIG: Neuer Code - Pläne immer einzeln speichern
+            // Pläne immer einzeln speichern
             final planJson = _encodePlanToJson(updatedPlan);
             await _getTrainingPlansCollection().doc(plan.id).set(planJson);
 
@@ -284,12 +304,14 @@ class TrainingPlanService {
     }
   }
 
-  // JSON-Konvertierungsmethoden
+  // JSON-Konvertierungsmethoden mit Unterstützung für Periodisierung
   Map<String, dynamic> _encodePlanToJson(TrainingPlanModel plan) {
-    return {
+    final Map<String, dynamic> json = {
       'id': plan.id,
       'name': plan.name,
       'isActive': plan.isActive,
+      'isPeriodized': plan.isPeriodized,
+      'numberOfWeeks': plan.numberOfWeeks,
       'days': plan.days
           .map((day) => {
                 'id': day.id,
@@ -309,6 +331,13 @@ class TrainingPlanService {
               })
           .toList(),
     };
+
+    // Füge Periodisierungsdaten hinzu, wenn vorhanden
+    if (plan.isPeriodized && plan.periodization != null) {
+      json['periodization'] = plan.periodization!.toMap();
+    }
+
+    return json;
   }
 
   TrainingPlanModel _decodePlanFromJson(Map<String, dynamic> json) {
@@ -337,11 +366,20 @@ class TrainingPlanService {
       );
     }).toList();
 
+    // Prüfe, ob Periodisierungsdaten vorhanden sind
+    PeriodizationModel? periodization;
+    if (json['isPeriodized'] == true && json['periodization'] != null) {
+      periodization = PeriodizationModel.fromMap(json['periodization']);
+    }
+
     return TrainingPlanModel(
       id: json['id'],
       name: json['name'],
       days: days,
       isActive: json['isActive'] ?? false,
+      isPeriodized: json['isPeriodized'] ?? false,
+      numberOfWeeks: json['numberOfWeeks'] ?? 1,
+      periodization: periodization,
     );
   }
 }

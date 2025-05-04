@@ -82,74 +82,134 @@ class RuleEvaluatorService {
             return 0;
         }
       } else if (valueNode['type'] == 'oneRM') {
-        // Quelle für 1RM bestimmen: 'last' (Standard) oder 'previous'
-        final String source = valueNode['source'] ?? 'last';
+        try {
+          // Quelle für 1RM bestimmen: 'last' (Standard) oder 'previous'
+          final String source = valueNode['source'] ?? 'last';
 
-        // Werte basierend auf der Quelle auswählen
-        final double kg;
-        final int reps;
-        final int rir;
+          // Werte basierend auf der Quelle auswählen
+          final double kg;
+          final int reps;
+          final int rir;
 
-        if (source == 'previous') {
-          // Werte vom vorherigen Satz verwenden
-          kg = variables['previousKg'] ?? 0.0;
-          reps = variables['previousReps'] ?? 0;
-          rir = variables['previousRIR'] ?? 0;
-          print(
-              'Verwende 1RM vom vorherigen Satz: $kg kg, $reps reps, $rir RIR');
-        } else {
-          // Werte vom letzten (aktuellen) Satz verwenden
-          kg = variables['lastKg'] ?? 0.0;
-          reps = variables['lastReps'] ?? 0;
-          rir = variables['lastRIR'] ?? 0;
-          print('Verwende 1RM vom letzten Satz: $kg kg, $reps reps, $rir RIR');
-        }
+          if (source == 'previous') {
+            // Werte vom vorherigen Satz verwenden
+            kg = variables['previousKg'] != null
+                ? (variables['previousKg'] is int
+                    ? (variables['previousKg'] as int).toDouble()
+                    : variables['previousKg'] as double)
+                : 0.0;
+            reps = variables['previousReps'] != null
+                ? variables['previousReps'] as int
+                : 0;
+            rir = variables['previousRIR'] != null
+                ? variables['previousRIR'] as int
+                : 0;
+            print(
+                'Verwende 1RM vom vorherigen Satz: $kg kg, $reps reps, $rir RIR');
+          } else {
+            // Werte vom letzten (aktuellen) Satz verwenden
+            kg = variables['lastKg'] != null
+                ? (variables['lastKg'] is int
+                    ? (variables['lastKg'] as int).toDouble()
+                    : variables['lastKg'] as double)
+                : 0.0;
+            reps = variables['lastReps'] != null
+                ? variables['lastReps'] as int
+                : 0;
+            rir =
+                variables['lastRIR'] != null ? variables['lastRIR'] as int : 0;
+            print(
+                'Verwende 1RM vom letzten Satz: $kg kg, $reps reps, $rir RIR');
+          }
 
-        // 1RM aus den ausgewählten Werten berechnen
-        final currentRM =
-            OneRMCalculatorService.calculate1RM(kg.toDouble(), reps, rir);
+          // WICHTIG: Nicht berechnen, wenn nicht alle Werte > 0 sind
+          if (kg <= 0 || reps <= 0) {
+            print(
+                'Keine gültigen Werte für 1RM-Berechnung: kg=$kg, reps=$reps, rir=$rir');
+            return 0.0;
+          }
 
-        // Dynamische Bestimmung von targetReps und targetRIR aus den anderen Actions der Regel
-        int targetReps = variables['targetRepsMin'] ?? 8;
-        int targetRIR = variables['targetRIRMin'] ?? 1;
+          // 1RM aus den ausgewählten Werten berechnen
+          final currentRM = OneRMCalculatorService.calculate1RM(kg, reps, rir);
+          print('Berechneter 1RM: $currentRM kg');
 
-        // Regel-Aktionen durchsuchen, wenn verfügbar
-        if (ruleActions != null && ruleActions.isNotEmpty) {
-          for (var action in ruleActions) {
-            if (action.type == 'assignment') {
-              // Zielwerte aus expliziten Regelaktionen holen
-              if (action.target == 'reps') {
-                // Die genauen Wiederholungswerte aus der Regel extrahieren
-                var repsValue = evaluateValue(action.value, variables);
-                if (repsValue is num) {
-                  targetReps = repsValue.toInt();
-                  print(
-                      'Dynamische Wiederholungen für 1RM-Berechnung: $targetReps');
-                }
-              } else if (action.target == 'rir') {
-                // Die genauen RIR-Werte aus der Regel extrahieren
-                var rirValue = evaluateValue(action.value, variables);
-                if (rirValue is num) {
-                  targetRIR = rirValue.toInt();
-                  print('Dynamischer RIR für 1RM-Berechnung: $targetRIR');
+          // Wenn 1RM ungültig ist, aussteigen
+          if (currentRM <= 0) {
+            print('Berechneter 1RM ist ungültig: $currentRM kg');
+            return 0.0;
+          }
+
+          // Dynamische Bestimmung von targetReps und targetRIR aus den anderen Actions der Regel
+          int targetReps = variables['targetRepsMin'] != null
+              ? variables['targetRepsMin'] as int
+              : 8;
+          int targetRIR = variables['targetRIRMin'] != null
+              ? variables['targetRIRMin'] as int
+              : 1;
+
+          // Regel-Aktionen durchsuchen, wenn verfügbar
+          if (ruleActions != null && ruleActions.isNotEmpty) {
+            for (var action in ruleActions) {
+              if (action.type == 'assignment') {
+                // Zielwerte aus expliziten Regelaktionen holen
+                if (action.target == 'reps') {
+                  // Die genauen Wiederholungswerte aus der Regel extrahieren
+                  var repsValue = evaluateValue(action.value, variables);
+                  if (repsValue is num) {
+                    targetReps = repsValue.toInt();
+                    print(
+                        'Dynamische Wiederholungen für 1RM-Berechnung: $targetReps');
+                  }
+                } else if (action.target == 'rir') {
+                  // Die genauen RIR-Werte aus der Regel extrahieren
+                  var rirValue = evaluateValue(action.value, variables);
+                  if (rirValue is num) {
+                    targetRIR = rirValue.toInt();
+                    print('Dynamischer RIR für 1RM-Berechnung: $targetRIR');
+                  }
                 }
               }
             }
           }
+
+          // WICHTIG: Prüfen, ob targetReps > 0 ist
+          if (targetReps <= 0) {
+            print('Ungültiger Zielwert für Wiederholungen: $targetReps');
+            targetReps = 8; // Standardwert
+          }
+
+          // Prozentuale Anpassung beachten - HIER IST DER FEHLER
+          // Stelle sicher, dass percentageAdjustment ein double ist
+          double percentageAdjustment = 0.0;
+          dynamic rawPercentage = valueNode['percentage'];
+
+          if (rawPercentage != null) {
+            if (rawPercentage is int) {
+              percentageAdjustment = rawPercentage.toDouble();
+            } else if (rawPercentage is double) {
+              percentageAdjustment = rawPercentage;
+            } else if (rawPercentage is String) {
+              percentageAdjustment = double.tryParse(rawPercentage) ?? 0.0;
+            }
+          }
+
+          print(
+              'Prozentuale Anpassung für 1RM: $percentageAdjustment% (Originalwert: $rawPercentage, Typ: ${rawPercentage?.runtimeType})');
+
+          // Gewicht basierend auf dem gewählten 1RM und den Zielwerten berechnen
+          final calculatedWeight =
+              OneRMCalculatorService.calculateWeightFromTargetRM(
+                  currentRM, targetReps, targetRIR, percentageAdjustment);
+
+          print(
+              '1RM-Berechnung: $currentRM 1RM mit $targetReps Wdh, $targetRIR RIR, $percentageAdjustment% = $calculatedWeight kg');
+
+          // WICHTIG: Stelle sicher, dass ein gültiger Wert zurückgegeben wird
+          return calculatedWeight > 0 ? calculatedWeight : 0.0;
+        } catch (e) {
+          print('Fehler in der oneRM Berechnung: $e');
+          return 0.0;
         }
-
-        // Prozentuale Anpassung beachten
-        double percentageAdjustment = valueNode['percentage'] ?? 0.0;
-
-        // Gewicht basierend auf dem gewählten 1RM und den Zielwerten berechnen
-        final calculatedWeight =
-            OneRMCalculatorService.calculateWeightFromTargetRM(
-                currentRM, targetReps, targetRIR, percentageAdjustment);
-
-        print(
-            '1RM-Berechnung: $currentRM 1RM mit $targetReps Wdh, $targetRIR RIR, $percentageAdjustment% = $calculatedWeight kg');
-
-        return calculatedWeight;
       }
 
       return 0;

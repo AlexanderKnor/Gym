@@ -1,7 +1,7 @@
 // lib/providers/training_session_screen/training_session_provider.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:flutter/services.dart'; // Für Vibrationsfeedback
 
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
@@ -788,7 +788,12 @@ class TrainingSessionProvider with ChangeNotifier {
         final exercise = _trainingDay?.exercises[exerciseIndex];
         if (exercise == null) return;
 
+        // GEÄNDERT: Werte aus der Übung für die Berechnung verwenden
         final customIncrement = exercise.standardIncrease;
+        final repRangeMin = exercise.repRangeMin;
+        final repRangeMax = exercise.repRangeMax;
+        final rirRangeMin = exercise.rirRangeMin;
+        final rirRangeMax = exercise.rirRangeMax;
 
         // WICHTIG: Die historischen Trainingsdaten für diese Übung abrufen
         // statt die aktuellen Werte im Set zu verwenden
@@ -840,10 +845,17 @@ class TrainingSessionProvider with ChangeNotifier {
               abgeschlossen: histSet.completed));
         }
 
-        // Empfehlung berechnen mit den historischen Werten
+        // GEÄNDERT: Empfehlung berechnen mit allen angepassten Werten aus der Übung
         final empfehlung = progressionProvider.berechneEmpfehlungMitProfil(
-            historicalSet, actualProfileId, historicalSets,
-            customIncrement: customIncrement);
+          historicalSet,
+          actualProfileId,
+          historicalSets,
+          customIncrement: customIncrement,
+          repRangeMin: repRangeMin,
+          repRangeMax: repRangeMax,
+          rirRangeMin: rirRangeMin,
+          rirRangeMax: rirRangeMax,
+        );
 
         // Empfehlung im aktuellen Set speichern
         final updatedSets = List<TrainingSetModel>.from(sets);

@@ -143,10 +143,14 @@ class ProgressionManagerProvider with ChangeNotifier {
 
   // ===== BERECHNUNGS-METHODEN =====
 
-  // Berechnet eine Empfehlung mit einem bestimmten Profil, ohne den Zustand zu ändern
+  // GEÄNDERT: Berechnet eine Empfehlung mit einem bestimmten Profil, nun mit zusätzlichen Parametern für repRange und rirRange
   Map<String, dynamic> berechneEmpfehlungMitProfil(
       TrainingSetModel satz, String profilId, List<TrainingSetModel> alleSaetze,
-      {double? customIncrement}) {
+      {double? customIncrement,
+      int? repRangeMin,
+      int? repRangeMax,
+      int? rirRangeMin,
+      int? rirRangeMax}) {
     // Das gewünschte Profil finden
     final profil = profileProvider.getProfileById(profilId);
     if (profil == null) {
@@ -158,14 +162,32 @@ class ProgressionManagerProvider with ChangeNotifier {
       };
     }
 
-    // Optional den Increment anpassen
-    ProgressionProfileModel tempProfil = profil;
+    // Temporär config anpassen (kopieren, um das Original nicht zu verändern)
+    final tempConfig = Map<String, dynamic>.from(profil.config);
+
+    // Optional den Increment-Wert anpassen
     if (customIncrement != null) {
-      // Temporär config anpassen
-      final tempConfig = Map<String, dynamic>.from(profil.config);
       tempConfig['increment'] = customIncrement;
-      tempProfil = profil.copyWith(config: tempConfig);
     }
+
+    // Optional die repRange-Werte anpassen
+    if (repRangeMin != null) {
+      tempConfig['targetRepsMin'] = repRangeMin;
+    }
+    if (repRangeMax != null) {
+      tempConfig['targetRepsMax'] = repRangeMax;
+    }
+
+    // Optional die rirRange-Werte anpassen
+    if (rirRangeMin != null) {
+      tempConfig['targetRIRMin'] = rirRangeMin;
+    }
+    if (rirRangeMax != null) {
+      tempConfig['targetRIRMax'] = rirRangeMax;
+    }
+
+    // Temporäres Profil mit angepassten Werten erstellen
+    ProgressionProfileModel tempProfil = profil.copyWith(config: tempConfig);
 
     // Berechnung ohne Profilwechsel durchführen
     final empfehlung = ProgressionCalculatorService.berechneProgression(
@@ -188,12 +210,16 @@ class ProgressionManagerProvider with ChangeNotifier {
   double berechne1RM(double gewicht, int wiederholungen, int rir) =>
       _trainingProvider.berechne1RM(gewicht, wiederholungen, rir);
 
-  // BUGFIX: Überarbeitete Methode für berechneProgression
+  // GEÄNDERT: Überarbeitete Methode für berechneProgression mit zusätzlichen Parametern
   Map<String, dynamic> berechneProgression(
       TrainingSetModel satz,
       ProgressionProfileModel? aktuellesProfilParam,
       List<TrainingSetModel> alleSaetze,
-      {double? customIncrement}) {
+      {double? customIncrement,
+      int? repRangeMin,
+      int? repRangeMax,
+      int? rirRangeMin,
+      int? rirRangeMax}) {
     // Wenn kein Profil übergeben wurde und auch kein aktuelles Profil existiert,
     // geben wir einen Standardwert zurück
     ProgressionProfileModel? profilToUse =
@@ -209,16 +235,35 @@ class ProgressionManagerProvider with ChangeNotifier {
       };
     }
 
-    // Wenn ein benutzerdefinierter increment Wert übergeben wurde, temporär die Config anpassen
+    // Wenn Parameter übergeben wurden, temporär die Config anpassen
     Map<String, dynamic>? originalConfig;
 
-    if (customIncrement != null) {
+    if (customIncrement != null ||
+        repRangeMin != null ||
+        repRangeMax != null ||
+        rirRangeMin != null ||
+        rirRangeMax != null) {
       // Originalwert sichern
       originalConfig = Map<String, dynamic>.from(profilToUse.config);
 
-      // Temporär den customIncrement Wert setzen
+      // Temporär die Config-Werte setzen
       final tempConfig = Map<String, dynamic>.from(profilToUse.config);
-      tempConfig['increment'] = customIncrement;
+
+      if (customIncrement != null) {
+        tempConfig['increment'] = customIncrement;
+      }
+      if (repRangeMin != null) {
+        tempConfig['targetRepsMin'] = repRangeMin;
+      }
+      if (repRangeMax != null) {
+        tempConfig['targetRepsMax'] = repRangeMax;
+      }
+      if (rirRangeMin != null) {
+        tempConfig['targetRIRMin'] = rirRangeMin;
+      }
+      if (rirRangeMax != null) {
+        tempConfig['targetRIRMax'] = rirRangeMax;
+      }
 
       // Config im Profil aktualisieren
       profilToUse = profilToUse.copyWith(config: tempConfig);
@@ -237,11 +282,15 @@ class ProgressionManagerProvider with ChangeNotifier {
     return ergebnis;
   }
 
-  // BUGFIX: Überarbeitete Methode für berechneEmpfehlungFuerAktivenSatz
+  // GEÄNDERT: Erweiterte Methode für berechneEmpfehlungFuerAktivenSatz
   void berechneEmpfehlungFuerAktivenSatz(
       {ProgressionProfileModel? aktuellesProfil,
       bool notify = true,
-      double? customIncrement}) {
+      double? customIncrement,
+      int? repRangeMin,
+      int? repRangeMax,
+      int? rirRangeMin,
+      int? rirRangeMax}) {
     final aktiverSatzIndex = _trainingProvider.saetze
         .indexWhere((satz) => satz.id == _trainingProvider.aktiverSatz);
 
@@ -252,7 +301,11 @@ class ProgressionManagerProvider with ChangeNotifier {
     // Neue Berechnung erzwingen, um sicherzustellen, dass die korrekten Regeln angewendet werden
     final empfehlung = berechneProgression(
         aktiverSatz, aktuellesProfil, _trainingProvider.saetze,
-        customIncrement: customIncrement);
+        customIncrement: customIncrement,
+        repRangeMin: repRangeMin,
+        repRangeMax: repRangeMax,
+        rirRangeMin: rirRangeMin,
+        rirRangeMax: rirRangeMax);
 
     final updatedSaetze = List<TrainingSetModel>.from(_trainingProvider.saetze);
     updatedSaetze[aktiverSatzIndex] = aktiverSatz.copyWith(

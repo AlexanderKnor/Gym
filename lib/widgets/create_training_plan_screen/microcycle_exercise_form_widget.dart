@@ -35,6 +35,10 @@ class _MicrocycleExerciseFormWidgetState
   late TextEditingController _standardIncreaseController;
   late TextEditingController _restPeriodController;
   late TextEditingController _numberOfSetsController;
+  late TextEditingController _repRangeMinController;
+  late TextEditingController _repRangeMaxController;
+  late TextEditingController _rirRangeMinController;
+  late TextEditingController _rirRangeMaxController;
   String? _selectedProfileId;
   bool _isLoading = true;
   late ProgressionManagerProvider _progressionProvider;
@@ -61,6 +65,18 @@ class _MicrocycleExerciseFormWidgetState
     );
     _numberOfSetsController = TextEditingController(
       text: widget.initialExercise?.numberOfSets.toString() ?? '3',
+    );
+    _repRangeMinController = TextEditingController(
+      text: widget.initialExercise?.repRangeMin.toString() ?? '8',
+    );
+    _repRangeMaxController = TextEditingController(
+      text: widget.initialExercise?.repRangeMax.toString() ?? '12',
+    );
+    _rirRangeMinController = TextEditingController(
+      text: widget.initialExercise?.rirRangeMin.toString() ?? '1',
+    );
+    _rirRangeMaxController = TextEditingController(
+      text: widget.initialExercise?.rirRangeMax.toString() ?? '3',
     );
 
     // WICHTIG: Profil-ID temporär speichern
@@ -122,6 +138,10 @@ class _MicrocycleExerciseFormWidgetState
     _standardIncreaseController.dispose();
     _restPeriodController.dispose();
     _numberOfSetsController.dispose();
+    _repRangeMinController.dispose();
+    _repRangeMaxController.dispose();
+    _rirRangeMinController.dispose();
+    _rirRangeMaxController.dispose();
     super.dispose();
   }
 
@@ -254,6 +274,140 @@ class _MicrocycleExerciseFormWidgetState
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 12),
+
+              // NEU: Wiederholungsbereich für diese Woche
+              const Text(
+                'Wiederholungsbereich (in dieser Woche)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  // Min. Wiederholungen
+                  Expanded(
+                    child: TextFormField(
+                      controller: _repRangeMinController,
+                      decoration: const InputDecoration(
+                        labelText: 'Min. Wiederholungen',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 8',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final reps = int.tryParse(value);
+                        if (reps == null || reps < 1) {
+                          return 'Min. 1';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Max. Wiederholungen
+                  Expanded(
+                    child: TextFormField(
+                      controller: _repRangeMaxController,
+                      decoration: const InputDecoration(
+                        labelText: 'Max. Wiederholungen',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 12',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final reps = int.tryParse(value);
+                        if (reps == null || reps < 1) {
+                          return 'Min. 1';
+                        }
+
+                        // Prüfen, ob Max größer oder gleich Min ist
+                        final minReps =
+                            int.tryParse(_repRangeMinController.text) ?? 0;
+                        if (reps < minReps) {
+                          return 'Muss ≥ Min. sein';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // NEU: RIR-Bereich für diese Woche
+              const Text(
+                'RIR-Bereich (in dieser Woche)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  // Min. RIR
+                  Expanded(
+                    child: TextFormField(
+                      controller: _rirRangeMinController,
+                      decoration: const InputDecoration(
+                        labelText: 'Min. RIR',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 1',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final rir = int.tryParse(value);
+                        if (rir == null || rir < 0) {
+                          return 'Min. 0';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Max. RIR
+                  Expanded(
+                    child: TextFormField(
+                      controller: _rirRangeMaxController,
+                      decoration: const InputDecoration(
+                        labelText: 'Max. RIR',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 3',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final rir = int.tryParse(value);
+                        if (rir == null || rir < 0) {
+                          return 'Min. 0';
+                        }
+
+                        // Prüfen, ob Max größer oder gleich Min ist
+                        final minRir =
+                            int.tryParse(_rirRangeMinController.text) ?? 0;
+                        if (rir < minRir) {
+                          return 'Muss ≥ Min. sein';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
 
@@ -427,6 +581,10 @@ class _MicrocycleExerciseFormWidgetState
             double.tryParse(_standardIncreaseController.text) ?? 2.5,
         restPeriodSeconds: int.tryParse(_restPeriodController.text) ?? 90,
         numberOfSets: int.tryParse(_numberOfSetsController.text) ?? 3,
+        repRangeMin: int.tryParse(_repRangeMinController.text) ?? 8,
+        repRangeMax: int.tryParse(_repRangeMaxController.text) ?? 12,
+        rirRangeMin: int.tryParse(_rirRangeMinController.text) ?? 1,
+        rirRangeMax: int.tryParse(_rirRangeMaxController.text) ?? 3,
         progressionProfileId: _selectedProfileId,
       );
 

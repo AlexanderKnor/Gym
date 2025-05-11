@@ -306,9 +306,9 @@ class TrainingDayTabWidget extends StatelessWidget {
                     Text(
                       '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' / ${exercise.secondaryMuscleGroup}' : ''}',
                     ),
-                    // Zeige die Anzahl der Sätze an
+                    // Anzeigen von Sätzen, Wiederholungsbereich und RIR-Bereich
                     Text(
-                      '${exercise.numberOfSets} ${exercise.numberOfSets == 1 ? "Satz" : "Sätze"} • ${exercise.restPeriodSeconds}s Pause',
+                      '${exercise.numberOfSets} ${exercise.numberOfSets == 1 ? "Satz" : "Sätze"} • ${exercise.repRangeMin}-${exercise.repRangeMax} Wdh • ${exercise.rirRangeMin}-${exercise.rirRangeMax} RIR • ${exercise.restPeriodSeconds}s Pause',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -444,11 +444,15 @@ class TrainingDayTabWidget extends StatelessWidget {
             weekIndex: activeWeekIndex,
             weekCount: createProvider.numberOfWeeks,
             onSave: (updatedExercise) {
-              // Nur die Mikrozyklus-Konfiguration für die aktuelle Woche aktualisieren
+              // Alle Werte für die aktuelle Woche aktualisieren
               createProvider.updateMicrocycle(
                 index,
                 activeWeekIndex,
                 updatedExercise.numberOfSets,
+                updatedExercise.repRangeMin,
+                updatedExercise.repRangeMax,
+                updatedExercise.rirRangeMin,
+                updatedExercise.rirRangeMax,
                 updatedExercise.progressionProfileId,
               );
               Navigator.pop(context);

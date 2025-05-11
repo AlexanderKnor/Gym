@@ -249,6 +249,10 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
                 _selectedDayIndex,
                 weekIndex,
                 exercise.numberOfSets,
+                exercise.repRangeMin,
+                exercise.repRangeMax,
+                exercise.rirRangeMin,
+                exercise.rirRangeMax,
                 exercise.progressionProfileId);
           } else {
             // Für andere Wochen kopieren wir erstmal die Werte
@@ -257,6 +261,10 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
                 _selectedDayIndex,
                 weekIndex,
                 exercise.numberOfSets,
+                exercise.repRangeMin,
+                exercise.repRangeMax,
+                exercise.rirRangeMin,
+                exercise.rirRangeMax,
                 exercise.progressionProfileId);
           }
         }
@@ -291,6 +299,10 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
               _selectedDayIndex,
               _activeWeekIndex,
               updatedExercise.numberOfSets,
+              updatedExercise.repRangeMin,
+              updatedExercise.repRangeMax,
+              updatedExercise.rirRangeMin,
+              updatedExercise.rirRangeMax,
               updatedExercise.progressionProfileId);
         }
 
@@ -302,7 +314,14 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   }
 
   // Methode zum Aktualisieren einer Mikrozyklus-Konfiguration
-  void updateMicrocycle(int exerciseIndex, int weekIndex, int numberOfSets,
+  void updateMicrocycle(
+      int exerciseIndex,
+      int weekIndex,
+      int numberOfSets,
+      int repRangeMin,
+      int repRangeMax,
+      int rirRangeMin,
+      int rirRangeMax,
       String? progressionProfileId) {
     if (_draftPlan != null && _draftPlan!.isPeriodized) {
       final currentDay = _draftPlan!.days[_selectedDayIndex];
@@ -310,8 +329,16 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       if (exerciseIndex >= 0 && exerciseIndex < currentDay.exercises.length) {
         final exercise = currentDay.exercises[exerciseIndex];
 
-        _draftPlan!.addExerciseMicrocycle(exercise.id, _selectedDayIndex,
-            weekIndex, numberOfSets, progressionProfileId);
+        _draftPlan!.addExerciseMicrocycle(
+            exercise.id,
+            _selectedDayIndex,
+            weekIndex,
+            numberOfSets,
+            repRangeMin,
+            repRangeMax,
+            rirRangeMin,
+            rirRangeMax,
+            progressionProfileId);
 
         notifyListeners();
       }
@@ -486,8 +513,16 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
         if (sourceConfig != null) {
           // Kopiere die Konfiguration zur Zielwoche
-          _draftPlan!.addExerciseMicrocycle(exerciseId, dayIndex, toWeekIndex,
-              sourceConfig.numberOfSets, sourceConfig.progressionProfileId);
+          _draftPlan!.addExerciseMicrocycle(
+              exerciseId,
+              dayIndex,
+              toWeekIndex,
+              sourceConfig.numberOfSets,
+              sourceConfig.repRangeMin,
+              sourceConfig.repRangeMax,
+              sourceConfig.rirRangeMin,
+              sourceConfig.rirRangeMax,
+              sourceConfig.progressionProfileId);
         }
       }
     }
@@ -538,6 +573,10 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     // Erstelle eine Kopie der Übung mit den Werten aus der Mikrozyklus-Konfiguration
     return exercise.copyWith(
       numberOfSets: config.numberOfSets,
+      repRangeMin: config.repRangeMin,
+      repRangeMax: config.repRangeMax,
+      rirRangeMin: config.rirRangeMin,
+      rirRangeMax: config.rirRangeMax,
       progressionProfileId: config.progressionProfileId,
     );
   }

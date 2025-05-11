@@ -29,6 +29,10 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   late TextEditingController _standardIncreaseController;
   late TextEditingController _restPeriodController;
   late TextEditingController _numberOfSetsController;
+  late TextEditingController _repRangeMinController;
+  late TextEditingController _repRangeMaxController;
+  late TextEditingController _rirRangeMinController;
+  late TextEditingController _rirRangeMaxController;
   String? _selectedProfileId;
   bool _isLoading = true;
   // Eigenen Provider erstellen, um Zustandsprobleme zu vermeiden
@@ -56,6 +60,18 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     );
     _numberOfSetsController = TextEditingController(
       text: widget.initialExercise?.numberOfSets.toString() ?? '3',
+    );
+    _repRangeMinController = TextEditingController(
+      text: widget.initialExercise?.repRangeMin.toString() ?? '8',
+    );
+    _repRangeMaxController = TextEditingController(
+      text: widget.initialExercise?.repRangeMax.toString() ?? '12',
+    );
+    _rirRangeMinController = TextEditingController(
+      text: widget.initialExercise?.rirRangeMin.toString() ?? '1',
+    );
+    _rirRangeMaxController = TextEditingController(
+      text: widget.initialExercise?.rirRangeMax.toString() ?? '3',
     );
 
     // WICHTIG: Profil-ID temporär speichern
@@ -117,6 +133,10 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     _standardIncreaseController.dispose();
     _restPeriodController.dispose();
     _numberOfSetsController.dispose();
+    _repRangeMinController.dispose();
+    _repRangeMaxController.dispose();
+    _rirRangeMinController.dispose();
+    _rirRangeMaxController.dispose();
     super.dispose();
   }
 
@@ -226,6 +246,140 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
               ),
               const SizedBox(height: 12),
 
+              // NEU: Wiederholungsbereich
+              const Text(
+                'Wiederholungsbereich',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  // Min. Wiederholungen
+                  Expanded(
+                    child: TextFormField(
+                      controller: _repRangeMinController,
+                      decoration: const InputDecoration(
+                        labelText: 'Min. Wiederholungen',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 8',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final reps = int.tryParse(value);
+                        if (reps == null || reps < 1) {
+                          return 'Min. 1';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Max. Wiederholungen
+                  Expanded(
+                    child: TextFormField(
+                      controller: _repRangeMaxController,
+                      decoration: const InputDecoration(
+                        labelText: 'Max. Wiederholungen',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 12',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final reps = int.tryParse(value);
+                        if (reps == null || reps < 1) {
+                          return 'Min. 1';
+                        }
+
+                        // Prüfen, ob Max größer oder gleich Min ist
+                        final minReps =
+                            int.tryParse(_repRangeMinController.text) ?? 0;
+                        if (reps < minReps) {
+                          return 'Muss ≥ Min. sein';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // NEU: RIR-Bereich
+              const Text(
+                'RIR-Bereich (Reps in Reserve)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  // Min. RIR
+                  Expanded(
+                    child: TextFormField(
+                      controller: _rirRangeMinController,
+                      decoration: const InputDecoration(
+                        labelText: 'Min. RIR',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 1',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final rir = int.tryParse(value);
+                        if (rir == null || rir < 0) {
+                          return 'Min. 0';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Max. RIR
+                  Expanded(
+                    child: TextFormField(
+                      controller: _rirRangeMaxController,
+                      decoration: const InputDecoration(
+                        labelText: 'Max. RIR',
+                        border: OutlineInputBorder(),
+                        hintText: 'z.B. 3',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Erforderlich';
+                        }
+                        final rir = int.tryParse(value);
+                        if (rir == null || rir < 0) {
+                          return 'Min. 0';
+                        }
+
+                        // Prüfen, ob Max größer oder gleich Min ist
+                        final minRir =
+                            int.tryParse(_rirRangeMinController.text) ?? 0;
+                        if (rir < minRir) {
+                          return 'Muss ≥ Min. sein';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
               // Standard Gewichtssteigerung
               TextFormField(
                 controller: _standardIncreaseController,
@@ -314,13 +468,6 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                 },
               ),
 
-              // Debug-Info
-              const SizedBox(height: 4),
-              Text(
-                'Verfügbare Profile: ${progressionProfiles.map((p) => p.name).join(", ")}',
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-
               // Profildetails
               if (_selectedProfileId != null) ...[
                 const SizedBox(height: 8),
@@ -403,6 +550,10 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
             double.tryParse(_standardIncreaseController.text) ?? 2.5,
         restPeriodSeconds: int.tryParse(_restPeriodController.text) ?? 90,
         numberOfSets: int.tryParse(_numberOfSetsController.text) ?? 3,
+        repRangeMin: int.tryParse(_repRangeMinController.text) ?? 8,
+        repRangeMax: int.tryParse(_repRangeMaxController.text) ?? 12,
+        rirRangeMin: int.tryParse(_rirRangeMinController.text) ?? 1,
+        rirRangeMax: int.tryParse(_rirRangeMaxController.text) ?? 3,
         progressionProfileId: _selectedProfileId,
       );
 

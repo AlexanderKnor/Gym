@@ -84,20 +84,36 @@ class PeriodizationModel {
 
 class MicrocycleConfiguration {
   final int numberOfSets;
+  final int repRangeMin; // Neues Feld
+  final int repRangeMax; // Neues Feld
+  final int rirRangeMin; // Neues Feld
+  final int rirRangeMax; // Neues Feld
   final String? progressionProfileId;
 
   MicrocycleConfiguration({
     required this.numberOfSets,
+    this.repRangeMin = 8, // Standardwert
+    this.repRangeMax = 12, // Standardwert
+    this.rirRangeMin = 1, // Standardwert
+    this.rirRangeMax = 3, // Standardwert
     this.progressionProfileId,
   });
 
   // Copy-Methode
   MicrocycleConfiguration copyWith({
     int? numberOfSets,
+    int? repRangeMin,
+    int? repRangeMax,
+    int? rirRangeMin,
+    int? rirRangeMax,
     String? progressionProfileId,
   }) {
     return MicrocycleConfiguration(
       numberOfSets: numberOfSets ?? this.numberOfSets,
+      repRangeMin: repRangeMin ?? this.repRangeMin,
+      repRangeMax: repRangeMax ?? this.repRangeMax,
+      rirRangeMin: rirRangeMin ?? this.rirRangeMin,
+      rirRangeMax: rirRangeMax ?? this.rirRangeMax,
       progressionProfileId: progressionProfileId ?? this.progressionProfileId,
     );
   }
@@ -106,6 +122,10 @@ class MicrocycleConfiguration {
   Map<String, dynamic> toMap() {
     return {
       'numberOfSets': numberOfSets,
+      'repRangeMin': repRangeMin,
+      'repRangeMax': repRangeMax,
+      'rirRangeMin': rirRangeMin,
+      'rirRangeMax': rirRangeMax,
       'progressionProfileId': progressionProfileId,
     };
   }
@@ -114,6 +134,10 @@ class MicrocycleConfiguration {
   factory MicrocycleConfiguration.fromMap(Map<String, dynamic> map) {
     return MicrocycleConfiguration(
       numberOfSets: map['numberOfSets'] ?? 3,
+      repRangeMin: map['repRangeMin'] ?? 8,
+      repRangeMax: map['repRangeMax'] ?? 12,
+      rirRangeMin: map['rirRangeMin'] ?? 1,
+      rirRangeMax: map['rirRangeMax'] ?? 3,
       progressionProfileId: map['progressionProfileId'],
     );
   }

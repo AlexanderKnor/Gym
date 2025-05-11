@@ -89,9 +89,17 @@ class TrainingPlanModel {
     );
   }
 
-  // Methode zum Hinzufügen einer Mikrozyklen-Konfiguration für eine Übung
-  void addExerciseMicrocycle(String exerciseId, int dayIndex, int weekIndex,
-      int sets, String? profileId) {
+  // Erweiterte Methode zum Hinzufügen einer Mikrozyklen-Konfiguration für eine Übung
+  void addExerciseMicrocycle(
+      String exerciseId,
+      int dayIndex,
+      int weekIndex,
+      int sets,
+      int repRangeMin,
+      int repRangeMax,
+      int rirRangeMin,
+      int rirRangeMax,
+      String? profileId) {
     periodization ??=
         PeriodizationModel(weeks: numberOfWeeks, dayConfigurations: {});
 
@@ -106,7 +114,12 @@ class TrainingPlanModel {
 
     periodization!.dayConfigurations[dayId]![exerciseId]![weekIndex] =
         MicrocycleConfiguration(
-            numberOfSets: sets, progressionProfileId: profileId);
+            numberOfSets: sets,
+            repRangeMin: repRangeMin,
+            repRangeMax: repRangeMax,
+            rirRangeMin: rirRangeMin,
+            rirRangeMax: rirRangeMax,
+            progressionProfileId: profileId);
   }
 
   // Methode zum Abrufen einer Mikrozyklen-Konfiguration für eine Übung

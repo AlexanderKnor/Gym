@@ -62,4 +62,40 @@ class ExerciseModel {
           : this.progressionProfileId,
     );
   }
+
+  // toMap() Methode für Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'primaryMuscleGroup': primaryMuscleGroup,
+      'secondaryMuscleGroup': secondaryMuscleGroup,
+      'standardIncrease': standardIncrease,
+      'restPeriodSeconds': restPeriodSeconds,
+      'numberOfSets': numberOfSets,
+      'repRangeMin': repRangeMin,
+      'repRangeMax': repRangeMax,
+      'rirRangeMin': rirRangeMin,
+      'rirRangeMax': rirRangeMax,
+      'progressionProfileId': progressionProfileId,
+    };
+  }
+
+  // fromMap() Factory-Methode für Firestore
+  factory ExerciseModel.fromMap(Map<String, dynamic> map) {
+    return ExerciseModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      primaryMuscleGroup: map['primaryMuscleGroup'] ?? '',
+      secondaryMuscleGroup: map['secondaryMuscleGroup'] ?? '',
+      standardIncrease: map['standardIncrease']?.toDouble() ?? 2.5,
+      restPeriodSeconds: map['restPeriodSeconds'] ?? 90,
+      numberOfSets: map['numberOfSets'] ?? 3,
+      repRangeMin: map['repRangeMin'] ?? 8,
+      repRangeMax: map['repRangeMax'] ?? 12,
+      rirRangeMin: map['rirRangeMin'] ?? 1,
+      rirRangeMax: map['rirRangeMax'] ?? 3,
+      progressionProfileId: map['progressionProfileId'],
+    );
+  }
 }

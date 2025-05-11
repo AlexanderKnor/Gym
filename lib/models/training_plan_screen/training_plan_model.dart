@@ -44,6 +44,39 @@ class TrainingPlanModel {
     );
   }
 
+  // Methode zum Konvertieren in Map für Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'days': days.map((day) => day.toMap()).toList(),
+      'isActive': isActive,
+      'isPeriodized': isPeriodized,
+      'numberOfWeeks': numberOfWeeks,
+      'periodization': periodization?.toMap(),
+    };
+  }
+
+  // Factory-Methode zum Erstellen aus Map von Firestore
+  factory TrainingPlanModel.fromMap(Map<String, dynamic> map) {
+    return TrainingPlanModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      days: (map['days'] as List?)
+              ?.map((day) =>
+                  TrainingDayModel.fromMap(day as Map<String, dynamic>))
+              .toList() ??
+          [],
+      isActive: map['isActive'] ?? false,
+      isPeriodized: map['isPeriodized'] ?? false,
+      numberOfWeeks: map['numberOfWeeks'] ?? 1,
+      periodization: map['periodization'] != null
+          ? PeriodizationModel.fromMap(
+              map['periodization'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
   // Factory-Methode für neuen Plan
   factory TrainingPlanModel.create(String name, int frequency) {
     final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';

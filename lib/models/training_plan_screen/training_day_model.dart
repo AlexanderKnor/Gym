@@ -24,4 +24,25 @@ class TrainingDayModel {
       exercises: exercises ?? this.exercises,
     );
   }
+
+  // Methode zum Konvertieren in Map für Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'exercises': exercises.map((e) => e.toMap()).toList(),
+    };
+  }
+
+  // Factory-Methode zum Erstellen aus Map von Firestore
+  factory TrainingDayModel.fromMap(Map<String, dynamic> map) {
+    return TrainingDayModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      exercises: (map['exercises'] as List?)
+              ?.map((e) => ExerciseModel.fromMap(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
 }

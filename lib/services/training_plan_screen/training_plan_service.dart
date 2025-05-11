@@ -325,6 +325,10 @@ class TrainingPlanService {
                           'standardIncrease': exercise.standardIncrease,
                           'restPeriodSeconds': exercise.restPeriodSeconds,
                           'numberOfSets': exercise.numberOfSets,
+                          'repRangeMin': exercise.repRangeMin,
+                          'repRangeMax': exercise.repRangeMax,
+                          'rirRangeMin': exercise.rirRangeMin,
+                          'rirRangeMax': exercise.rirRangeMax,
                           'progressionProfileId': exercise.progressionProfileId,
                         })
                     .toList(),
@@ -355,6 +359,10 @@ class TrainingPlanService {
           standardIncrease: exerciseJson['standardIncrease'].toDouble(),
           restPeriodSeconds: exerciseJson['restPeriodSeconds'],
           numberOfSets: exerciseJson['numberOfSets'] ?? 3,
+          repRangeMin: exerciseJson['repRangeMin'] ?? 8,
+          repRangeMax: exerciseJson['repRangeMax'] ?? 12,
+          rirRangeMin: exerciseJson['rirRangeMin'] ?? 1,
+          rirRangeMax: exerciseJson['rirRangeMax'] ?? 3,
           progressionProfileId: exerciseJson['progressionProfileId'],
         );
       }).toList();

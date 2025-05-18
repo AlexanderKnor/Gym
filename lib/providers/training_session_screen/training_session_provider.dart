@@ -1,4 +1,6 @@
 // lib/providers/training_session_screen/training_session_provider.dart
+
+// lib/providers/training_session_screen/training_session_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -1729,6 +1731,28 @@ class TrainingSessionProvider with ChangeNotifier {
 
       final updatedDays = List<TrainingDayModel>.from(_trainingPlan!.days);
       updatedDays[_dayIndex] = updatedDay;
+
+      // NEUER CODE - WICHTIG: Bei periodisierten Plänen auch die Mikrozyklus-Konfiguration aktualisieren
+      if (_trainingPlan!.isPeriodized && _trainingPlan!.periodization != null) {
+        // Aktualisiere die Konfiguration für die aktuelle Woche
+        _trainingPlan!.addExerciseMicrocycle(
+          newExercise.id,
+          _dayIndex,
+          _weekIndex,
+          newExercise.numberOfSets,
+          newExercise.repRangeMin,
+          newExercise.repRangeMax,
+          newExercise.rirRangeMin,
+          newExercise.rirRangeMax,
+          newExercise.progressionProfileId,
+        );
+
+        _log('Mikrozyklus-Konfiguration für Woche ${_weekIndex + 1} aktualisiert mit: ' +
+            'Sets=${newExercise.numberOfSets}, ' +
+            'RepRange=${newExercise.repRangeMin}-${newExercise.repRangeMax}, ' +
+            'RIR=${newExercise.rirRangeMin}-${newExercise.rirRangeMax}, ' +
+            'ProfileID=${newExercise.progressionProfileId}');
+      }
 
       final updatedPlan = _trainingPlan!.copyWith(
         days: updatedDays,

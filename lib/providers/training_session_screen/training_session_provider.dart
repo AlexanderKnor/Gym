@@ -153,6 +153,11 @@ class TrainingSessionProvider with ChangeNotifier {
             adjustedExercise = exercise.copyWith(
               numberOfSets: config.numberOfSets,
               progressionProfileId: config.progressionProfileId,
+              // KORRIGIERT: Fehlende periodisierte Werte hinzugefügt
+              repRangeMin: config.repRangeMin,
+              repRangeMax: config.repRangeMax,
+              rirRangeMin: config.rirRangeMin,
+              rirRangeMax: config.rirRangeMax,
             );
           }
         }
@@ -777,7 +782,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
     final set = sets[setIndex];
 
-    // WICHTIG: Holen Sie das richtige Profil für die aktuelle Woche
+    // WICHTIG: Hole das richtige Profil für die aktuelle Woche
     final exercise = getExerciseForMicrocycle(exerciseIndex);
     final actualProfileId = exercise.progressionProfileId ?? profileId;
 
@@ -785,10 +790,9 @@ class TrainingSessionProvider with ChangeNotifier {
     if (!set.empfehlungBerechnet || forceRecalculation) {
       try {
         // Standard-Steigerungswert holen
-        final exercise = _trainingDay?.exercises[exerciseIndex];
         if (exercise == null) return;
 
-        // GEÄNDERT: Werte aus der Übung für die Berechnung verwenden
+        // WICHTIG: Verwende die aktuellen Werte aus der Übung für die Berechnung
         final customIncrement = exercise.standardIncrease;
         final repRangeMin = exercise.repRangeMin;
         final repRangeMax = exercise.repRangeMax;
@@ -1036,7 +1040,9 @@ class TrainingSessionProvider with ChangeNotifier {
 
   // Getter für die standardIncrease des aktuellen Exercises
   double get currentExerciseStandardIncrease {
-    return currentExercise?.standardIncrease ?? 2.5;
+    // KORRIGIERT: Verwende die angepasste Übung für den aktuellen Mikrozyklus
+    final exercise = getExerciseForMicrocycle(_currentExerciseIndex);
+    return exercise?.standardIncrease ?? 2.5;
   }
 
   // Getter für den Fortschritt des Trainings
@@ -1705,6 +1711,11 @@ class TrainingSessionProvider with ChangeNotifier {
         restPeriodSeconds: updatedExercise.restPeriodSeconds,
         numberOfSets: updatedExercise.numberOfSets,
         progressionProfileId: updatedExercise.progressionProfileId,
+        // KORRIGIERT: Sicherstellen, dass alle Werte kopiert werden
+        repRangeMin: updatedExercise.repRangeMin,
+        repRangeMax: updatedExercise.repRangeMax,
+        rirRangeMin: updatedExercise.rirRangeMin,
+        rirRangeMax: updatedExercise.rirRangeMax,
       );
 
       // Trainingsplan aktualisieren
@@ -1876,10 +1887,14 @@ class TrainingSessionProvider with ChangeNotifier {
       return exercise; // Keine spezifische Konfiguration vorhanden
     }
 
-    // Erstelle eine angepasste Version der Übung mit den Werten aus dem Mikrozyklus
+    // KORRIGIERT: Erstelle eine angepasste Version der Übung mit ALLEN Werten aus dem Mikrozyklus
     return exercise.copyWith(
       numberOfSets: config.numberOfSets,
       progressionProfileId: config.progressionProfileId,
+      repRangeMin: config.repRangeMin,
+      repRangeMax: config.repRangeMax,
+      rirRangeMin: config.rirRangeMin,
+      rirRangeMax: config.rirRangeMax,
     );
   }
 }

@@ -95,8 +95,12 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final adaptedExercise =
         sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
 
-    // Merken wir uns das aktuelle Profil, um später zu überprüfen, ob es geändert wurde
+    // Speichere die ursprünglichen Werte zum Vergleich
     final String? originalProfileId = adaptedExercise.progressionProfileId;
+    final int originalRepRangeMin = adaptedExercise.repRangeMin;
+    final int originalRepRangeMax = adaptedExercise.repRangeMax;
+    final int originalRirRangeMin = adaptedExercise.rirRangeMin;
+    final int originalRirRangeMax = adaptedExercise.rirRangeMax;
 
     // Prüfen, ob mehr als eine Übung vorhanden ist
     final bool canDeleteExercise = sessionProvider.exercises.length > 1;
@@ -130,10 +134,22 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                             // Dialog schließen
                             Navigator.pop(context);
 
+                            // Überprüfen, ob sich relevante Einstellungen geändert haben
+                            bool settingsChanged = originalProfileId !=
+                                    updatedExercise.progressionProfileId ||
+                                originalRepRangeMin !=
+                                    updatedExercise.repRangeMin ||
+                                originalRepRangeMax !=
+                                    updatedExercise.repRangeMax ||
+                                originalRirRangeMin !=
+                                    updatedExercise.rirRangeMin ||
+                                originalRirRangeMax !=
+                                    updatedExercise.rirRangeMax;
+
                             // Wenn das Progressionsprofil geändert wurde oder ein neues hinzugefügt wurde,
+                            // oder wenn sich andere relevante Einstellungen geändert haben,
                             // Empfehlungen sofort neu berechnen
-                            if (originalProfileId !=
-                                updatedExercise.progressionProfileId) {
+                            if (settingsChanged) {
                               setState(() {
                                 _exerciseProfileId =
                                     updatedExercise.progressionProfileId;

@@ -23,6 +23,52 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
   final _tabController = GlobalKey();
   bool _showTabOptions = false;
 
+  // Neue Zustandsvariablen für Inline-Bearbeitung
+  int? _editingIndex;
+  final TextEditingController _renameController = TextEditingController();
+  final FocusNode _renameFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Den FocusNode so konfigurieren, dass er beim Verlieren des Fokus
+    // die Bearbeitung beendet
+    _renameFocusNode.addListener(() {
+      if (!_renameFocusNode.hasFocus && _editingIndex != null) {
+        _finishRenaming();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _renameController.dispose();
+    _renameFocusNode.dispose();
+    super.dispose();
+  }
+
+  // Methode zum Beenden der Bearbeitung und Anwenden der Änderungen
+  void _finishRenaming() {
+    if (_editingIndex != null) {
+      final newName = _renameController.text.trim();
+      if (newName.isNotEmpty) {
+        final createProvider =
+            Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+
+        // Namen aktualisieren
+        createProvider.setDayName(_editingIndex!, newName);
+
+        // Haptisches Feedback
+        HapticFeedback.mediumImpact();
+      }
+
+      // Bearbeitungsmodus beenden
+      setState(() {
+        _editingIndex = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final createProvider = Provider.of<CreateTrainingPlanProvider>(context);
@@ -96,12 +142,56 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
                 tabs: plan.days.asMap().entries.map((entry) {
                   final index = entry.key;
                   final day = entry.value;
+
+                  // Wenn dieser Tab aktuell bearbeitet wird, zeige ein TextField
+                  if (_editingIndex == index) {
+                    return Tab(
+                      height: 48,
+                      child: Container(
+                        width: 150, // Breiter Bereich für das Textfeld
+                        child: TextField(
+                          controller: _renameController,
+                          focusNode: _renameFocusNode,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 0),
+                            isDense: true,
+                            border: InputBorder.none,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          autofocus: true,
+                          textCapitalization: TextCapitalization.words,
+                          onSubmitted: (_) => _finishRenaming(),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Ansonsten den normalen Tab anzeigen
                   return Tab(
                     height: 48,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(day.name),
+                        // Tagesname mit GestureDetector für Doppeltipp
+                        GestureDetector(
+                          onDoubleTap: () {
+                            // Bearbeitungsmodus starten
+                            setState(() {
+                              _editingIndex = index;
+                              _renameController.text = day.name;
+                            });
+
+                            // Kurze Verzögerung, um sicherzustellen, dass
+                            // das Textfeld erstellt wurde
+                            Future.delayed(const Duration(milliseconds: 50),
+                                () => _renameFocusNode.requestFocus());
+                          },
+                          child: Text(day.name),
+                        ),
                         const SizedBox(width: 8),
                         // Drei-Punkte-Menü
                         InkWell(
@@ -120,6 +210,10 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
                   );
                 }).toList(),
                 onTap: (index) {
+                  // Wenn im Bearbeitungsmodus, zuerst die Bearbeitung beenden
+                  if (_editingIndex != null) {
+                    _finishRenaming();
+                  }
                   createProvider.setSelectedDayIndex(index);
                 },
               ),
@@ -157,35 +251,43 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
                   ),
           ],
         ),
-        body: Stack(
-          children: [
-            // TabBarView für die Trainingstage
-            TabBarView(
-              physics: _showTabOptions
-                  ? const NeverScrollableScrollPhysics()
-                  : const AlwaysScrollableScrollPhysics(),
-              children: List.generate(
-                plan.days.length,
-                (index) => TrainingDayTabWidget(dayIndex: index),
-              ),
-            ),
-
-            // Semi-transparentes Overlay, wenn Optionen angezeigt werden
-            if (_showTabOptions)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showTabOptions = false;
-                  });
-                },
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.1),
-                  ),
+        body: GestureDetector(
+          // Beim Tippen auf den Hintergrund die Bearbeitung beenden
+          onTap: () {
+            if (_editingIndex != null) {
+              _finishRenaming();
+            }
+          },
+          child: Stack(
+            children: [
+              // TabBarView für die Trainingstage
+              TabBarView(
+                physics: _showTabOptions || _editingIndex != null
+                    ? const NeverScrollableScrollPhysics()
+                    : const AlwaysScrollableScrollPhysics(),
+                children: List.generate(
+                  plan.days.length,
+                  (index) => TrainingDayTabWidget(dayIndex: index),
                 ),
               ),
-          ],
+
+              // Semi-transparentes Overlay, wenn Optionen angezeigt werden
+              if (_showTabOptions)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showTabOptions = false;
+                    });
+                  },
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                    child: Container(
+                      color: Colors.black.withOpacity(0.1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -377,122 +479,18 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
 
       // Aktion basierend auf der Auswahl
       if (value == 'rename') {
-        _showRenameDayDialog(context, dayIndex);
+        // Bearbeitungsmodus starten
+        setState(() {
+          _editingIndex = dayIndex;
+          _renameController.text = plan.days[dayIndex].name;
+        });
+
+        // Kurze Verzögerung, um sicherzustellen, dass das Textfeld erstellt wurde
+        Future.delayed(const Duration(milliseconds: 50),
+            () => _renameFocusNode.requestFocus());
       } else if (value == 'delete') {
         _confirmDeleteDay(context, dayIndex);
       }
-    });
-  }
-
-  // Dialog zum Umbenennen eines Trainingstags
-  void _showRenameDayDialog(BuildContext context, int dayIndex) {
-    final createProvider =
-        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-    final plan = createProvider.draftPlan;
-    if (plan == null || dayIndex >= plan.days.length) return;
-
-    final TextEditingController controller =
-        TextEditingController(text: plan.days[dayIndex].name);
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Trainingstag umbenennen',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: 'Name des Trainingstags',
-                  hintText: 'z.B. Brust & Trizeps, Beine, ...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-                autofocus: true,
-                onSubmitted: (value) {
-                  if (value.trim().isNotEmpty) {
-                    Navigator.pop(context);
-                    createProvider.setDayName(dayIndex, value);
-                    HapticFeedback.mediumImpact();
-                  }
-                },
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (controller.text.trim().isNotEmpty) {
-                        Navigator.pop(context);
-                        createProvider.setDayName(dayIndex, controller.text);
-                        HapticFeedback.mediumImpact();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Umbenennen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).then((_) {
-      controller.dispose();
     });
   }
 

@@ -61,27 +61,52 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   // Methoden für den ersten Screen
   void setPlanName(String name) {
     _planName = name;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    notifyListeners();
   }
 
   void setFrequency(int freq) {
     if (freq >= 1 && freq <= 7) {
       _frequency = freq;
       _ensureDayNamesInitialized();
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 
+  // Sichere Methode zum Setzen eines Tagesnamens
   void setDayName(int index, String name) {
-    if (index >= 0 && index < _dayNames.length) {
+    try {
+      if (index < 0 || index >= _dayNames.length) {
+        print(
+            'Ungültiger Index für setDayName: $index von ${_dayNames.length}');
+        return;
+      }
+
+      print('Aktualisiere Trainingstag-Namen: $index -> "$name"');
+
+      // _dayNames-Liste aktualisieren
       _dayNames[index] = name;
-      Future.microtask(() {
-        notifyListeners();
-      });
+
+      // Auch den Trainingstag im draftPlan aktualisieren, falls vorhanden
+      if (_draftPlan != null) {
+        if (index < _draftPlan!.days.length) {
+          // Erstelle eine tiefe Kopie aller Tage
+          final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
+          // Aktualisiere den spezifischen Tag
+          updatedDays[index] = updatedDays[index].copyWith(name: name);
+          // Erstelle eine neue Planinstanz mit den aktualisierten Tagen
+          _draftPlan = _draftPlan!.copyWith(days: updatedDays);
+
+          print('Trainingstag im draftPlan erfolgreich aktualisiert');
+        } else {
+          print(
+              'Warnung: Index $index existiert nicht im draftPlan (nur ${_draftPlan!.days.length} Tage)');
+        }
+      }
+
+      // UI aktualisieren
+      notifyListeners();
+    } catch (e) {
+      print('Fehler in setDayName: $e');
     }
   }
 
@@ -129,82 +154,88 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
   // Entwurfsplan aus Anfangsdaten erstellen
   void createDraftPlan() {
-    // Stellen wir sicher, dass die Tagnamen richtig initialisiert sind
-    _ensureDayNamesInitialized();
+    try {
+      // Stellen wir sicher, dass die Tagnamen richtig initialisiert sind
+      _ensureDayNamesInitialized();
 
-    // Entscheiden, ob ein periodisierter oder normaler Plan erstellt wird
-    if (_isPeriodized) {
-      final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
+      // Entscheiden, ob ein periodisierter oder normaler Plan erstellt wird
+      if (_isPeriodized) {
+        final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Sicherstellen, dass wir keine Index-Fehler bekommen
-      final days = List<TrainingDayModel>.generate(
-        _frequency,
-        (index) => TrainingDayModel(
-          id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
-          name:
-              index < _dayNames.length ? _dayNames[index] : 'Tag ${index + 1}',
-          exercises: [],
-        ),
-      );
+        // Sicherstellen, dass wir keine Index-Fehler bekommen
+        final days = List<TrainingDayModel>.generate(
+          _frequency,
+          (index) => TrainingDayModel(
+            id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
+            name: index < _dayNames.length
+                ? _dayNames[index]
+                : 'Tag ${index + 1}',
+            exercises: [],
+          ),
+        );
 
-      _draftPlan = TrainingPlanModel(
-        id: id,
-        name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
-        days: days,
-        isActive: false,
-        isPeriodized: true,
-        numberOfWeeks: _numberOfWeeks,
-        periodization: PeriodizationModel(
-          weeks: _numberOfWeeks,
-          dayConfigurations: {},
-        ),
-      );
-    } else {
-      // Normaler Plan ohne Periodisierung
-      final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
+        _draftPlan = TrainingPlanModel(
+          id: id,
+          name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
+          days: days,
+          isActive: false,
+          isPeriodized: true,
+          numberOfWeeks: _numberOfWeeks,
+          periodization: PeriodizationModel(
+            weeks: _numberOfWeeks,
+            dayConfigurations: {},
+          ),
+        );
+      } else {
+        // Normaler Plan ohne Periodisierung
+        final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Sicherstellen, dass wir keine Index-Fehler bekommen
-      final days = List<TrainingDayModel>.generate(
-        _frequency,
-        (index) => TrainingDayModel(
-          id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
-          name:
-              index < _dayNames.length ? _dayNames[index] : 'Tag ${index + 1}',
-          exercises: [],
-        ),
-      );
+        // Sicherstellen, dass wir keine Index-Fehler bekommen
+        final days = List<TrainingDayModel>.generate(
+          _frequency,
+          (index) => TrainingDayModel(
+            id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
+            name: index < _dayNames.length
+                ? _dayNames[index]
+                : 'Tag ${index + 1}',
+            exercises: [],
+          ),
+        );
 
-      _draftPlan = TrainingPlanModel(
-        id: id,
-        name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
-        days: days,
-        isActive: false,
-      );
-    }
+        _draftPlan = TrainingPlanModel(
+          id: id,
+          name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
+          days: days,
+          isActive: false,
+        );
+      }
 
-    Future.microtask(() {
       notifyListeners();
-    });
+    } catch (e) {
+      print('Fehler in createDraftPlan: $e');
+    }
   }
 
   // Methode zum Laden eines existierenden Plans zum Bearbeiten
   void loadExistingPlanForEditing(TrainingPlanModel plan) {
-    _isEditMode = true;
-    _editingPlanId = plan.id;
-    _planName = plan.name;
-    _frequency = plan.days.length;
-    _isPeriodized = plan.isPeriodized;
-    _numberOfWeeks = plan.numberOfWeeks;
+    try {
+      _isEditMode = true;
+      _editingPlanId = plan.id;
+      _planName = plan.name;
+      _frequency = plan.days.length;
+      _isPeriodized = plan.isPeriodized;
+      _numberOfWeeks = plan.numberOfWeeks;
 
-    // Tagnamen aus dem Plan übernehmen
-    _dayNames = plan.days.map((day) => day.name).toList();
+      // Tagnamen aus dem Plan übernehmen
+      _dayNames = plan.days.map((day) => day.name).toList();
 
-    // Plan-Kopie als Draft-Plan setzen
-    _draftPlan = plan.copyWith();
+      // Plan-Kopie als Draft-Plan setzen
+      _draftPlan = plan.copyWith();
 
-    Future.microtask(() {
       notifyListeners();
-    });
+    } catch (e) {
+      print('Fehler in loadExistingPlanForEditing: $e');
+    }
   }
 
   // Methode für direkten Einstieg in den Editor (ohne den ersten Screen)
@@ -214,11 +245,9 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
   // Methoden für den zweiten Screen (Übungseditor)
   void setSelectedDayIndex(int index) {
-    if (index >= 0 && index < _draftPlan!.days.length) {
+    if (index >= 0 && _draftPlan != null && index < _draftPlan!.days.length) {
       _selectedDayIndex = index;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 
@@ -270,9 +299,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
         }
       }
 
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 
@@ -306,9 +333,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
               updatedExercise.progressionProfileId);
         }
 
-        Future.microtask(() {
-          notifyListeners();
-        });
+        notifyListeners();
       }
     }
   }
@@ -376,9 +401,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
           }
         }
 
-        Future.microtask(() {
-          notifyListeners();
-        });
+        notifyListeners();
       }
     }
   }
@@ -410,9 +433,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       // Optional: Gleich zum neuen Tag wechseln
       _selectedDayIndex = updatedDays.length - 1;
 
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 
@@ -453,9 +474,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
         _frequency = updatedDays.length;
         _dayNames = updatedDays.map((day) => day.name).toList();
 
-        Future.microtask(() {
-          notifyListeners();
-        });
+        notifyListeners();
       }
     }
   }
@@ -545,9 +564,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     _numberOfWeeks = 4;
     _activeWeekIndex = 0;
 
-    Future.microtask(() {
-      notifyListeners();
-    });
+    notifyListeners();
   }
 
   // Methode zum Abrufen der Übungskonfiguration für die aktuelle Woche im Editor

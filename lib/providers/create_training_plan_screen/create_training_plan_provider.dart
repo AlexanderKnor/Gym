@@ -597,4 +597,6 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       progressionProfileId: config.progressionProfileId,
     );
   }
+
+  void reorderTrainingDays(int oldIndex, int newIndex) {}
 }

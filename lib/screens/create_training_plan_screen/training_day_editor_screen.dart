@@ -69,6 +69,121 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
     }
   }
 
+  // Methode zum Anzeigen eines Bestätigungsdialogs zum Hinzufügen eines Trainingstages
+  void _showAddTrainingDayConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Trainingstag hinzufügen',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Möchtest du einen neuen Trainingstag hinzufügen?',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Abbrechen',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _addTrainingDayWithoutNameDialog();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Hinzufügen',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Methode zum Hinzufügen eines Trainingstages mit Standardnamen
+  void _addTrainingDayWithoutNameDialog() {
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+
+    // Aktuellen Index berechnen, um einen Standard-Namen zu generieren
+    final newDayNumber = (createProvider.draftPlan?.days.length ?? 0) + 1;
+    final defaultName = 'Tag $newDayNumber';
+
+    print("Füge Trainingstag hinzu: $defaultName");
+
+    // Tag mit Standard-Namen hinzufügen
+    createProvider.addTrainingDay(defaultName);
+
+    print(
+        "Trainingstag hinzugefügt. Neue Anzahl: ${createProvider.draftPlan?.days.length}");
+    print("Neuer selectedDayIndex: ${createProvider.selectedDayIndex}");
+
+    // Haptisches Feedback
+    HapticFeedback.mediumImpact();
+
+    // Erzwinge einen kompletten Rebuild der UI
+    setState(() {});
+
+    // Wir müssen einen kompletten Neuaufbau des Widgets erzwingen, indem wir
+    // uns selbst ersetzen - das stellt sicher, dass der TabController neu erstellt wird
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      // Ersetze diesen Screen durch eine neue Instanz seiner selbst
+      // und behalte den Provider-State bei
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const TrainingDayEditorScreen(),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final createProvider = Provider.of<CreateTrainingPlanProvider>(context);
@@ -95,7 +210,9 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
 
     return DefaultTabController(
       length: plan.days.length,
-      initialIndex: createProvider.selectedDayIndex,
+      initialIndex: createProvider.selectedDayIndex < plan.days.length
+          ? createProvider.selectedDayIndex
+          : plan.days.length - 1,
       key: _tabController,
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -220,11 +337,11 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
             ),
           ),
           actions: [
-            // Trainingstag hinzufügen Button mit eleganterer Darstellung
+            // Trainingstag hinzufügen Button - Jetzt mit Bestätigungsdialog
             IconButton(
               icon: const Icon(Icons.add_rounded, size: 24),
               tooltip: 'Trainingstag hinzufügen',
-              onPressed: () => _showAddDayDialog(context),
+              onPressed: () => _showAddTrainingDayConfirmation(context),
               splashRadius: 24,
             ),
             // Status-Indikator für den Speichervorgang
@@ -291,114 +408,6 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen> {
         ),
       ),
     );
-  }
-
-  // Zeigt den Dialog zum Hinzufügen eines Trainingstages
-  void _showAddDayDialog(BuildContext context) {
-    final TextEditingController controller = TextEditingController();
-    final createProvider =
-        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-
-    // Vorschlag für den neuen Tagesnamen
-    if (createProvider.draftPlan != null) {
-      controller.text = 'Tag ${createProvider.draftPlan!.days.length + 1}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Neuen Trainingstag hinzufügen',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: 'Name des Trainingstags',
-                  hintText: 'z.B. Brust & Trizeps, Beine, ...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-                autofocus: true,
-                onSubmitted: (value) {
-                  Navigator.pop(context);
-                  createProvider.addTrainingDay(value);
-                },
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      createProvider.addTrainingDay(controller.text);
-                      HapticFeedback.mediumImpact();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Hinzufügen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).then((_) {
-      controller.dispose();
-    });
   }
 
   // Zeigt das Optionsmenü für einen Trainingstag

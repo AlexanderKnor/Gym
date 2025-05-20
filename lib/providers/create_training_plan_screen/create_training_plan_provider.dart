@@ -598,5 +598,41 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     );
   }
 
-  void reorderTrainingDays(int oldIndex, int newIndex) {}
+  // Implementierung der Methode zum Umordnen der Trainingstage
+  void reorderTrainingDays(int oldIndex, int newIndex) {
+    if (_draftPlan == null) return;
+
+    // Sicherstellen, dass die Indizes gültig sind
+    if (oldIndex < 0 ||
+        oldIndex >= _draftPlan!.days.length ||
+        newIndex < 0 ||
+        newIndex >= _draftPlan!.days.length) return;
+
+    // Erstelle eine Kopie der Tage-Liste
+    final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
+
+    // Verschiebe den Tag (Element entfernen und an neuer Position einfügen)
+    final movedDay = updatedDays.removeAt(oldIndex);
+    updatedDays.insert(newIndex, movedDay);
+
+    // Plan aktualisieren mit den neu geordneten Tagen
+    _draftPlan = _draftPlan!.copyWith(days: updatedDays);
+
+    // dayNames aktualisieren, um die neue Reihenfolge zu reflektieren
+    _dayNames = updatedDays.map((day) => day.name).toList();
+
+    // Den ausgewählten Tab-Index aktualisieren, wenn der verschobene Tab der aktuell ausgewählte war
+    if (_selectedDayIndex == oldIndex) {
+      _selectedDayIndex = newIndex;
+    }
+    // Oder wenn sich durch die Umordnung der Index des ausgewählten Tabs geändert hat
+    else if (oldIndex < _selectedDayIndex && newIndex >= _selectedDayIndex) {
+      _selectedDayIndex--;
+    } else if (oldIndex > _selectedDayIndex && newIndex <= _selectedDayIndex) {
+      _selectedDayIndex++;
+    }
+
+    // UI aktualisieren
+    notifyListeners();
+  }
 }

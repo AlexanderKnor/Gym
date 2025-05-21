@@ -1,5 +1,4 @@
 // lib/screens/create_training_plan_screen/training_day_editor_screen.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -22,203 +21,163 @@ class TrainingDayEditorScreen extends StatefulWidget {
 class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     with TickerProviderStateMixin {
   bool _isSaving = false;
-  bool _showTabOptions = false;
   late TabController _tabController;
 
-  // Neue Zustandsvariablen für Inline-Bearbeitung
-  int? _editingIndex;
-  final TextEditingController _renameController = TextEditingController();
-  final FocusNode _renameFocusNode = FocusNode();
+  // Performance-Optimierung
+  final ScrollController _tabScrollController = ScrollController();
+  final Map<int, Widget> _tabContentCache = {};
+
+  // Vereinfachte State-Variablen (weniger Rebuilds)
+  bool _isDragging = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Den FocusNode so konfigurieren, dass er beim Verlieren des Fokus
-    // die Bearbeitung beendet
-    _renameFocusNode.addListener(() {
-      if (!_renameFocusNode.hasFocus && _editingIndex != null) {
-        _finishRenaming();
-      }
-    });
-
-    // TabController wird in didChangeDependencies initialisiert
+    // Initialisierung mit Standardwert
+    _tabController = TabController(length: 1, vsync: this);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // TabController initialisieren
     final provider = Provider.of<CreateTrainingPlanProvider>(context);
     if (provider.draftPlan != null) {
-      _tabController = TabController(
-        length: provider.draftPlan!.days.length,
-        vsync: this,
-        initialIndex:
-            provider.selectedDayIndex < provider.draftPlan!.days.length
-                ? provider.selectedDayIndex
-                : provider.draftPlan!.days.length - 1,
-      );
+      final int tabCount = provider.draftPlan!.days.length;
+      final int initialIndex = provider.selectedDayIndex < tabCount
+          ? provider.selectedDayIndex
+          : tabCount - 1;
 
-      // TabController-Listener für Updates der selectedDayIndex
-      _tabController.addListener(() {
-        if (!_tabController.indexIsChanging) {
-          if (provider.selectedDayIndex != _tabController.index) {
-            provider.setSelectedDayIndex(_tabController.index);
-          }
+      // Nur aktualisieren, wenn nötig
+      if (_tabController.length != tabCount) {
+        // Vorherigen Controller sauber entsorgen
+        if (_tabController.hasListeners) {
+          _tabController.removeListener(_handleTabChange);
         }
-      });
+        _tabController.dispose();
+
+        // Neuen Controller erstellen
+        _tabController = TabController(
+          length: tabCount,
+          vsync: this,
+          initialIndex: initialIndex,
+        );
+
+        // Listener hinzufügen
+        _tabController.addListener(_handleTabChange);
+
+        // Cache leeren nur bei Strukturänderungen
+        _tabContentCache.clear();
+      } else if (_tabController.index != initialIndex) {
+        _tabController.animateTo(initialIndex);
+      }
     }
   }
 
-  @override
-  void didUpdateWidget(TrainingDayEditorScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // TabController aktualisieren, wenn sich die Anzahl der Tabs ändert
-    final provider =
-        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-    if (provider.draftPlan != null &&
-        _tabController.length != provider.draftPlan!.days.length) {
-      // Alten Controller korrekt entsorgen
-      _tabController.dispose();
-
-      // Neuen Controller erstellen
-      _tabController = TabController(
-        length: provider.draftPlan!.days.length,
-        vsync: this,
-        initialIndex:
-            provider.selectedDayIndex < provider.draftPlan!.days.length
-                ? provider.selectedDayIndex
-                : provider.draftPlan!.days.length - 1,
-      );
+  // Optimierte Tab-Änderung ohne setState
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging && mounted) {
+      final provider =
+          Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+      if (provider.selectedDayIndex != _tabController.index) {
+        provider.setSelectedDayIndex(_tabController.index);
+      }
     }
   }
 
   @override
   void dispose() {
-    _renameController.dispose();
-    _renameFocusNode.dispose();
+    if (_tabController.hasListeners) {
+      _tabController.removeListener(_handleTabChange);
+    }
     _tabController.dispose();
+    _tabScrollController.dispose();
     super.dispose();
   }
 
-  // Methode zum Beenden der Bearbeitung und Anwenden der Änderungen
-  void _finishRenaming() {
-    if (_editingIndex != null) {
-      final newName = _renameController.text.trim();
-      if (newName.isNotEmpty) {
-        final createProvider =
-            Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-
-        // Namen aktualisieren
-        createProvider.setDayName(_editingIndex!, newName);
-
-        // Haptisches Feedback
-        HapticFeedback.mediumImpact();
-      }
-
-      // Bearbeitungsmodus beenden
-      setState(() {
-        _editingIndex = null;
-      });
-    }
-  }
-
-  // Methode zum Anzeigen eines Bestätigungsdialogs zum Hinzufügen eines Trainingstages
-  void _showAddTrainingDayConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Trainingstag hinzufügen',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Möchtest du einen neuen Trainingstag hinzufügen?',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _addTrainingDayWithoutNameDialog();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Hinzufügen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Methode zum Hinzufügen eines Trainingstages mit Standardnamen
-  void _addTrainingDayWithoutNameDialog() {
+  // Trainingstag hinzufügen (optimiert)
+  void _addTrainingDay() {
     final createProvider =
         Provider.of<CreateTrainingPlanProvider>(context, listen: false);
 
-    // Aktuellen Index berechnen, um einen Standard-Namen zu generieren
     final newDayNumber = (createProvider.draftPlan?.days.length ?? 0) + 1;
     final defaultName = 'Tag $newDayNumber';
 
-    // Tag mit Standard-Namen hinzufügen
     createProvider.addTrainingDay(defaultName);
-
-    // Haptisches Feedback
     HapticFeedback.mediumImpact();
 
-    // Sicherstellen, dass die UI aktualisiert wird
-    setState(() {});
+    // Nur bei Strukturänderungen Cache leeren
+    _tabContentCache.clear();
+  }
+
+  // Vereinfachte Umordnung ohne komplexe Drag-Logik
+  void _reorderTrainingDays(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    createProvider.reorderTrainingDays(oldIndex, newIndex);
+
+    _tabContentCache.clear();
+    HapticFeedback.mediumImpact();
+  }
+
+  // Plan speichern
+  Future<void> _processSave(bool activate) async {
+    if (_isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final createProvider =
+          Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+      final plansProvider =
+          Provider.of<TrainingPlansProvider>(context, listen: false);
+      final navigationProvider =
+          Provider.of<NavigationProvider>(context, listen: false);
+
+      final planToSave = createProvider.draftPlan!;
+      final wasAlreadyActive = planToSave.isActive;
+
+      navigationProvider.setCurrentIndex(wasAlreadyActive || activate ? 0 : 2);
+
+      await plansProvider.saveTrainingPlan(planToSave, activate);
+      await createProvider.cleanupDeletedItems();
+      createProvider.reset();
+
+      HapticFeedback.mediumImpact();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      print('Fehler beim Speichern: $e');
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler beim Speichern: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -245,570 +204,637 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
       );
     }
 
-    // TabController aktualisieren wenn selectedDayIndex geändert wurde
-    if (_tabController.index != createProvider.selectedDayIndex) {
-      _tabController.animateTo(createProvider.selectedDayIndex);
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          isEditMode ? '${plan.name} bearbeiten' : 'Plan erstellen',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 22),
-          onPressed: () => _showExitConfirmation(context),
-          splashRadius: 24,
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-              ),
-            ),
-            // Benutzerdefinierte, draggable TabBar-Implementierung
-            child: _buildDraggableTabBar(plan),
-          ),
-        ),
-        actions: [
-          // Trainingstag hinzufügen Button
-          IconButton(
-            icon: const Icon(Icons.add_rounded, size: 24),
-            tooltip: 'Trainingstag hinzufügen',
-            onPressed: () => _showAddTrainingDayConfirmation(context),
-            splashRadius: 24,
-          ),
-          // Status-Indikator für den Speichervorgang
-          _isSaving
-              ? Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  width: 20,
-                  height: 20,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.black,
-                  ),
-                )
-              : TextButton(
-                  onPressed: () => _saveTrainingPlan(context),
-                  child: Text(
-                    'Speichern',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-        ],
-      ),
-      body: GestureDetector(
-        // Beim Tippen auf den Hintergrund die Bearbeitung beenden
-        onTap: () {
-          if (_editingIndex != null) {
-            _finishRenaming();
-          }
-        },
-        child: Stack(
-          children: [
-            // TabBarView für die Trainingstage
-            TabBarView(
+      appBar: _buildAppBar(plan, isEditMode),
+      body: Column(
+        children: [
+          // Vereinfachte, performante TabBar
+          _buildOptimizedTabBar(plan),
+
+          // Optimiertes TabBarView mit besserer Performance
+          Expanded(
+            child: TabBarView(
               controller: _tabController,
-              physics: _showTabOptions || _editingIndex != null
+              physics: _isDragging
                   ? const NeverScrollableScrollPhysics()
-                  : const AlwaysScrollableScrollPhysics(),
+                  : const PageScrollPhysics(),
               children: List.generate(
                 plan.days.length,
-                (index) => TrainingDayTabWidget(dayIndex: index),
+                (index) {
+                  // Effizienteres Caching
+                  return _tabContentCache.putIfAbsent(
+                      index, () => TrainingDayTabWidget(dayIndex: index));
+                },
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Semi-transparentes Overlay, wenn Optionen angezeigt werden
-            if (_showTabOptions)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showTabOptions = false;
-                  });
-                },
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.1),
+  // Optimierte AppBar
+  PreferredSizeWidget _buildAppBar(TrainingPlanModel plan, bool isEditMode) {
+    return AppBar(
+      title: Text(
+        isEditMode ? '${plan.name} bearbeiten' : 'Plan erstellen',
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 18,
+        ),
+      ),
+      centerTitle: true,
+      elevation: 0,
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+        onPressed: () => _showExitConfirmation(context),
+        splashRadius: 24,
+      ),
+      actions: [
+        _isSaving
+            ? Container(
+                margin: const EdgeInsets.only(right: 16),
+                width: 20,
+                height: 20,
+                child: const CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.black),
+              )
+            : TextButton(
+                onPressed: () => _saveTrainingPlan(context),
+                child: const Text(
+                  'Speichern',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
                 ),
               ),
-          ],
+      ],
+    );
+  }
+
+  // Vereinfachte, performante TabBar
+  Widget _buildOptimizedTabBar(TrainingPlanModel plan) {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            offset: const Offset(0, 2),
+            blurRadius: 3,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Scrollbare Tabs
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                controller: _tabScrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: plan.days.length,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final day = plan.days[index];
+                  final isActive = index == _tabController.index;
+
+                  return _buildSimpleTab(day, index, isActive);
+                },
+              ),
+            ),
+          ),
+
+          // "+" Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _addTrainingDay,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.withOpacity(0.1),
+                  ),
+                  child: const Icon(Icons.add, size: 20),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Vereinfachter Tab ohne komplexe Drag-Logik für bessere Performance
+  Widget _buildSimpleTab(TrainingDayModel day, int index, bool isActive) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Provider.of<CreateTrainingPlanProvider>(context, listen: false)
+                .setSelectedDayIndex(index);
+            _tabController.animateTo(index);
+          },
+          onLongPress: () {
+            HapticFeedback.mediumImpact();
+            _showTabContextMenu(context, index);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: isActive ? Colors.black : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isActive
+                    ? Colors.transparent
+                    : Colors.grey.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                day.name,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: isActive ? Colors.white : Colors.grey[800],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  // Benutzerdefinierte, draggable TabBar-Implementierung
-  Widget _buildDraggableTabBar(TrainingPlanModel plan) {
-    return Container(
-      height: 48,
-      child: ReorderableListView.builder(
-        scrollDirection: Axis.horizontal,
-        // Anpassen des Aussehens des gezogenen Elements
-        proxyDecorator: (child, index, animation) {
-          return Material(
-            elevation: 4.0,
-            color: Colors.white,
-            shadowColor: Colors.black.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(12),
-            // Animation für das Hochheben und Vergrößern während des Ziehens
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.black.withOpacity(0.2),
-                  width: 1.5,
+  // Eleganter Dialog zum Umbenennen von Trainingstagen
+  void _showRenameDialog(BuildContext context, int index) {
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    final currentName = createProvider.draftPlan!.days[index].name;
+    final TextEditingController controller =
+        TextEditingController(text: currentName);
+    final FocusNode focusNode = FocusNode();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header mit Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.edit_outlined,
+                  color: Colors.blue,
+                  size: 24,
                 ),
               ),
-              transformAlignment: Alignment.center,
-              transform: Matrix4.identity()..scale(1.05),
-              child: child,
-            ),
-          );
-        },
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        onReorder: (oldIndex, newIndex) {
-          // Korrektur des newIndex, wie in der Dokumentation empfohlen
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
+              const SizedBox(height: 16),
 
-          // Haptisches Feedback
-          HapticFeedback.mediumImpact();
-
-          // Wirkliche Umordnung im Provider ausführen
-          Provider.of<CreateTrainingPlanProvider>(context, listen: false)
-              .reorderTrainingDays(oldIndex, newIndex);
-
-          // Zusätzliches setState für den Fall, dass der Provider nicht neu rendert
-          setState(() {});
-        },
-        itemCount: plan.days.length,
-        itemBuilder: (context, index) {
-          final day = plan.days[index];
-          final isSelected = _tabController.index == index;
-
-          // Wenn dieser Tab aktuell bearbeitet wird, zeige ein TextField
-          if (_editingIndex == index) {
-            return Container(
-              key: ValueKey('tab_edit_${day.id}'),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: 150,
-              child: TextField(
-                controller: _renameController,
-                focusNode: _renameFocusNode,
-                decoration: const InputDecoration(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                  isDense: true,
-                  border: InputBorder.none,
+              // Titel
+              const Text(
+                'Trainingstag umbenennen',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+
+              // Beschreibung
+              Text(
+                'Gib einen neuen Namen für deinen Trainingstag ein',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
                 ),
-                autofocus: true,
-                textCapitalization: TextCapitalization.words,
-                onSubmitted: (_) => _finishRenaming(),
+                textAlign: TextAlign.center,
               ),
-            );
-          }
+              const SizedBox(height: 24),
 
-          // Ansonsten den normalen, ziehbaren Tab anzeigen
-          return GestureDetector(
-            key: ValueKey('tab_${day.id}'),
-            onTap: () {
-              // Wenn im Bearbeitungsmodus, erst beenden
-              if (_editingIndex != null) {
-                _finishRenaming();
-              }
-
-              Provider.of<CreateTrainingPlanProvider>(context, listen: false)
-                  .setSelectedDayIndex(index);
-              _tabController.animateTo(index);
-            },
-            onDoubleTap: () {
-              // Bearbeitungsmodus starten
-              setState(() {
-                _editingIndex = index;
-                _renameController.text = day.name;
-              });
-
-              // Kurze Verzögerung für den Fokus
-              Future.delayed(const Duration(milliseconds: 50),
-                  () => _renameFocusNode.requestFocus());
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.black.withOpacity(0.05)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: isSelected
-                    ? Border.all(color: Colors.black.withOpacity(0.1))
-                    : null,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Drag-Handle als visueller Hinweis
-                  Icon(
-                    Icons.drag_indicator,
-                    size: 16,
-                    color: isSelected ? Colors.black : Colors.grey[500],
+              // Textfeld mit elegantem Design
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(width: 8),
-
-                  // Tab-Titel
-                  Text(
-                    day.name,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? Colors.black : Colors.grey[600],
+                  decoration: InputDecoration(
+                    hintText: 'z.B. Oberkörper, Push, Beine...',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.fitness_center,
+                      color: Colors.grey[400],
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  onSubmitted: (value) {
+                    if (value.trim().isNotEmpty) {
+                      createProvider.setDayName(index, value.trim());
+                      Navigator.pop(context);
+                      HapticFeedback.mediumImpact();
 
-                  // PopupMenuButton für Optionen
-                  PopupMenuButton<String>(
-                    padding: EdgeInsets.zero,
-                    icon: Icon(
-                      Icons.more_vert,
-                      size: 16,
-                      color: isSelected ? Colors.black : Colors.grey[600],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onSelected: (value) {
-                      if (value == 'rename') {
-                        // Bearbeitungsmodus starten
-                        setState(() {
-                          _editingIndex = index;
-                          _renameController.text = day.name;
-                        });
-
-                        // Kurze Verzögerung für den Fokus
-                        Future.delayed(const Duration(milliseconds: 50),
-                            () => _renameFocusNode.requestFocus());
-                      } else if (value == 'delete') {
-                        _confirmDeleteDay(context, index);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      // Option zum Umbenennen
-                      PopupMenuItem<String>(
-                        value: 'rename',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 20,
-                              color: Colors.grey[800],
-                            ),
-                            const SizedBox(width: 12),
-                            const Text('Umbenennen'),
-                          ],
-                        ),
-                      ),
-                      // Option zum Löschen (nur wenn mehr als ein Tag vorhanden)
-                      if (plan.days.length > 1)
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Löschen',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
+                      // Erfolgsmeldung
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Trainingstag wurde zu "$value" umbenannt'),
+                          backgroundColor: Colors.green,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                    ],
+                      );
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Buttons
+              Row(
+                children: [
+                  // Abbrechen
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Abbrechen',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Bestätigen
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final newName = controller.text.trim();
+                        if (newName.isNotEmpty) {
+                          createProvider.setDayName(index, newName);
+                          Navigator.pop(context);
+                          HapticFeedback.mediumImpact();
+
+                          // Erfolgsmeldung
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Trainingstag wurde zu "$newName" umbenannt'),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text('Umbenennen'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      // FocusNode nach Dialog-Schließung entsorgen
+      focusNode.dispose();
+      controller.dispose();
+    });
+  }
+
+  // Tab-Kontextmenü mit optimiertem Design
+  void _showTabContextMenu(BuildContext context, int index) {
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    final day = createProvider.draftPlan!.days[index];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Trainingstag-Info
+                Container(
+                  width: 60,
+                  height: 60,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.calendar_today_rounded,
+                    size: 24,
+                    color: Colors.grey[800],
+                  ),
+                ),
+
+                Text(
+                  day.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  "${day.exercises.length} Übung${day.exercises.length != 1 ? 'en' : ''}",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+                const Divider(height: 1),
+
+                // Umbenennen-Option
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text("Umbenennen"),
+                  subtitle: const Text("Namen des Trainingstages ändern"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showRenameDialog(context, index);
+                  },
+                ),
+
+                // Löschen-Option (nur wenn mehr als ein Tag)
+                if (createProvider.draftPlan!.days.length > 1)
+                  ListTile(
+                    leading:
+                        const Icon(Icons.delete_outline, color: Colors.red),
+                    title: const Text("Löschen",
+                        style: TextStyle(color: Colors.red)),
+                    subtitle: const Text("Tag und alle Übungen löschen"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _confirmDeleteDay(context, index);
+                    },
+                  ),
+
+                const SizedBox(height: 16),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
-  // Zeigt das Optionsmenü für einen Trainingstag
-  void _showDayOptionsMenu(BuildContext context, int dayIndex) {
-    final createProvider =
-        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-    final plan = createProvider.draftPlan;
-    if (plan == null || dayIndex >= plan.days.length) return;
-
-    final dayName = plan.days[dayIndex].name;
-    final canDelete = plan.days.length > 1;
-
-    setState(() {
-      _showTabOptions = true;
-    });
-
-    // Statt die genaue Position zu berechnen, zeigen wir das Menü relativ zum Cursor an
-    // Das Offset ist relativ zum gesamten Bildschirm
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-          100, 80, 0, 0), // Positioniert das Menü unterhalb des Tabs
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      elevation: 8,
-      items: [
-        // Option zum Umbenennen
-        PopupMenuItem<String>(
-          value: 'rename',
-          child: Row(
-            children: [
-              Icon(
-                Icons.edit_outlined,
-                size: 20,
-                color: Colors.grey[800],
-              ),
-              const SizedBox(width: 12),
-              const Text('Umbenennen'),
-            ],
-          ),
-        ),
-        // Option zum Löschen (nur wenn mehr als ein Tag vorhanden)
-        if (canDelete)
-          PopupMenuItem<String>(
-            value: 'delete',
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.delete_outline,
-                  size: 20,
-                  color: Colors.red,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Löschen',
-                  style: TextStyle(
-                    color: Colors.red,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    ).then((value) {
-      setState(() {
-        _showTabOptions = false;
-      });
-
-      // Aktion basierend auf der Auswahl
-      if (value == 'rename') {
-        // Bearbeitungsmodus starten
-        setState(() {
-          _editingIndex = dayIndex;
-          _renameController.text = plan.days[dayIndex].name;
-        });
-
-        // Kurze Verzögerung, um sicherzustellen, dass das Textfeld erstellt wurde
-        Future.delayed(const Duration(milliseconds: 50),
-            () => _renameFocusNode.requestFocus());
-      } else if (value == 'delete') {
-        _confirmDeleteDay(context, dayIndex);
-      }
-    });
-  }
-
-  // Bestätigungsdialog zum Löschen eines Trainingstags
+  // Dialog: Tag löschen
   void _confirmDeleteDay(BuildContext context, int dayIndex) {
     final createProvider =
         Provider.of<CreateTrainingPlanProvider>(context, listen: false);
     final dayName =
         createProvider.draftPlan?.days[dayIndex].name ?? 'Trainingstag';
+    final exerciseCount =
+        createProvider.draftPlan?.days[dayIndex].exercises.length ?? 0;
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
+      builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Trainingstag löschen',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Möchtest du den Trainingstag "$dayName" wirklich löschen? Alle Übungen dieses Tages werden ebenfalls gelöscht.',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[700],
-                ),
+              child:
+                  const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text('Trainingstag löschen'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Möchtest du den Trainingstag "$dayName" wirklich löschen?',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withOpacity(0.2)),
               ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Row(
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      createProvider.removeTrainingDay(dayIndex);
-                      HapticFeedback.mediumImpact();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Löschen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Colors.red, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Alle $exerciseCount Übungen dieses Tages werden ebenfalls gelöscht.',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child:
+                const Text('Abbrechen', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              createProvider.removeTrainingDay(dayIndex);
+
+              _tabContentCache.clear();
+
+              HapticFeedback.mediumImpact();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Trainingstag "$dayName" wurde gelöscht'),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.delete, size: 18),
+            label: const Text('Löschen'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // Bestätigungsdialog zum Verlassen des Screens
+  // Dialog: Bearbeitung beenden
   void _showExitConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
+      builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Bearbeitung abbrechen?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Möchtest du die Bearbeitung wirklich abbrechen? Alle nicht gespeicherten Änderungen gehen verloren.',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Weiter bearbeiten',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Dialog schließen
-                      Navigator.pop(context); // Screen verlassen
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: Colors.amber, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text('Bearbeitung abbrechen?'),
+          ],
+        ),
+        content: const Text(
+            'Möchtest du die Bearbeitung wirklich abbrechen? Alle nicht gespeicherten Änderungen gehen verloren.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Weiter bearbeiten',
+                style: TextStyle(color: Colors.grey)),
           ),
-        ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.close, size: 18),
+            label: const Text('Abbrechen'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  // Dialog: Plan speichern
   void _saveTrainingPlan(BuildContext context) {
     final createProvider =
         Provider.of<CreateTrainingPlanProvider>(context, listen: false);
@@ -816,146 +842,89 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
 
     if (plan == null) return;
 
-    // Prüfen, ob der Plan bereits aktiviert ist
     if (plan.isActive) {
-      // Wenn bereits aktiv, direkt speichern ohne nachzufragen
-      _processSave(context, true);
+      _processSave(true);
     } else {
-      // Wenn nicht aktiv, Dialog anzeigen
       showDialog(
         context: context,
-        builder: (context) => Dialog(
+        builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Trainingsplan speichern',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Möchtest du den Trainingsplan aktivieren?',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey[700],
-                  ),
+                child: const Icon(Icons.save, color: Colors.green, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text('Trainingsplan speichern'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Möchtest du den Trainingsplan aktivieren?'),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.withOpacity(0.2)),
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: Row(
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _processSave(context, false);
-                      },
-                      child: const Text(
-                        'Nur speichern',
+                    const Icon(Icons.info_outline,
+                        color: Colors.blue, size: 18),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Als aktiver Plan wird dieser sofort auf dem Startbildschirm angezeigt.',
                         style: TextStyle(
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _processSave(context, true);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Aktivieren',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                          fontSize: 13,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _processSave(false);
+              },
+              child: const Text('Nur speichern',
+                  style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _processSave(true);
+              },
+              icon: const Icon(Icons.check_circle_outline, size: 18),
+              label: const Text('Aktivieren'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
         ),
       );
-    }
-  }
-
-  Future<void> _processSave(BuildContext context, bool activate) async {
-    if (_isSaving) return;
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      final createProvider =
-          Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-      final plansProvider =
-          Provider.of<TrainingPlansProvider>(context, listen: false);
-      final navigationProvider =
-          Provider.of<NavigationProvider>(context, listen: false);
-      final planToSave = createProvider.draftPlan!;
-      final wasAlreadyActive = planToSave.isActive;
-
-      // Setze Navigation Index
-      navigationProvider.setCurrentIndex(wasAlreadyActive || activate ? 0 : 2);
-
-      // Speichere Plan
-      await plansProvider.saveTrainingPlan(planToSave, activate);
-
-      // Gelöschte Übungen und Trainingstage bereinigen
-      await createProvider.cleanupDeletedItems();
-
-      // Provider zurücksetzen
-      createProvider.reset();
-
-      // Visuelles Feedback
-      HapticFeedback.mediumImpact();
-
-      // Navigation
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      print('Fehler beim Speichern: $e');
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-
-        // Fehler-Feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Speichern: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
     }
   }
 }

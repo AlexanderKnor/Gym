@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/shared/navigation_provider.dart';
+import '../providers/auth/auth_provider.dart';
 import 'training_screen/training_screen.dart';
 import 'progression_manager_screen/progression_manager_screen.dart';
 import 'training_plans_screen/training_plans_screen.dart';
@@ -17,40 +18,59 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  
+  // Ultra-refined color system
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _obsidian = Color(0xFF0F0F0F);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _platinum = Color(0xFFE5E5EA);
+  static const Color _snow = Color(0xFFFFFFFF);
+  
+  // Signature orange gradient system
+  static const Color _emberCore = Color(0xFFFF4500);
+  static const Color _emberBright = Color(0xFFFF6B35);
+  static const Color _emberSoft = Color(0xFFFF8C69);
 
   @override
   void initState() {
     super.initState();
 
-    // Set system UI overlay style to match the aesthetic
+    // Set ultra-dark theme system UI
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: _midnight,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
 
-    // Initialize animation
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
+    ));
 
-    _controller.forward();
+    _fadeController.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -66,62 +86,14 @@ class _MainScreenState extends State<MainScreen>
       const ProfileScreen(),
     ];
 
-    // Screen titles for the app bar
-    final screenTitles = [
-      'Training',
-      'Progressionsprofile',
-      'Trainingspläne',
-      'Profil',
-    ];
-
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            screenTitles[navigationProvider.currentIndex],
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-            ),
-          ),
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.white,
-          actions: [
-            // Add action buttons specific to each screen
-            // Benachrichtigungsbutton wurde entfernt
-
-            if (navigationProvider.currentIndex == 2) // Training plans screen
-              IconButton(
-                icon: const Icon(Icons.add_rounded, size: 22),
-                splashRadius: 20,
-                onPressed: () {
-                  // Handle add training plan
-                  HapticFeedback.lightImpact();
-                },
-              ),
-
-            if (navigationProvider.currentIndex == 3) // Profile screen
-              IconButton(
-                icon: const Icon(Icons.settings_outlined, size: 22),
-                splashRadius: 20,
-                onPressed: () {
-                  // Handle settings
-                  HapticFeedback.lightImpact();
-                },
-              ),
-          ],
-        ),
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          child: screens[navigationProvider.currentIndex],
-        ),
-        bottomNavigationBar: const BottomNavigationBarWidget(),
+    return Scaffold(
+      backgroundColor: _midnight,
+      extendBodyBehindAppBar: true,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: screens[navigationProvider.currentIndex],
       ),
+      bottomNavigationBar: const BottomNavigationBarWidget(),
     );
   }
 }

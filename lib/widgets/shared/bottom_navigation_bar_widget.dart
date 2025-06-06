@@ -8,6 +8,16 @@ import '../../providers/profile_screen/friendship_provider.dart';
 class BottomNavigationBarWidget extends StatelessWidget {
   const BottomNavigationBarWidget({super.key});
 
+  // Dark theme colors matching the app
+  static const Color _void = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1A1A1A);
+  static const Color _slate = Color(0xFF2A2A2A);
+  static const Color _ember = Color(0xFFFF4500);
+  static const Color _flame = Color(0xFFFF6B35);
+  static const Color _pure = Color(0xFFFFFFFF);
+  static const Color _ash = Color(0xFF888888);
+  static const Color _smoke = Color(0xFF555555);
+
   @override
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context);
@@ -25,24 +35,23 @@ class BottomNavigationBarWidget extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+        color: _void,
+        border: Border(
+          top: BorderSide(
+            color: _charcoal,
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildNavItem(
                 context: context,
-                icon: Icons.fitness_center_rounded,
+                icon: Icons.fitness_center,
                 label: 'Training',
                 index: 0,
                 isSelected: navigationProvider.currentIndex == 0,
@@ -53,7 +62,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
               ),
               _buildNavItem(
                 context: context,
-                icon: Icons.trending_up_rounded,
+                icon: Icons.trending_up,
                 label: 'Progression',
                 index: 1,
                 isSelected: navigationProvider.currentIndex == 1,
@@ -64,7 +73,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
               ),
               _buildNavItem(
                 context: context,
-                icon: Icons.calendar_today_rounded,
+                icon: Icons.calendar_month,
                 label: 'Pläne',
                 index: 2,
                 isSelected: navigationProvider.currentIndex == 2,
@@ -80,7 +89,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
 
                   return _buildNavItem(
                     context: context,
-                    icon: Icons.person_rounded,
+                    icon: Icons.person,
                     label: 'Profil',
                     index: 3,
                     isSelected: navigationProvider.currentIndex == 3,
@@ -117,66 +126,89 @@ class BottomNavigationBarWidget extends StatelessWidget {
     int badgeCount = 0,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.grey[100] : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              children: [
-                Icon(
-                  icon,
-                  size: 24,
-                  color: isSelected ? Colors.black : Colors.grey[400],
-                ),
-                if (showBadge)
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 1.5,
-                        ),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        badgeCount > 9 ? '9+' : '$badgeCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: _ember.withOpacity(0.1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? _ember.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            border: isSelected 
+                ? Border.all(color: _ember.withOpacity(0.3), width: 1)
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: isSelected ? _ember.withOpacity(0.2) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 20,
+                      color: isSelected ? _ember : _ash,
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? Colors.black : Colors.grey[500],
+                  if (showBadge)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [_ember, _flame],
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _void,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _ember.withOpacity(0.5),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            badgeCount > 9 ? '9+' : '$badgeCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? _ember : _smoke,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

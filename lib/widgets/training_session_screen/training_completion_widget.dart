@@ -15,6 +15,16 @@ class TrainingCompletionWidget extends StatefulWidget {
 
 class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     with SingleTickerProviderStateMixin {
+  // Clean color system matching training screen
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
+
   bool _isSaving = false;
   bool _hasAskedForChanges = false;
   bool _hasAskedForAddedExercises = false; // NEU: Für hinzugefügte Übungen

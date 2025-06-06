@@ -40,6 +40,16 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   bool _showRestPeriodWheel = false;
   bool _isProcessingDeletion = false; // NEU: Flag für Löschvorgang
 
+  // Clean color system matching training screen
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
+
   @override
   void initState() {
     super.initState();
@@ -116,7 +126,13 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return Dialog(
-              child: Stack(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _charcoal,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Stack(
                 children: [
                   // Das tatsächliche Formular mit Lösch-Button
                   SingleChildScrollView(
@@ -338,6 +354,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                       ),
                     ),
                 ],
+                ),
               ),
             );
           },
@@ -400,9 +417,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: _charcoal,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
@@ -527,7 +544,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     }
 
     return Container(
-      color: Colors.white,
+      color: _midnight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -542,8 +559,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
               child: Container(
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: _charcoal.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _steel.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
@@ -569,7 +587,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                   Icon(
                                     Icons.calculate_outlined,
                                     size: 18,
-                                    color: Colors.grey[800],
+                                    color: allSetsCompleted ? _mercury : _snow,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -577,7 +595,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.grey[800],
+                                      color: allSetsCompleted ? _mercury : _snow,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -593,7 +611,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                     Container(
                       width: 1,
                       height: 24,
-                      color: Colors.grey[300],
+                      color: _steel.withOpacity(0.3),
                     ),
 
                     // Progress-Button - immer anzeigen, aber bei Bedarf ausgegraut
@@ -652,7 +670,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                   Icon(
                                     Icons.bolt,
                                     size: 18,
-                                    color: Colors.grey[800],
+                                    color: (!_hasRecommendation(sessionProvider, sessionProvider.getActiveSetIdForCurrentExercise()) || allSetsCompleted) ? _mercury : _emberCore,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -660,7 +678,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.grey[800],
+                                      color: (!_hasRecommendation(sessionProvider, sessionProvider.getActiveSetIdForCurrentExercise()) || allSetsCompleted) ? _mercury : _snow,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -676,7 +694,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                     Container(
                       width: 1,
                       height: 24,
-                      color: Colors.grey[300],
+                      color: _steel.withOpacity(0.3),
                     ),
 
                     // Zurück-Button - immer anzeigen, aber bei Bedarf ausgegraut
@@ -706,7 +724,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                   Icon(
                                     Icons.replay_rounded,
                                     size: 18,
-                                    color: Colors.grey[800],
+                                    color: !_hasCompletedSets(sessionProvider.currentExerciseSets) ? _mercury : _snow,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -714,7 +732,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.grey[800],
+                                      color: !_hasCompletedSets(sessionProvider.currentExerciseSets) ? _mercury : _snow,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -750,39 +768,41 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final adaptedExercise =
         sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
 
-    return InkWell(
-      onTap: () => _showExerciseEditor(context, adaptedExercise),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.grey[300]!,
-            width: 1,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      child: InkWell(
+        onTap: () => _showExerciseEditor(context, adaptedExercise),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: _charcoal.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _steel.withOpacity(0.3),
+              width: 1,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.tune,
-              size: 18,
-              color: Colors.grey[800],
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Übungseinstellungen bearbeiten',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[800],
-                letterSpacing: -0.3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.tune,
+                size: 18,
+                color: _silver,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                'Übungseinstellungen bearbeiten',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _snow,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

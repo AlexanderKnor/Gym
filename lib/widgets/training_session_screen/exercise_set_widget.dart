@@ -14,6 +14,16 @@ class ExerciseSetWidget extends StatelessWidget {
   final Function(String, dynamic) onValueChanged;
   final Map<String, dynamic>? recommendation;
 
+  // Clean color system matching training screen
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
+
   const ExerciseSetWidget({
     Key? key,
     required this.set,
@@ -103,15 +113,15 @@ class ExerciseSetWidget extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _charcoal,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isActive
-              ? Colors.black
+              ? _emberCore
               : isCompleted
-                  ? Colors.green[300]!
-                  : Colors.grey[200]!,
-          width: isActive ? 1.5 : 1,
+                  ? Colors.green
+                  : _steel.withOpacity(0.4),
+          width: isActive ? 2 : 1,
         ),
         boxShadow: cardShadows,
       ),
@@ -130,15 +140,15 @@ class ExerciseSetWidget extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: isActive
-                      ? [Colors.black, Colors.black.withOpacity(0.9)]
+                      ? [_emberCore, _emberCore.withOpacity(0.8)]
                       : isCompleted
                           ? [
-                              Colors.green.withOpacity(0.12),
-                              Colors.green.withOpacity(0.05)
+                              Colors.green.withOpacity(0.2),
+                              Colors.green.withOpacity(0.1)
                             ]
                           : [
-                              Colors.grey.withOpacity(0.12),
-                              Colors.grey.withOpacity(0.05)
+                              _steel.withOpacity(0.3),
+                              _steel.withOpacity(0.1)
                             ],
                 ),
                 boxShadow: [
@@ -365,14 +375,14 @@ class ExerciseSetWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: _graphite.withOpacity(0.5),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(15),
                   bottomRight: Radius.circular(15),
                 ),
                 border: Border(
                   top: BorderSide(
-                    color: Colors.grey[200]!,
+                    color: _steel.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -386,7 +396,7 @@ class ExerciseSetWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
+                      color: _silver,
                       letterSpacing: -0.3,
                     ),
                   ),

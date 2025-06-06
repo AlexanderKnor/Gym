@@ -6,6 +6,16 @@ import '../../providers/training_session_screen/training_session_provider.dart';
 class RestTimerWidget extends StatelessWidget {
   const RestTimerWidget({Key? key}) : super(key: key);
 
+  // Clean color system matching training screen
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
+
   @override
   Widget build(BuildContext context) {
     final sessionProvider = Provider.of<TrainingSessionProvider>(context);
@@ -46,7 +56,7 @@ class RestTimerWidget extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.3,
-                    color: Colors.black,
+                    color: _emberCore,
                   ),
                 ),
 

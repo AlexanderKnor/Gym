@@ -44,6 +44,11 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  // Screen entrance animation controller for smooth transitions
+  late AnimationController _screenEntranceController;
+  late Animation<double> _screenOpacityAnimation;
+  late Animation<double> _screenSlideAnimation;
+
   // Clean color system matching training screen
   static const Color _midnight = Color(0xFF000000);
   static const Color _charcoal = Color(0xFF1C1C1E);
@@ -61,6 +66,12 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     // Initialize exercise navigation animation controller
     _exerciseNavAnimationController = AnimationController(
       duration: const Duration(milliseconds: 450), // Slightly longer for smoother feel
+      vsync: this,
+    );
+
+    // Initialize screen entrance animation controller
+    _screenEntranceController = AnimationController(
+      duration: const Duration(milliseconds: 600), // Smooth entrance duration
       vsync: this,
     );
 
@@ -89,6 +100,23 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
     ).animate(CurvedAnimation(
       parent: _exerciseNavAnimationController,
       curve: Curves.easeOutBack, // Elastic feeling
+    ));
+
+    // Create screen entrance animations
+    _screenOpacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _screenEntranceController,
+      curve: Curves.easeOut,
+    ));
+
+    _screenSlideAnimation = Tween<double>(
+      begin: 20.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _screenEntranceController,
+      curve: Curves.easeOutCubic,
     ));
 
     // Set dark system UI overlay style
@@ -130,6 +158,13 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
           _startupComplete = true;
           _isLoading = false;
           _lastKnownExerciseIndex = sessionProvider.currentExerciseIndex;
+        });
+        
+        // Start screen entrance animation after everything is loaded
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _screenEntranceController.forward();
+          }
         });
       }
     } catch (e) {
@@ -228,6 +263,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   void dispose() {
     _tabController?.dispose();
     _exerciseNavAnimationController.dispose();
+    _screenEntranceController.dispose();
 
     // Reset system UI to default when leaving
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -341,8 +377,15 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       );
     }
 
-    return Consumer<TrainingSessionProvider>(
-      builder: (context, sessionProvider, child) {
+    return AnimatedBuilder(
+      animation: _screenEntranceController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _screenSlideAnimation.value),
+          child: Opacity(
+            opacity: _screenOpacityAnimation.value,
+            child: Consumer<TrainingSessionProvider>(
+              builder: (context, sessionProvider, child) {
         if (sessionProvider.isTrainingCompleted) {
           return const TrainingCompletionWidget();
         }
@@ -643,6 +686,10 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                   ),
                 ],
               ),
+            ),
+          ),
+        );
+              },
             ),
           ),
         );

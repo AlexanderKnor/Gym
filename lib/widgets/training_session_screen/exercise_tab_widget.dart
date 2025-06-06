@@ -53,7 +53,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   @override
   void initState() {
     super.initState();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Initialisierung nach dem ersten Frame
       _initializeProgressionManager();
     });
   }
@@ -86,8 +88,13 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
               sessionProvider.getActiveSetIdForCurrentExercise();
 
           if (_exerciseProfileId != null) {
-            sessionProvider.calculateProgressionForSet(widget.exerciseIndex,
-                activeSetId, _exerciseProfileId!, progressionProvider);
+            // Berechnung nach dem Frame-Build zur Vermeidung von Build-Phase-Konflikten
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                sessionProvider.calculateProgressionForSet(widget.exerciseIndex,
+                    activeSetId, _exerciseProfileId!, progressionProvider);
+              }
+            });
           }
         }
       }
@@ -185,13 +192,12 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                     widget.exerciseIndex, activeSetId);
 
                                 // Neue Empfehlungen berechnen auf Basis der historischen Daten
-                                await sessionProvider
-                                    .calculateProgressionForSet(
-                                        widget.exerciseIndex,
-                                        activeSetId,
-                                        updatedExercise.progressionProfileId!,
-                                        progressionProvider,
-                                        forceRecalculation: true);
+                                sessionProvider.calculateProgressionForSet(
+                                    widget.exerciseIndex,
+                                    activeSetId,
+                                    updatedExercise.progressionProfileId!,
+                                    progressionProvider,
+                                    forceRecalculation: true);
                               }
                             }
 
@@ -535,13 +541,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final bool allSetsCompleted = isActiveExercise &&
         sessionProvider.areAllSetsCompletedForCurrentExercise();
 
-    if (isActiveExercise && _exerciseProfileId != null) {
-      final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
-      Future.microtask(() {
-        sessionProvider.calculateProgressionForSet(widget.exerciseIndex,
-            activeSetId, _exerciseProfileId!, progressionProvider);
-      });
-    }
 
     return Container(
       color: _midnight,

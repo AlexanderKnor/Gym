@@ -462,6 +462,20 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
     }
   }
 
+  // Adaptive Schriftgröße basierend auf der Textlänge
+  double _getAdaptiveFontSize(String text, bool isSelected) {
+    final baseSize = isSelected ? 20.0 : 16.0;
+    
+    // Für längere Zahlen (z.B. dreistellig mit Dezimalstellen) Schriftgröße reduzieren
+    if (text.length >= 6) {
+      return baseSize * 0.85; // 15% Reduktion für sehr lange Zahlen
+    } else if (text.length >= 5) {
+      return baseSize * 0.92; // 8% Reduktion für lange Zahlen
+    }
+    
+    return baseSize;
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -584,7 +598,7 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                     parent: BouncingScrollPhysics(), // Natürliche Bounce-Physik
                   )
                 : const NeverScrollableScrollPhysics(),
-            itemExtent: 46, // Optimale Größe für Touch und Sichtbarkeit
+            itemExtent: 50, // Mehr Platz für dreistellige Zahlen
             perspective: 0.002, // Sehr minimal für fast flaches Design
             diameterRatio: 4.0, // Maximaler Radius für natürliche Darstellung
             overAndUnderCenterOpacity: 0.3, // Starker Kontrast zur ausgewählten Zahl
@@ -644,7 +658,7 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOutCubic,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: isSelected
                           ? BoxDecoration(
                               gradient: LinearGradient(
@@ -690,12 +704,13 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            _formatValue(value),
-                            style: TextStyle(
-                              fontSize: isSelected ? 22 : 17,
+                          Flexible(
+                            child: Text(
+                              _formatValue(value),
+                              style: TextStyle(
+                              fontSize: _getAdaptiveFontSize(_formatValue(value), isSelected),
                               fontWeight: isSelected
-                                  ? FontWeight.w800
+                                  ? FontWeight.w700
                                   : FontWeight.w600,
                               color: isSelected
                                   ? widget.isEnabled
@@ -704,15 +719,18 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                                           ? Colors.green
                                           : NumberWheelPickerWidget._silver
                                   : NumberWheelPickerWidget._silver,
-                              letterSpacing: isSelected ? -0.8 : -0.2,
+                              letterSpacing: isSelected ? -0.5 : -0.2,
                               height: 1.0, // Kompakte Zeilenhöhe
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (widget.suffix.isNotEmpty)
                             Text(
                               ' ${widget.suffix}',
                               style: TextStyle(
-                                fontSize: isSelected ? 16 : 13,
+                                fontSize: isSelected ? 14 : 12,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.w500,

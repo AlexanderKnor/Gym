@@ -173,14 +173,20 @@ class ExerciseSetWidget extends StatelessWidget {
                           ? Colors.white
                           : isCompleted
                               ? Colors.green
-                              : Colors.grey[400],
+                              : _graphite, // Dunkler Hintergrund für starken Kontrast
+                      border: isActive || isCompleted 
+                          ? null 
+                          : Border.all(
+                              color: _silver.withOpacity(0.3),
+                              width: 1,
+                            ), // Subtiler Border für ausstehende Sätze
                       boxShadow: [
                         BoxShadow(
                           color: (isActive
                                   ? Colors.black
                                   : isCompleted
                                       ? Colors.green
-                                      : Colors.grey[400])!
+                                      : _graphite)!
                               .withOpacity(0.2),
                           offset: const Offset(0, 1),
                           blurRadius: 2,
@@ -193,7 +199,11 @@ class ExerciseSetWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: isActive ? Colors.black : Colors.white,
+                          color: isActive 
+                              ? Colors.black 
+                              : isCompleted 
+                                  ? Colors.white
+                                  : _snow, // Weißer Text für bessere Lesbarkeit auf dunklem Hintergrund
                         ),
                       ),
                     ),
@@ -445,7 +455,7 @@ class ExerciseSetWidget extends StatelessWidget {
             Colors.grey[200]!.withOpacity(0.0),
             isCompleted
                 ? Colors.green[200]!.withOpacity(0.7)
-                : Colors.grey[300]!.withOpacity(0.7),
+                : _steel.withOpacity(0.4), // Bessere Sichtbarkeit auf dunklem Hintergrund
             Colors.grey[200]!.withOpacity(0.0),
           ],
         ),
@@ -463,9 +473,9 @@ class ExerciseSetWidget extends StatelessWidget {
     required int flex,
   }) {
     final Color valueColor =
-        isCompleted ? Colors.green[700]! : Colors.grey[900]!;
+        isCompleted ? Colors.green[700]! : _silver; // Ausgegrauter Text für ausstehende Sätze  
     final Color labelColor =
-        isCompleted ? Colors.green[600]! : Colors.grey[600]!;
+        isCompleted ? Colors.green[600]! : _mercury; // Noch subtilere Labels
 
     return Expanded(
       flex: flex,

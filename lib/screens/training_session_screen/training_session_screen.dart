@@ -667,9 +667,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                         height: 52,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Ignoriere Klicks während Processing
-                            if (sessionProvider.isProcessingSetCompletion) return;
-                            
                             HapticFeedback.mediumImpact();
                             if (allSetsCompleted && !hasMoreExercises) {
                               sessionProvider.completeCurrentExercise();
@@ -1290,47 +1287,24 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
-                    // BUGFIX: Session cleanup ZUERST, dann Navigation
-                    Navigator.of(context).pop(); // Close dialog
-                    
-                    try {
-                      final sessionProvider =
-                          Provider.of<TrainingSessionProvider>(context,
-                              listen: false);
-                      
-                      // Session SOFORT löschen um Recovery Dialog zu verhindern
-                      await sessionProvider.clearSavedSession();
-                      
-                      // Training als abgeschlossen markieren und in DB speichern
-                      await sessionProvider.completeTraining();
-                      
-                    } catch (e) {
-                      print('Fehler beim Beenden des Trainings: $e');
-                      
-                      // Auch bei Fehlern die Session löschen
-                      try {
-                        final sessionProvider =
-                            Provider.of<TrainingSessionProvider>(context,
-                                listen: false);
-                        await sessionProvider.clearSavedSession();
-                      } catch (clearError) {
-                        print('Fehler beim Löschen der Session: $clearError');
-                      }
-                    }
-                    
-                    // Sanfte Navigation ohne Screen-Überlappung
+                    // BUGFIX: Provider VOR Navigation speichern
+                    final sessionProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
                     final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
-                    navigationProvider.setCurrentIndex(0); // Training Tab setzen
+                    final navigator = Navigator.of(context);
                     
-                    // Context prüfen und Navigation
-                    if (context.mounted) {
-                      // Saubere Navigation ohne Überlappung
-                      Navigator.of(context).pushAndRemoveUntil(
+                    // Dialog schließen
+                    navigator.pop();
+                    
+                    // BUGFIX: Navigation Tab SOFORT setzen
+                    navigationProvider.setCurrentIndex(0);
+                    
+                    // BUGFIX: Navigation SOFORT ausführen BEVOR exitTrainingEarly
+                    navigator.pushAndRemoveUntil(
                       PageRouteBuilder(
                         pageBuilder: (context, animation, secondaryAnimation) {
                           return const MainScreen();
                         },
-                        transitionDuration: const Duration(milliseconds: 500),
+                        transitionDuration: const Duration(milliseconds: 300),
                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                           return FadeTransition(
                             opacity: Tween<double>(
@@ -1345,7 +1319,20 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                         },
                       ),
                       (route) => false, // Remove all previous routes
-                      );
+                    );
+                    
+                    // Session cleanup NACH der Navigation
+                    try {
+                      await sessionProvider.exitTrainingEarly();
+                    } catch (e) {
+                      print('Fehler beim Beenden des Trainings: $e');
+                      
+                      // Auch bei Fehlern die Session löschen
+                      try {
+                        await sessionProvider.clearSavedSession();
+                      } catch (clearError) {
+                        print('Fehler beim Löschen der Session: $clearError');
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

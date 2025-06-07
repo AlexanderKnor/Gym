@@ -831,13 +831,13 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: (!_hasRecommendation(
-                                      sessionProvider,
-                                      sessionProvider
-                                          .getActiveSetIdForCurrentExercise()) ||
-                                  allSetsCompleted)
-                              ? null
-                              : () {
+                          onTap: () {
+                            // Progress Button immer enabled, interne Validierung
+                            if (!_hasRecommendation(
+                                sessionProvider,
+                                sessionProvider.getActiveSetIdForCurrentExercise())) {
+                              return; // Ignoriere Klick ohne visuelles Feedback
+                            }
                                   final activeSetId = sessionProvider
                                       .getActiveSetIdForCurrentExercise();
                                   final activeSet = sessionProvider
@@ -864,13 +864,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                 },
                           borderRadius: BorderRadius.circular(12),
                           child: Opacity(
-                            opacity: (!_hasRecommendation(
-                                        sessionProvider,
-                                        sessionProvider
-                                            .getActiveSetIdForCurrentExercise()) ||
-                                    allSetsCompleted)
-                                ? 0.5
-                                : 1.0,
+                            opacity: 1.0, // Immer volle Opacity
                             child: Container(
                               height: 38,
                               padding:
@@ -882,7 +876,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                   Icon(
                                     Icons.bolt,
                                     size: 18,
-                                    color: (!_hasRecommendation(sessionProvider, sessionProvider.getActiveSetIdForCurrentExercise()) || allSetsCompleted) ? _mercury : _emberCore,
+                                    color: _emberCore, // Immer orange
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -890,7 +884,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: (!_hasRecommendation(sessionProvider, sessionProvider.getActiveSetIdForCurrentExercise()) || allSetsCompleted) ? _mercury : _snow,
+                                      color: _snow, // Immer weiß
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),

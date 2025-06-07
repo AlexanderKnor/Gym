@@ -68,8 +68,6 @@ class TrainingSessionProvider with ChangeNotifier {
   // Liste für gelöschte Übungen
   List<ExerciseModel> _deletedExercises = [];
   bool get hasDeletedExercises => _deletedExercises.isNotEmpty;
-  
-  bool get isProcessingSetCompletion => _isProcessingSetCompletion;
 
   // Flag für Debug-Logging
   final bool _debugMode = true;
@@ -825,6 +823,37 @@ class TrainingSessionProvider with ChangeNotifier {
   void _cancelRestTimer() {
     _restTimer?.cancel();
     _restTimer = null;
+  }
+
+  // Beendet das Training vorzeitig ohne Completion Widget anzuzeigen
+  Future<void> exitTrainingEarly() async {
+    // Session cleanup ohne isTrainingCompleted zu setzen
+    _cancelRestTimer();
+    
+    // WICHTIG: Session löschen ohne Training als completed zu markieren
+    try {
+      await clearSavedSession();
+      _log('Session bei vorzeitigem Beenden gelöscht.');
+    } catch (e) {
+      _log('Fehler beim Löschen der Session bei vorzeitigem Beenden: $e');
+    }
+    
+    // Training in DB speichern aber als nicht abgeschlossen markieren
+    if (_currentSession != null) {
+      final incompletedSession = _currentSession!.copyWith(
+        isCompleted: false, // WICHTIG: Nicht als abgeschlossen markieren
+      );
+      
+      try {
+        await _historyService.saveTrainingSession(incompletedSession);
+        _log('Unvollständiges Training in der Datenbank gespeichert.');
+      } catch (e) {
+        _log('Fehler beim Speichern des unvollständigen Trainings: $e');
+      }
+    }
+    
+    // WICHTIG: _isTrainingCompleted wird NICHT auf true gesetzt
+    notifyListeners();
   }
 
   // Schließt das gesamte Training ab und speichert es nur dann in die Datenbank!

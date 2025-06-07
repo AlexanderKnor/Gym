@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -27,15 +28,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set dark system UI overlay style to prevent white flashing
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF000000), // Midnight
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
+  // System UI wird jetzt kontinuierlich in MyAppState verwaltet
 
   // Initialize Firebase with project-specific options
   await Firebase.initializeApp(
@@ -52,18 +45,61 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  Timer? _systemUITimer;
+
   @override
   void initState() {
     super.initState();
     // Add global back button interceptor
     BackButtonInterceptor.add(myInterceptor);
+    
+    // System UI Observer hinzufügen
+    WidgetsBinding.instance.addObserver(this);
+    
+    // Kontinuierliche System UI Unterdrückung
+    _startSystemUIHiding();
   }
 
   @override
   void dispose() {
     BackButtonInterceptor.remove(myInterceptor);
+    WidgetsBinding.instance.removeObserver(this);
+    _systemUITimer?.cancel();
     super.dispose();
+  }
+
+  // Überwacht App-Lifecycle Änderungen
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // App wurde wieder fokussiert - System UI erneut verstecken
+      _hideSystemUI();
+    }
+  }
+
+  // Startet kontinuierliche System UI Überwachung
+  void _startSystemUIHiding() {
+    _hideSystemUI();
+    
+    // Timer für periodische Überprüfung (alle 2 Sekunden)
+    _systemUITimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      _hideSystemUI();
+    });
+  }
+
+  // Versteckt System UI komplett
+  void _hideSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF000000),
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
   }
 
   // Returns 'true' to indicate that the back button event

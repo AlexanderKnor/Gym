@@ -31,7 +31,7 @@ class ExerciseTabWidget extends StatefulWidget {
 }
 
 class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -39,6 +39,23 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   bool _showStandardIncrementWheel = false;
   bool _showRestPeriodWheel = false;
   bool _isProcessingDeletion = false; // NEU: Flag für Löschvorgang
+  
+  // Auto-Scroll Controller für Sätze
+  final ScrollController _setsScrollController = ScrollController();
+  final GlobalKey _setListKey = GlobalKey();
+  final GlobalKey _actionBarKey = GlobalKey(); // Referenz für Action-Button Position
+  
+  // Animation Controller für smooth scrolling
+  late AnimationController _scrollAnimationController;
+  late Animation<double> _scrollAnimation;
+  
+  // State tracking für intelligent auto-scroll triggering
+  int? _lastActiveSetId;
+  bool _hasScrolledToActiveSet = false;
+  int? _lastExerciseIndex;
+  
+  // Keys für jeden Satz für präzise Positionsberechnung
+  final Map<int, GlobalKey> _setKeys = {};
 
   // Clean color system matching training screen
   static const Color _midnight = Color(0xFF000000);
@@ -53,6 +70,17 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   @override
   void initState() {
     super.initState();
+    
+    // Initialisiere Animation Controller für smooth scrolling
+    _scrollAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _scrollAnimation = CurvedAnimation(
+      parent: _scrollAnimationController,
+      curve: Curves.easeOutCubic,
+    );
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Initialisierung nach dem ersten Frame
@@ -520,6 +548,170 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
+  // Ultra-sanfter Auto-Scroll mit perfekter Glätte
+  Future<void> _scrollToActiveSet(int activeSetIndex, int totalSets) async {
+    if (!_setsScrollController.hasClients || !mounted) return;
+    
+    // Erweiterte Wartezeit für vollständige Widget-Stabilisierung
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // Doppelte Überprüfung der Controller-Verfügbarkeit
+    if (!_setsScrollController.hasClients || !mounted) return;
+    
+    // Berechne die exakte Position basierend auf Action Bar
+    double? targetScrollOffset = _calculatePreciseScrollOffset(activeSetIndex);
+    
+    if (targetScrollOffset == null) {
+      // Fallback auf approximierte Berechnung
+      targetScrollOffset = _calculateFallbackScrollOffset(activeSetIndex);
+    }
+    
+    // Sichere Grenzen mit zusätzlicher Validierung
+    final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
+    final double minScrollExtent = _setsScrollController.position.minScrollExtent;
+    final double finalOffset = targetScrollOffset.clamp(minScrollExtent, maxScrollExtent);
+    
+    // Präziser Performance-Check
+    final double currentOffset = _setsScrollController.offset;
+    const double scrollThreshold = 10.0; // Noch präziser
+    
+    if ((finalOffset - currentOffset).abs() < scrollThreshold) {
+      return; // Bereits optimal positioniert
+    }
+    
+    try {
+      // Berechne optimale Animation-Parameter für maximale Sanftheit
+      final double scrollDistance = (finalOffset - currentOffset).abs();
+      
+      // Frame-Rate optimierte Dauer-Berechnung für perfekte Sanftheit
+      // Ziel: ~60fps mit smooth interpolation
+      final double pixelsPerSecond = 120.0; // Sanfte Geschwindigkeit
+      final int calculatedDuration = (scrollDistance / pixelsPerSecond * 1000).round();
+      final int duration = calculatedDuration.clamp(400, 1200); // Realistische Grenzen
+      
+      // Experimentiere mit verschiedenen Curves für maximale Sanftheit
+      Curve animationCurve;
+      
+      if (scrollDistance < 50) {
+        // Sehr kurze Distanz: Linear für absolute Glätte
+        animationCurve = Curves.linear;
+      } else if (scrollDistance < 150) {
+        // Mittlere Distanz: Sanfte Deceleration
+        animationCurve = Curves.easeOut;
+      } else {
+        // Lange Distanz: Ultra-sanfte exponentielle Kurve
+        animationCurve = Curves.easeOutExpo;
+      }
+      
+      // Ultra-sanfte Animation mit perfekter Frame-Rate
+      await _setsScrollController.animateTo(
+        finalOffset,
+        duration: Duration(milliseconds: duration),
+        curve: animationCurve,
+      );
+      
+      // Verzögerte haptische Rückmeldung für natürlicheres Gefühl
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        HapticFeedback.selectionClick();
+      }
+      
+    } catch (e) {
+      // Sanftes Fallback auch bei Fehlern
+      if (mounted && _setsScrollController.hasClients) {
+        try {
+          await _setsScrollController.animateTo(
+            finalOffset,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOut,
+          );
+        } catch (_) {
+          _setsScrollController.jumpTo(finalOffset);
+        }
+      }
+    }
+  }
+  
+  // Berechne exakte Scroll-Position basierend auf realen Widget-Positionen
+  double? _calculatePreciseScrollOffset(int activeSetIndex) {
+    try {
+      // Action Bar Position ermitteln
+      final actionBarRenderBox = _actionBarKey.currentContext?.findRenderObject() as RenderBox?;
+      if (actionBarRenderBox == null) return null;
+      
+      // Action Bar Position relativ zum ListView
+      final listRenderBox = _setListKey.currentContext?.findRenderObject() as RenderBox?;
+      if (listRenderBox == null) return null;
+      
+      // Berechne die relative Position zwischen Action Bar und ListView
+      final actionBarPosition = actionBarRenderBox.localToGlobal(Offset.zero);
+      final listPosition = listRenderBox.localToGlobal(Offset.zero);
+      final actionBarBottom = actionBarPosition.dy + actionBarRenderBox.size.height;
+      
+      // Wenn ein spezifischer Satz-Key verfügbar ist, verwende die echte Position
+      final setKey = _setKeys[activeSetIndex];
+      if (setKey?.currentContext != null) {
+        final setRenderBox = setKey!.currentContext!.findRenderObject() as RenderBox?;
+        if (setRenderBox != null) {
+          final setPosition = setRenderBox.localToGlobal(Offset.zero);
+          
+          // Gewünschte Position: Satz direkt unter Action Bar mit optimiertem Gap
+          const double desiredGap = 16.0; // Etwas größerer Gap für bessere Optik
+          final double targetSetY = actionBarBottom + desiredGap;
+          
+          // Berechne erforderlichen Scroll-Offset
+          final double currentSetY = setPosition.dy;
+          final double scrollAdjustment = currentSetY - targetSetY;
+          final double currentScrollOffset = _setsScrollController.offset;
+          
+          return currentScrollOffset + scrollAdjustment;
+        }
+      }
+      
+      // Fallback: Verwende approximierte Position
+      const double desiredGap = 16.0;
+      const double averageSetHeight = 104.0; // Gemessene Durchschnittshöhe
+      const double listTopPadding = 8.0;
+      
+      final double targetSetY = actionBarBottom + desiredGap;
+      final double listTop = listPosition.dy;
+      final double setEstimatedY = listTop + listTopPadding + (activeSetIndex * averageSetHeight);
+      
+      final double scrollAdjustment = setEstimatedY - targetSetY;
+      return _setsScrollController.offset + scrollAdjustment;
+      
+    } catch (e) {
+      print('Error calculating precise scroll offset: $e');
+      return null; // Fallback bei Fehlern
+    }
+  }
+  
+  // Fallback-Berechnung falls keine genaue Position ermittelt werden kann
+  double _calculateFallbackScrollOffset(int activeSetIndex) {
+    // Approximierte Werte basierend auf typischer UI-Struktur
+    const double actionBarHeight = 38.0;
+    const double actionBarPadding = 16.0 + 8.0; // top + bottom padding
+    const double exerciseDetailsHeight = 0.0; // Nur wenn showDetails true ist
+    const double setHeight = 108.0;
+    const double listTopPadding = 8.0;
+    
+    // Berechne Position wo der aktive Satz beginnen soll
+    final double actionBarTotalHeight = actionBarHeight + actionBarPadding;
+    final double targetSetPosition = actionBarTotalHeight + exerciseDetailsHeight + 8.0;
+    
+    // Berechne erforderlichen Scroll-Offset
+    final double setActualPosition = listTopPadding + (activeSetIndex * setHeight);
+    return setActualPosition - targetSetPosition;
+  }
+
+  @override
+  void dispose() {
+    _setsScrollController.dispose();
+    _scrollAnimationController.dispose();
+    _setKeys.clear(); // Cleanup für bessere Memory-Performance
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -556,6 +748,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Container(
+                key: _actionBarKey, // GlobalKey für Positionsreferenz
                 height: 38,
                 decoration: BoxDecoration(
                   color: _charcoal.withOpacity(0.8),
@@ -853,7 +1046,51 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       );
     }
 
+    // Auto-Scroll Logic: Intelligente Fokussierung basierend auf Zustandsänderungen
+    final activeSetIndex = activeSetId - 1; // setId is 1-based, index is 0-based
+    
+    // Check if exercise changed (neue Übung ausgewählt)
+    final bool exerciseChanged = _lastExerciseIndex != widget.exerciseIndex;
+    
+    // Check if the active set has changed for this exercise
+    final bool activeSetChanged = _lastActiveSetId != activeSetId;
+    
+    if (isActiveExercise && _setsScrollController.hasClients) {
+      
+      if (exerciseChanged) {
+        // Neue Übung: Scroll sanft zum ersten Satz (oder aktiven Satz)
+        _lastExerciseIndex = widget.exerciseIndex;
+        _lastActiveSetId = activeSetId;
+        _hasScrolledToActiveSet = false;
+        
+        // Erweiterte Verzögerung für perfekten UI-Aufbau bei Übungswechsel
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (!_hasScrolledToActiveSet && mounted) {
+            _hasScrolledToActiveSet = true;
+            // Bei Übungswechsel zum aktiven/ersten Satz scrollen
+            final scrollToIndex = activeSetIndex >= 0 ? activeSetIndex : 0;
+            _scrollToActiveSet(scrollToIndex, sets.length);
+          }
+        });
+        
+      } else if (activeSetChanged && activeSetIndex >= 0 && activeSetIndex < sets.length) {
+        // Satz-Wechsel innerhalb derselben Übung: Focus auf neuen aktiven Satz
+        _lastActiveSetId = activeSetId;
+        _hasScrolledToActiveSet = false;
+        
+        // Optimierter Trigger bei Satz-Completion mit minimaler Verzögerung
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (!_hasScrolledToActiveSet && mounted) {
+            _hasScrolledToActiveSet = true;
+            _scrollToActiveSet(activeSetIndex, sets.length);
+          }
+        });
+      }
+    }
+
     return ListView.builder(
+      key: _setListKey,
+      controller: _setsScrollController,
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       itemCount: sets.length,
       itemBuilder: (context, index) {
@@ -865,22 +1102,30 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
             sessionProvider.shouldShowRecommendation(
                 widget.exerciseIndex, set.id);
 
-        return ExerciseSetWidget(
-          set: set,
-          isActive: isActiveSet,
-          isCompleted: set.abgeschlossen,
-          onValueChanged: (field, value) {
-            if (isActiveSet && !allSetsCompleted) {
-              sessionProvider.updateSet(set.id, field, value);
-            }
-          },
-          recommendation: showRecommendation
-              ? {
-                  'kg': set.empfKg,
-                  'wiederholungen': set.empfWiederholungen,
-                  'rir': set.empfRir,
-                }
-              : null,
+        // Stelle sicher, dass jeder Satz einen eindeutigen Key hat
+        if (!_setKeys.containsKey(index)) {
+          _setKeys[index] = GlobalKey();
+        }
+        
+        return Container(
+          key: _setKeys[index],
+          child: ExerciseSetWidget(
+            set: set,
+            isActive: isActiveSet,
+            isCompleted: set.abgeschlossen,
+            onValueChanged: (field, value) {
+              if (isActiveSet && !allSetsCompleted) {
+                sessionProvider.updateSet(set.id, field, value);
+              }
+            },
+            recommendation: showRecommendation
+                ? {
+                    'kg': set.empfKg,
+                    'wiederholungen': set.empfWiederholungen,
+                    'rir': set.empfRir,
+                  }
+                : null,
+          ),
         );
       },
     );

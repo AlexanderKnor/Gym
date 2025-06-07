@@ -75,6 +75,9 @@ class TrainingSessionProvider with ChangeNotifier {
   // Variablen zum Verhindern von wiederholten Updates
   bool _isUpdatingExerciseConfig = false;
   bool _isProcessingConfig = false;
+  
+  // Race Condition Protection für Set-Completion
+  bool _isProcessingSetCompletion = false;
 
   // Session Persistence Service
   final SessionPersistenceService _sessionPersistenceService = SessionPersistenceService();
@@ -253,6 +256,7 @@ class TrainingSessionProvider with ChangeNotifier {
     _hasBeenSaved = false;
     _isUpdatingExerciseConfig = false;
     _isProcessingConfig = false;
+    _isProcessingSetCompletion = false; // Reset Race Condition Flag
     _addedExercises.clear();
     _deletedExercises.clear();
     _originalExercises.clear();
@@ -460,15 +464,40 @@ class TrainingSessionProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Markiert den aktuellen Satz als abgeschlossen und bereitet den nächsten Satz vor
+  // Thread-Safe Markierung des aktuellen Satzes als abgeschlossen
   Future<void> completeCurrentSet() async {
-    if (_trainingDay == null || _currentSession == null) return;
+    // Race Condition Protection: Verhindere parallele Ausführung
+    if (_isProcessingSetCompletion) {
+      _log('Set-Completion bereits in Bearbeitung, ignoriere doppelten Aufruf');
+      return;
+    }
+    
+    _isProcessingSetCompletion = true;
+    
+    try {
+      if (_trainingDay == null || _currentSession == null) {
+        _isProcessingSetCompletion = false;
+        return;
+      }
 
-    final exerciseIndex = _currentExerciseIndex;
-    final setIndex = _activeSetByExercise[exerciseIndex] ?? 0;
+      final exerciseIndex = _currentExerciseIndex;
+      final setIndex = _activeSetByExercise[exerciseIndex] ?? 0;
 
-    final sets = _exerciseSets[exerciseIndex];
-    if (sets == null || setIndex >= sets.length) return;
+      final sets = _exerciseSets[exerciseIndex];
+      
+      // Erweiterte Validierung für Thread-Safety
+      if (sets == null || setIndex < 0 || setIndex >= sets.length) {
+        _log('Ungültiger setIndex: $setIndex für ${sets?.length ?? 0} Sätze');
+        _isProcessingSetCompletion = false;
+        return;
+      }
+      
+      // Prüfe ob der Satz bereits abgeschlossen ist
+      if (sets[setIndex].abgeschlossen) {
+        _log('Satz $setIndex ist bereits abgeschlossen, ignoriere');
+        _isProcessingSetCompletion = false;
+        return;
+      }
 
     // Markiere den aktuellen Satz als abgeschlossen
     final updatedSets = List<TrainingSetModel>.from(sets);
@@ -539,8 +568,15 @@ class TrainingSessionProvider with ChangeNotifier {
       );
     }
 
-    notifyListeners();
-    _saveSession();
+      notifyListeners();
+      _saveSession();
+      
+    } catch (e) {
+      _log('Fehler in completeCurrentSet: $e');
+    } finally {
+      // Stelle sicher, dass das Flag immer zurückgesetzt wird
+      _isProcessingSetCompletion = false;
+    }
   }
 
   // Findet den Index der nächsten offenen Übung (nicht abgeschlossen)
@@ -953,6 +989,14 @@ class TrainingSessionProvider with ChangeNotifier {
 
   int getActiveSetIdForCurrentExercise() {
     final activeSetIndex = _activeSetByExercise[_currentExerciseIndex] ?? 0;
+    
+    // Bounds-Checking für Thread-Safety
+    final sets = _exerciseSets[_currentExerciseIndex];
+    if (sets == null || activeSetIndex < 0 || activeSetIndex >= sets.length) {
+      _log('Ungültiger activeSetIndex: $activeSetIndex für ${sets?.length ?? 0} Sätze');
+      return 1; // Fallback auf ersten Satz
+    }
+    
     // Die Set-ID beginnt bei 1, während der Index bei 0 beginnt
     return activeSetIndex + 1;
   }

@@ -1288,6 +1288,10 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
+                    // BUGFIX: Navigation VOR completeTraining um Completion Widget Flash zu vermeiden
+                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.of(context).pop(); // Close training session screen
+                    
                     try {
                       final sessionProvider =
                           Provider.of<TrainingSessionProvider>(context,
@@ -1312,8 +1316,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                         print('Fehler beim Löschen der Session: $clearError');
                       }
                     }
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.withOpacity(0.15),

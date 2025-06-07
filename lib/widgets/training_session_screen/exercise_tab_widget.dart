@@ -1,6 +1,7 @@
 // lib/widgets/training_session_screen/exercise_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 
 import '../../providers/training_session_screen/training_session_provider.dart';
@@ -450,7 +451,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
         decoration: BoxDecoration(
           color: _charcoal,
           borderRadius: const BorderRadius.only(
@@ -469,7 +472,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: _steel.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -478,6 +481,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
+                    color: _snow,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -498,6 +502,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
               ],
             ),
           ),
+        ),
         ),
       ),
     );
@@ -520,26 +525,41 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
           horizontal: 16,
         ),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.grey[200]!,
-              width: 1,
-            ),
+          color: _graphite.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _steel.withOpacity(0.2),
+            width: 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: Colors.black,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _emberCore.withOpacity(0.15),
+                border: Border.all(
+                  color: _emberCore.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: _emberCore,
+              ),
             ),
             const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: _snow,
+                ),
               ),
             ),
           ],

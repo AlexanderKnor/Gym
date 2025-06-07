@@ -1,6 +1,7 @@
 // lib/screens/training_session_screen/training_session_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 
 import '../../models/training_plan_screen/training_plan_model.dart';
@@ -1041,7 +1042,9 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
         padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom +
                 MediaQuery.of(context).padding.bottom),
@@ -1167,6 +1170,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -1233,7 +1237,9 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
         padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom +
                 MediaQuery.of(context).padding.bottom),
@@ -1354,6 +1360,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               ),
             ],
           ),
+        ),
         ),
       ),
     );

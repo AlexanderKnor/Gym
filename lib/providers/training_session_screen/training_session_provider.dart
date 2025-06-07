@@ -68,6 +68,8 @@ class TrainingSessionProvider with ChangeNotifier {
   // Liste für gelöschte Übungen
   List<ExerciseModel> _deletedExercises = [];
   bool get hasDeletedExercises => _deletedExercises.isNotEmpty;
+  
+  bool get isProcessingSetCompletion => _isProcessingSetCompletion;
 
   // Flag für Debug-Logging
   final bool _debugMode = true;
@@ -566,16 +568,25 @@ class TrainingSessionProvider with ChangeNotifier {
       _currentSession = _currentSession!.copyWith(
         exercises: updatedExercises,
       );
+      
+      // Automatische Navigation zur nächsten Übung oder Training abschließen
+      _autoNavigateToNextExerciseOrComplete();
     }
 
       notifyListeners();
       _saveSession();
       
+      // Delay um UI-Rendering abzuwarten bevor Button wieder enabled wird
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _isProcessingSetCompletion = false;
+        notifyListeners();
+      });
+      
     } catch (e) {
       _log('Fehler in completeCurrentSet: $e');
-    } finally {
-      // Stelle sicher, dass das Flag immer zurückgesetzt wird
+      // Bei Fehlern Button sofort wieder enablen
       _isProcessingSetCompletion = false;
+      notifyListeners();
     }
   }
 
@@ -662,6 +673,32 @@ class TrainingSessionProvider with ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  // Automatische Navigation zur nächsten Übung oder Training abschließen
+  void _autoNavigateToNextExerciseOrComplete() {
+    if (_trainingDay == null) return;
+
+    // Finde die nächste offene Übung
+    int nextOpenExerciseIndex = findNextOpenExerciseIndex();
+
+    // Prüfe, ob es noch offene Übungen gibt
+    bool allExercisesCompleted = _trainingDay!.exercises.length ==
+        _exerciseCompletionStatus.values.where((completed) => completed).length;
+
+    if (allExercisesCompleted) {
+      // Alle Übungen sind abgeschlossen, beende das Training
+      _isTrainingCompleted = true;
+
+      if (_currentSession != null) {
+        _currentSession = _currentSession!.copyWith(isCompleted: true);
+      }
+    } else {
+      // Es gibt noch offene Übungen, wechsle zur nächsten
+      _currentExerciseIndex = nextOpenExerciseIndex;
+    }
+    
+    // Kein notifyListeners() hier - das wird bereits in completeCurrentSet() aufgerufen
   }
 
   // Methode zur Prüfung, ob eine bestimmte Übung abgeschlossen ist

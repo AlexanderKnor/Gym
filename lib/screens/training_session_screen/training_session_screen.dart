@@ -663,15 +663,17 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
-                          onPressed: allSetsCompleted
-                              ? () {
-                                  HapticFeedback.mediumImpact();
-                                  sessionProvider.completeCurrentExercise();
-                                }
-                              : () {
-                                  HapticFeedback.mediumImpact();
-                                  sessionProvider.completeCurrentSet();
-                                },
+                          onPressed: () {
+                            // Ignoriere Klicks während Processing
+                            if (sessionProvider.isProcessingSetCompletion) return;
+                            
+                            HapticFeedback.mediumImpact();
+                            if (allSetsCompleted && !hasMoreExercises) {
+                              sessionProvider.completeCurrentExercise();
+                            } else {
+                              sessionProvider.completeCurrentSet();
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _emberCore,
                             foregroundColor: _snow,
@@ -681,10 +683,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                             ),
                           ),
                           child: Text(
-                            allSetsCompleted
-                                ? (hasMoreExercises
-                                    ? 'NÄCHSTE ÜBUNG'
-                                    : 'TRAINING ABSCHLIESSEN')
+                            allSetsCompleted && !hasMoreExercises
+                                ? 'TRAINING ABSCHLIESSEN'
                                 : 'SATZ ABSCHLIESSEN',
                             style: const TextStyle(
                               fontSize: 14,

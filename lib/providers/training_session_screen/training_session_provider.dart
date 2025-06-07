@@ -17,6 +17,8 @@ import '../../models/training_history/set_history_model.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../services/training_history/training_history_service.dart';
 import '../../services/training_plan_screen/training_plan_service.dart';
+import '../../services/training/session_persistence_service.dart';
+import '../../models/active_training_session.dart';
 
 /// Provider für die Verwaltung einer aktiven Trainings-Session
 class TrainingSessionProvider with ChangeNotifier {
@@ -51,20 +53,20 @@ class TrainingSessionProvider with ChangeNotifier {
   final TrainingHistoryService _historyService = TrainingHistoryService();
 
   // Tracking für Übungsänderungen
-  final Map<int, ExerciseModel> _originalExercises =
+  Map<int, ExerciseModel> _originalExercises =
       {}; // Speichert Original-Konfigurationen
-  final Map<int, bool> _exerciseConfigModified =
+  Map<int, bool> _exerciseConfigModified =
       {}; // Markiert geänderte Übungen
 
   // Service für das Updaten des Trainingsplans
   final TrainingPlanService _trainingPlanService = TrainingPlanService();
 
   // Tracking für hinzugefügte Übungen
-  final List<ExerciseModel> _addedExercises = [];
+  List<ExerciseModel> _addedExercises = [];
   bool get hasAddedExercises => _addedExercises.isNotEmpty;
 
   // Liste für gelöschte Übungen
-  final List<ExerciseModel> _deletedExercises = [];
+  List<ExerciseModel> _deletedExercises = [];
   bool get hasDeletedExercises => _deletedExercises.isNotEmpty;
 
   // Flag für Debug-Logging
@@ -73,6 +75,9 @@ class TrainingSessionProvider with ChangeNotifier {
   // Variablen zum Verhindern von wiederholten Updates
   bool _isUpdatingExerciseConfig = false;
   bool _isProcessingConfig = false;
+
+  // Session Persistence Service
+  final SessionPersistenceService _sessionPersistenceService = SessionPersistenceService();
 
   // Konstruktor
   TrainingSessionProvider() {
@@ -225,6 +230,7 @@ class TrainingSessionProvider with ChangeNotifier {
     }
 
     notifyListeners();
+    _saveSession(); // Session speichern nach dem Start
   }
 
   // Vollständigere Reset-Methode
@@ -256,6 +262,8 @@ class TrainingSessionProvider with ChangeNotifier {
   // Setzt alle Trainings-Session-Daten zurück
   void _resetTrainingSession() {
     _completeReset();
+    // Lösche auch die gespeicherte Session
+    clearSavedSession();
   }
 
   // Wechselt zur nächsten Übung
@@ -266,6 +274,7 @@ class TrainingSessionProvider with ChangeNotifier {
     if (_currentExerciseIndex < _trainingDay!.exercises.length - 1) {
       _currentExerciseIndex++;
       notifyListeners();
+      _saveSession();
     } else {
       // Alle Übungen wurden abgeschlossen
       _isTrainingCompleted = true;
@@ -276,6 +285,7 @@ class TrainingSessionProvider with ChangeNotifier {
       }
 
       notifyListeners();
+      _saveSession();
     }
   }
 
@@ -287,6 +297,7 @@ class TrainingSessionProvider with ChangeNotifier {
     if (exerciseIndex >= 0 && exerciseIndex < _trainingDay!.exercises.length) {
       _currentExerciseIndex = exerciseIndex;
       notifyListeners();
+      _saveSession();
     }
   }
 
@@ -322,6 +333,7 @@ class TrainingSessionProvider with ChangeNotifier {
             updatedSet = currentSet.copyWith(kg: newValue);
             updatedSets[setIndex] = updatedSet;
             _exerciseSets[_currentExerciseIndex] = updatedSets;
+            _saveSession();
           }
         }
         break;
@@ -344,6 +356,7 @@ class TrainingSessionProvider with ChangeNotifier {
             updatedSet = currentSet.copyWith(wiederholungen: newValue);
             updatedSets[setIndex] = updatedSet;
             _exerciseSets[_currentExerciseIndex] = updatedSets;
+            _saveSession();
           }
         }
         break;
@@ -365,6 +378,7 @@ class TrainingSessionProvider with ChangeNotifier {
             updatedSet = currentSet.copyWith(rir: newValue);
             updatedSets[setIndex] = updatedSet;
             _exerciseSets[_currentExerciseIndex] = updatedSets;
+            _saveSession();
           }
         }
         break;
@@ -526,6 +540,7 @@ class TrainingSessionProvider with ChangeNotifier {
     }
 
     notifyListeners();
+    _saveSession();
   }
 
   // Findet den Index der nächsten offenen Übung (nicht abgeschlossen)
@@ -743,7 +758,9 @@ class TrainingSessionProvider with ChangeNotifier {
   Future<void> completeTraining() async {
     // Prüfen, ob das Training schon gespeichert wurde
     if (_hasBeenSaved) {
-      return; // Verhindert mehrfaches Speichern
+      // WICHTIG: Auch bei bereits gespeicherten Sessions die gespeicherte Session löschen
+      await clearSavedSession();
+      return;
     }
 
     _isTrainingCompleted = true;
@@ -767,6 +784,14 @@ class TrainingSessionProvider with ChangeNotifier {
       } catch (e) {
         _log('Fehler beim Speichern des Trainings: $e');
       }
+    }
+
+    // WICHTIG: Gespeicherte Session IMMER löschen, egal ob Speichern erfolgreich war oder nicht
+    try {
+      await clearSavedSession();
+      _log('Gespeicherte Session erfolgreich gelöscht.');
+    } catch (e) {
+      _log('Fehler beim Löschen der gespeicherten Session: $e');
     }
 
     notifyListeners();
@@ -874,6 +899,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
         _exerciseSets[exerciseIndex] = updatedSets;
         notifyListeners();
+        _saveSession();
 
         _log(
             'Progression berechnet: ${empfehlung['kg']}kg, ${empfehlung['wiederholungen']} Wdh, ${empfehlung['rir']} RIR');
@@ -957,6 +983,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
     // Sofort aktualisieren
     notifyListeners();
+    _saveSession();
   }
 
   /// Wendet benutzerdefinierte Werte vom Kraftrechner auf einen bestimmten Satz an
@@ -987,6 +1014,7 @@ class TrainingSessionProvider with ChangeNotifier {
       _exerciseSets[exerciseIndex] = updatedSets;
 
       notifyListeners();
+      _saveSession();
     } catch (e) {
       print('Fehler beim Anwenden der Kraftrechner-Werte: $e');
     }
@@ -1184,6 +1212,7 @@ class TrainingSessionProvider with ChangeNotifier {
       Future.microtask(() {
         _isUpdatingExerciseConfig = false;
         notifyListeners();
+        _saveSession();
       });
     } catch (e) {
       _log('Fehler beim Aktualisieren der Übungskonfiguration: $e');
@@ -1303,6 +1332,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
       _isProcessingConfig = false;
       notifyListeners();
+      _saveSession();
     } catch (e) {
       _log('Fehler beim Hinzufügen eines Satzes: $e');
       _isProcessingConfig = false;
@@ -1375,6 +1405,7 @@ class TrainingSessionProvider with ChangeNotifier {
 
       _isProcessingConfig = false;
       notifyListeners();
+      _saveSession();
       return true;
     } catch (e) {
       _log('Fehler beim Entfernen eines Satzes: $e');
@@ -1482,6 +1513,7 @@ class TrainingSessionProvider with ChangeNotifier {
       // TabController muss vom UI aktualisiert werden
 
       notifyListeners();
+      _saveSession();
     } catch (e) {
       _log('Fehler beim Hinzufügen einer neuen Übung: $e');
     }
@@ -1584,6 +1616,7 @@ class TrainingSessionProvider with ChangeNotifier {
         // Status aktualisieren, erst NACHDEM alles andere erledigt ist
         _isProcessingConfig = false;
         notifyListeners();
+        _saveSession();
 
         return true;
       } catch (e) {
@@ -1685,6 +1718,10 @@ class TrainingSessionProvider with ChangeNotifier {
   @override
   void dispose() {
     _cancelRestTimer();
+    // Session beim Training beenden automatisch löschen
+    if (_isTrainingCompleted) {
+      clearSavedSession();
+    }
     super.dispose();
   }
 
@@ -1823,6 +1860,7 @@ class TrainingSessionProvider with ChangeNotifier {
       Future.microtask(() {
         _isProcessingConfig = false;
         notifyListeners();
+        _saveSession();
       });
 
       _log(
@@ -1920,5 +1958,97 @@ class TrainingSessionProvider with ChangeNotifier {
       rirRangeMin: config.rirRangeMin,
       rirRangeMax: config.rirRangeMax,
     );
+  }
+
+  // Private Methode zum Speichern der Session
+  Future<void> _saveSession() async {
+    if (_trainingPlan == null || _trainingDay == null) {
+      return;
+    }
+    
+    // Debug-Log
+    _log('Speichere Session: Plan=${_trainingPlan?.id}, Day=${_trainingDay?.id}, CurrentSession=${_currentSession?.id}');
+
+    try {
+      final activeSession = ActiveTrainingSession(
+        trainingPlan: _trainingPlan!,
+        trainingDay: _trainingDay!,
+        dayIndex: _dayIndex,
+        weekIndex: _weekIndex,
+      );
+
+      // Kopiere alle Zustandsdaten
+      activeSession.currentSession = _currentSession;
+      activeSession.hasBeenSaved = _hasBeenSaved;
+      activeSession.currentExerciseIndex = _currentExerciseIndex;
+      activeSession.exerciseSets = Map.from(_exerciseSets);
+      activeSession.activeSetByExercise = Map.from(_activeSetByExercise);
+      activeSession.exerciseCompletionStatus = Map.from(_exerciseCompletionStatus);
+      activeSession.lastCompletedSetIndexByExercise = Map.from(_lastCompletedSetIndexByExercise);
+      activeSession.isResting = _isResting;
+      activeSession.restTimeRemaining = _restTimeRemaining;
+      activeSession.isPaused = _isPaused;
+      activeSession.isTrainingCompleted = _isTrainingCompleted;
+      activeSession.originalExercises = Map.from(_originalExercises);
+      activeSession.exerciseConfigModified = Map.from(_exerciseConfigModified);
+      activeSession.addedExercises = List.from(_addedExercises);
+      activeSession.deletedExercises = List.from(_deletedExercises);
+
+      await _sessionPersistenceService.saveSession(activeSession);
+    } catch (e) {
+      _log('Fehler beim Speichern der Session: $e');
+    }
+  }
+
+  // Öffentliche Methode zum Laden einer gespeicherten Session
+  Future<bool> loadSavedSession() async {
+    try {
+      final savedSession = await _sessionPersistenceService.loadSession();
+      if (savedSession == null) {
+        return false;
+      }
+
+      // Lade alle Daten aus der gespeicherten Session
+      _trainingPlan = savedSession.trainingPlan;
+      _trainingDay = savedSession.trainingDay;
+      _dayIndex = savedSession.dayIndex;
+      _weekIndex = savedSession.weekIndex;
+      _currentSession = savedSession.currentSession;
+      _hasBeenSaved = savedSession.hasBeenSaved;
+      _currentExerciseIndex = savedSession.currentExerciseIndex;
+      _exerciseSets = Map.from(savedSession.exerciseSets);
+      _activeSetByExercise = Map.from(savedSession.activeSetByExercise);
+      _exerciseCompletionStatus = Map.from(savedSession.exerciseCompletionStatus);
+      _lastCompletedSetIndexByExercise = Map.from(savedSession.lastCompletedSetIndexByExercise);
+      _isResting = savedSession.isResting;
+      _restTimeRemaining = savedSession.restTimeRemaining;
+      _isPaused = savedSession.isPaused;
+      _isTrainingCompleted = savedSession.isTrainingCompleted;
+      _originalExercises = Map.from(savedSession.originalExercises);
+      _exerciseConfigModified = Map.from(savedSession.exerciseConfigModified);
+      _addedExercises = List.from(savedSession.addedExercises);
+      _deletedExercises = List.from(savedSession.deletedExercises);
+
+      // Starte Timer neu wenn nötig
+      if (_isResting && !_isPaused && _restTimeRemaining > 0) {
+        startRestTimer();
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _log('Fehler beim Laden der Session: $e');
+      return false;
+    }
+  }
+
+  // Methode zum Prüfen ob eine gespeicherte Session existiert
+  Future<bool> hasSavedSession() async {
+    return await _sessionPersistenceService.hasActiveSession();
+  }
+
+  // Methode zum Löschen der gespeicherten Session
+  Future<void> clearSavedSession() async {
+    await _sessionPersistenceService.clearSession();
   }
 }

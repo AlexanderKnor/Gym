@@ -57,6 +57,9 @@ class TrainingPlanModel {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Factory-Methode zum Erstellen aus Map von Firestore
   factory TrainingPlanModel.fromMap(Map<String, dynamic> map) {
     return TrainingPlanModel(
@@ -76,6 +79,9 @@ class TrainingPlanModel {
           : null,
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory TrainingPlanModel.fromJson(Map<String, dynamic> json) => TrainingPlanModel.fromMap(json);
 
   // Factory-Methode für neuen Plan
   factory TrainingPlanModel.create(String name, int frequency) {

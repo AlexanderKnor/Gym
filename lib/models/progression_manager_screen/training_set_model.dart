@@ -47,4 +47,32 @@ class TrainingSetModel {
       empfehlungBerechnet: empfehlungBerechnet ?? this.empfehlungBerechnet,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'kg': kg,
+      'wiederholungen': wiederholungen,
+      'rir': rir,
+      'abgeschlossen': abgeschlossen,
+      'empfKg': empfKg,
+      'empfWiederholungen': empfWiederholungen,
+      'empfRir': empfRir,
+      'empfehlungBerechnet': empfehlungBerechnet,
+    };
+  }
+
+  factory TrainingSetModel.fromJson(Map<String, dynamic> json) {
+    return TrainingSetModel(
+      id: json['id'],
+      kg: (json['kg'] ?? 0).toDouble(),
+      wiederholungen: json['wiederholungen'] ?? 0,
+      rir: json['rir'] ?? 0,
+      abgeschlossen: json['abgeschlossen'] ?? false,
+      empfKg: json['empfKg']?.toDouble(),
+      empfWiederholungen: json['empfWiederholungen'],
+      empfRir: json['empfRir'],
+      empfehlungBerechnet: json['empfehlungBerechnet'] ?? false,
+    );
+  }
 }

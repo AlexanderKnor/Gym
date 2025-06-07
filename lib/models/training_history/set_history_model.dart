@@ -47,6 +47,9 @@ class SetHistoryModel {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Erstellen aus Map von Firestore
   factory SetHistoryModel.fromMap(Map<String, dynamic> map) {
     return SetHistoryModel(
@@ -59,6 +62,9 @@ class SetHistoryModel {
           map['timestamp'] != null ? DateTime.parse(map['timestamp']) : null,
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory SetHistoryModel.fromJson(Map<String, dynamic> json) => SetHistoryModel.fromMap(json);
 
   // Factory für einen neuen Satz aus TrainingSetModel
   factory SetHistoryModel.fromTrainingSet(

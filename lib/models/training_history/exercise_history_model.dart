@@ -69,6 +69,9 @@ class ExerciseHistoryModel {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Erstellen aus Map von Firestore
   factory ExerciseHistoryModel.fromMap(Map<String, dynamic> map) {
     return ExerciseHistoryModel(
@@ -85,6 +88,9 @@ class ExerciseHistoryModel {
       progressionProfileId: map['progressionProfileId'],
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory ExerciseHistoryModel.fromJson(Map<String, dynamic> json) => ExerciseHistoryModel.fromMap(json);
 
   // Factory für neue Exercise History
   factory ExerciseHistoryModel.fromExerciseModel(

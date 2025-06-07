@@ -15,6 +15,7 @@ import 'providers/profile_screen/profile_screen_provider.dart';
 import 'providers/profile_screen/friendship_provider.dart';
 import 'providers/friend_profile_screen/friend_profile_provider.dart';
 import 'screens/auth/auth_checker_screen.dart';
+import 'services/training/session_recovery_service.dart';
 
 void main() async {
   // Ensure Flutter widgets are initialized
@@ -26,13 +27,13 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set system UI overlay style for clean appearance
+  // Set dark system UI overlay style to prevent white flashing
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF000000), // Midnight
+      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
 
@@ -104,79 +105,88 @@ class _MyAppState extends State<MyApp> {
           create: (context) => FriendProfileProvider(),
         ),
       ],
-      child: MaterialApp(
-        title: 'Prover',
-        theme: ThemeData(
-          // Set color scheme to match training session screen
-          colorScheme: ColorScheme.light(
-            primary: Colors.black,
-            secondary: Colors.grey[800]!,
-            onPrimary: Colors.white,
-            onSecondary: Colors.white,
-            surface: Colors.white,
-            background: Colors.white,
-            error: Colors.red[700]!,
-          ),
+      child: Container(
+        color: const Color(0xFF000000), // Prevent any white background at root level
+        child: MaterialApp(
+          title: 'Prover',
+          theme: ThemeData(
+            brightness: Brightness.dark, // Enforce dark theme globally
+            // Comprehensive dark color scheme to prevent white flashing
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFFFF4500), // Orange
+              secondary: Color(0xFF48484A), // Steel
+              onPrimary: Color(0xFF000000), // Midnight
+              onSecondary: Color(0xFFFFFFFF), // Snow
+              surface: Color(0xFF1C1C1E), // Charcoal
+              background: Color(0xFF000000), // Midnight
+              onSurface: Color(0xFFFFFFFF), // Snow
+              onBackground: Color(0xFFFFFFFF), // Snow
+              error: Color(0xFFFF453A),
+            ),
+            scaffoldBackgroundColor: const Color(0xFF000000), // Midnight
+            canvasColor: const Color(0xFF000000), // Midnight
+            cardColor: const Color(0xFF1C1C1E), // Dark card background
+            dialogBackgroundColor: const Color(0xFF1C1C1E), // Dark dialog background
 
-          // Clean, modern typography
-          textTheme: TextTheme(
+          // Dark typography
+          textTheme: const TextTheme(
             titleLarge: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.5,
-              color: Colors.grey[900],
+              color: Color(0xFFFFFFFF), // Snow
             ),
             titleMedium: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.5,
-              color: Colors.grey[900],
+              color: Color(0xFFFFFFFF), // Snow
             ),
             titleSmall: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[900],
+              color: Color(0xFFFFFFFF), // Snow
             ),
             bodyLarge: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w400,
-              color: Colors.grey[800],
+              color: Color(0xFFAEAEB2), // Silver
             ),
             bodyMedium: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w400,
-              color: Colors.grey[800],
+              color: Color(0xFFAEAEB2), // Silver
             ),
             bodySmall: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: Colors.grey[600],
+              color: Color(0xFF8E8E93), // Mercury
             ),
           ),
 
-          // Clean app bar style
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.grey[900],
+          // Dark app bar style
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF000000), // Midnight background
+            foregroundColor: Color(0xFFFFFFFF), // Snow foreground
             elevation: 0,
             centerTitle: true,
             titleTextStyle: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.5,
-              color: Colors.grey[900],
+              color: Color(0xFFFFFFFF), // Snow
             ),
             iconTheme: IconThemeData(
-              color: Colors.grey[900],
+              color: Color(0xFFFFFFFF), // Snow
               size: 22,
             ),
           ),
 
-          // Modern button style
+          // Dark button style
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFFFF4500), // Orange
+              foregroundColor: const Color(0xFFFFFFFF), // Snow
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(
@@ -190,58 +200,56 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
 
-          // Matching text button style
+          // Dark text button style
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
-              foregroundColor: Colors.grey[800],
+              foregroundColor: const Color(0xFFAEAEB2), // Silver
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              textStyle: TextStyle(
+              textStyle: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[800],
+                color: Color(0xFFAEAEB2), // Silver
               ),
             ),
           ),
 
-          // Card style with subtle shadows
-          cardTheme: CardTheme(
-            color: Colors.white,
+          // Dark card style
+          cardTheme: const CardTheme(
+            color: Color(0xFF1C1C1E), // Charcoal
             elevation: 1,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.all(Radius.circular(16)),
             ),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
 
-          // Input decoration
-          inputDecorationTheme: InputDecorationTheme(
+          // Dark input decoration
+          inputDecorationTheme: const InputDecorationTheme(
             filled: true,
-            fillColor: Colors.grey[100],
+            fillColor: Color(0xFF2C2C2E), // Graphite
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.all(Radius.circular(12)),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             hintStyle: TextStyle(
-              color: Colors.grey[500],
+              color: Color(0xFF8E8E93), // Mercury
               fontSize: 15,
             ),
           ),
 
-          // Global scaffold background
-          scaffoldBackgroundColor: Colors.white,
-
           // Visual density
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: const AuthCheckerScreen(),
-        debugShowCheckedModeBanner: false,
+          home: const AuthCheckerScreen(),
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }

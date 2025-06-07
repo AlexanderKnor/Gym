@@ -7,6 +7,7 @@ import '../../providers/shared/navigation_provider.dart';
 import '../../providers/training_plans_screen/training_plans_screen_provider.dart';
 import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
+import '../../services/training/session_recovery_service.dart';
 import '../create_training_plan_screen/create_training_plan_screen.dart';
 import '../create_training_plan_screen/training_day_editor_screen.dart';
 import '../training_session_screen/training_session_screen.dart';
@@ -35,6 +36,8 @@ class _TrainingScreenState extends State<TrainingScreen>
   // Single orange accent
   static const Color _emberCore = Color(0xFFFF4500);
 
+  bool _sessionRecoveryChecked = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +53,19 @@ class _TrainingScreenState extends State<TrainingScreen>
     );
 
     _fadeController.forward();
+    
+    // Session-Recovery Check nach dem ersten Frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForSessionRecovery();
+    });
+  }
+
+  Future<void> _checkForSessionRecovery() async {
+    if (_sessionRecoveryChecked) return;
+    _sessionRecoveryChecked = true;
+    
+    final trainingProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
+    await SessionRecoveryService.checkAndRecoverSession(context, trainingProvider);
   }
 
   @override
@@ -537,14 +553,32 @@ class _TrainingScreenState extends State<TrainingScreen>
 
   void _startTraining(BuildContext context, TrainingPlanModel plan, int dayIndex, int weekIndex) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) {
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
           return ChangeNotifierProvider(
             create: (context) => TrainingSessionProvider(),
             child: TrainingSessionScreen(
               trainingPlan: plan,
               dayIndex: dayIndex,
               weekIndex: weekIndex,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 350),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Nur Background-Schutz, kein Layout-breaking Container
+          return ColoredBox(
+            color: const Color(0xFF000000), // Prevent white edges
+            child: FadeTransition(
+              opacity: Tween<double>(
+                begin: 0.0,
+                end: 1.0,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              )),
+              child: child,
             ),
           );
         },

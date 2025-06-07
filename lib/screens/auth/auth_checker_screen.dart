@@ -82,6 +82,8 @@ class _AuthCheckerScreenState extends State<AuthCheckerScreen>
       await friendshipProvider.refreshFriendData();
     }
 
+    // Session-Recovery Check wird im TrainingScreen durchgeführt
+
     // Start fade out animation
     await _transitionController.forward();
     

@@ -52,6 +52,9 @@ class PeriodizationModel {
     return map;
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Aus JSON erstellen
   factory PeriodizationModel.fromMap(Map<String, dynamic> map) {
     final dayConfigs =
@@ -80,6 +83,9 @@ class PeriodizationModel {
           map['startDate'] != null ? DateTime.parse(map['startDate']) : null,
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory PeriodizationModel.fromJson(Map<String, dynamic> json) => PeriodizationModel.fromMap(json);
 }
 
 class MicrocycleConfiguration {
@@ -130,6 +136,9 @@ class MicrocycleConfiguration {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Aus JSON erstellen
   factory MicrocycleConfiguration.fromMap(Map<String, dynamic> map) {
     return MicrocycleConfiguration(
@@ -141,4 +150,7 @@ class MicrocycleConfiguration {
       progressionProfileId: map['progressionProfileId'],
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory MicrocycleConfiguration.fromJson(Map<String, dynamic> json) => MicrocycleConfiguration.fromMap(json);
 }

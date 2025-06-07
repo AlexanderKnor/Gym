@@ -505,14 +505,32 @@ class _ActivePlanCardWidgetState extends State<ActivePlanCardWidget>
         widget.plan.isPeriodized ? plansProvider.currentWeekIndex : 0;
 
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) {
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
           return ChangeNotifierProvider(
             create: (context) => TrainingSessionProvider(),
             child: TrainingSessionScreen(
               trainingPlan: widget.plan,
               dayIndex: dayIndex,
               weekIndex: currentWeekIndex,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 350),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Nur Background-Schutz, kein Layout-breaking Container
+          return ColoredBox(
+            color: const Color(0xFF000000), // Prevent white edges
+            child: FadeTransition(
+              opacity: Tween<double>(
+                begin: 0.0,
+                end: 1.0,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              )),
+              child: child,
             ),
           );
         },

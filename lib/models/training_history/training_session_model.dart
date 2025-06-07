@@ -54,6 +54,9 @@ class TrainingSessionModel {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Erstellen aus Map von Firestore
   factory TrainingSessionModel.fromMap(Map<String, dynamic> map) {
     return TrainingSessionModel(
@@ -68,6 +71,9 @@ class TrainingSessionModel {
       isCompleted: map['isCompleted'] ?? false,
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory TrainingSessionModel.fromJson(Map<String, dynamic> json) => TrainingSessionModel.fromMap(json);
 
   // Factory für neue Session
   factory TrainingSessionModel.create(

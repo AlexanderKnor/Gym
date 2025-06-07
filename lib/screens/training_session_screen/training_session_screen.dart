@@ -16,12 +16,14 @@ class TrainingSessionScreen extends StatefulWidget {
   final TrainingPlanModel trainingPlan;
   final int dayIndex;
   final int weekIndex; // Neuer Parameter für den Mikrozyklus
+  final bool isRecoveredSession; // Neuer Parameter für wiederhergestellte Sessions
 
   const TrainingSessionScreen({
     Key? key,
     required this.trainingPlan,
     required this.dayIndex,
     this.weekIndex = 0, // Standard: erste Woche
+    this.isRecoveredSession = false, // Standard: neue Session
   }) : super(key: key);
 
   @override
@@ -63,6 +65,21 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   void initState() {
     super.initState();
 
+    // IMMEDIATE dark system UI to prevent ANY white flashing
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: _midnight,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: _midnight,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
+    
+    // Force dark system navigation bar immediately
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      systemNavigationBarColor: _midnight,
+      systemNavigationBarDividerColor: _midnight,
+    ));
+
     // Initialize exercise navigation animation controller
     _exerciseNavAnimationController = AnimationController(
       duration: const Duration(milliseconds: 450), // Slightly longer for smoother feel
@@ -71,7 +88,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
 
     // Initialize screen entrance animation controller
     _screenEntranceController = AnimationController(
-      duration: const Duration(milliseconds: 600), // Smooth entrance duration
+      duration: const Duration(milliseconds: 800), // Longer for smoother entrance
       vsync: this,
     );
 
@@ -119,14 +136,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       curve: Curves.easeOutCubic,
     ));
 
-    // Set dark system UI overlay style
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: _midnight,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ));
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeSessionWithDelay();
     });
@@ -134,38 +143,33 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
 
   Future<void> _initializeSessionWithDelay() async {
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Minimale Verzögerung für nahtlosen Übergang
+      await Future.delayed(const Duration(milliseconds: 100));
 
       if (!mounted) return;
-
-      setState(() {
-        _isLoading = true;
-      });
 
       final sessionProvider =
           Provider.of<TrainingSessionProvider>(context, listen: false);
 
-      // Übergebe den Mikrozyklus-Index an den Provider
-      await sessionProvider.startTrainingSession(
-          widget.trainingPlan, widget.dayIndex, widget.weekIndex);
+      // Prüfe ob es eine wiederhergestellte Session ist
+      if (!widget.isRecoveredSession) {
+        // Normale neue Session - starte Training
+        await sessionProvider.startTrainingSession(
+            widget.trainingPlan, widget.dayIndex, widget.weekIndex);
+      }
+      // Bei wiederhergestellter Session: Provider hat bereits alle Daten geladen
 
       if (mounted) {
         _initializeTabController();
-      }
-
-      if (mounted) {
+        
         setState(() {
           _startupComplete = true;
           _isLoading = false;
           _lastKnownExerciseIndex = sessionProvider.currentExerciseIndex;
         });
         
-        // Start screen entrance animation after everything is loaded
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            _screenEntranceController.forward();
-          }
-        });
+        // Start screen entrance animation immediately
+        _screenEntranceController.forward();
       }
     } catch (e) {
       print('Fehler bei der Initialisierung der Trainingssession: $e');
@@ -314,63 +318,91 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: _midnight,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _emberCore.withOpacity(0.15),
-                  border:
-                      Border.all(color: _emberCore.withOpacity(0.4), width: 2),
+    // Vollständig abgedichteter loading state gegen weiße Ränder
+    if (_isLoading || !_startupComplete) {
+      return Container(
+        color: _midnight, // Root container for edge protection
+        child: Material(
+          color: _midnight,
+          child: Scaffold(
+            backgroundColor: _midnight,
+            extendBodyBehindAppBar: true,
+            extendBody: true,
+            body: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: _midnight, // Zusätzliche Absicherung
+              child: SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                // Elegant pulsing icon mit reversibler Animation
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 1000),
+                  tween: Tween(begin: 0.9, end: 1.0),
+                  onEnd: () {
+                    // Kontinuierliches Pulsing durch Rebuild
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                  builder: (context, scale, child) {
+                    return Transform.scale(
+                      scale: scale,
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _emberCore.withOpacity(0.08),
+                          border: Border.all(
+                            color: _emberCore.withOpacity(0.25), 
+                            width: 1
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.fitness_center_rounded,
+                          size: 28,
+                          color: _emberCore,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                child: const Icon(
-                  Icons.fitness_center_rounded,
-                  size: 40,
-                  color: _emberCore,
+                
+                const SizedBox(height: 24),
+                
+                // Clean title text mit expliziter Textdefinition
+                Text(
+                  widget.isRecoveredSession 
+                    ? 'Session wiederherstellen'
+                    : 'Training starten',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: _snow,
+                    letterSpacing: -0.3,
+                    decoration: TextDecoration.none, // Explizit keine Unterstreichung
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Minimaler progress indicator
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(_emberCore.withOpacity(0.4)),
+                    backgroundColor: Colors.transparent,
+                  ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
-              const Text(
-                'Dein Training wird vorbereitet',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _snow,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Gleich kann es losgehen...',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: _silver,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (!_startupComplete) {
-      return Scaffold(
-        backgroundColor: _midnight,
-        body: Center(
-          child: SizedBox(
-            width: 32,
-            height: 32,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: const AlwaysStoppedAnimation<Color>(_emberCore),
             ),
           ),
         ),
@@ -388,22 +420,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               builder: (context, sessionProvider, child) {
         if (sessionProvider.isTrainingCompleted) {
           return const TrainingCompletionWidget();
-        }
-
-        if (!_initialized || sessionProvider.exercises.isEmpty) {
-          return Scaffold(
-            backgroundColor: _midnight,
-            body: Center(
-              child: SizedBox(
-                width: 32,
-                height: 32,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: const AlwaysStoppedAnimation<Color>(_emberCore),
-                ),
-              ),
-            ),
-          );
         }
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1274,9 +1290,25 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                       final sessionProvider =
                           Provider.of<TrainingSessionProvider>(context,
                               listen: false);
-                      sessionProvider.completeTraining();
+                      
+                      // Training als abgeschlossen markieren und in DB speichern
+                      await sessionProvider.completeTraining();
+                      
+                      // Sicherheitshalber nochmals clearSavedSession aufrufen
+                      await sessionProvider.clearSavedSession();
+                      
                     } catch (e) {
                       print('Fehler beim Beenden des Trainings: $e');
+                      
+                      // Auch bei Fehlern die Session löschen
+                      try {
+                        final sessionProvider =
+                            Provider.of<TrainingSessionProvider>(context,
+                                listen: false);
+                        await sessionProvider.clearSavedSession();
+                      } catch (clearError) {
+                        print('Fehler beim Löschen der Session: $clearError');
+                      }
                     }
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();

@@ -34,6 +34,9 @@ class TrainingDayModel {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // Factory-Methode zum Erstellen aus Map von Firestore
   factory TrainingDayModel.fromMap(Map<String, dynamic> map) {
     return TrainingDayModel(
@@ -45,4 +48,7 @@ class TrainingDayModel {
           [],
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory TrainingDayModel.fromJson(Map<String, dynamic> json) => TrainingDayModel.fromMap(json);
 }

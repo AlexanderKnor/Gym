@@ -81,6 +81,9 @@ class ExerciseModel {
     };
   }
 
+  // Alias für JSON-Serialisierung
+  Map<String, dynamic> toJson() => toMap();
+
   // fromMap() Factory-Methode für Firestore
   factory ExerciseModel.fromMap(Map<String, dynamic> map) {
     return ExerciseModel(
@@ -98,4 +101,7 @@ class ExerciseModel {
       progressionProfileId: map['progressionProfileId'],
     );
   }
+
+  // Alias für JSON-Deserialisierung
+  factory ExerciseModel.fromJson(Map<String, dynamic> json) => ExerciseModel.fromMap(json);
 }

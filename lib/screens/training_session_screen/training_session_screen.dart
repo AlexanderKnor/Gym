@@ -73,12 +73,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       systemNavigationBarIconBrightness: Brightness.light,
     ));
     
-    // Force dark system navigation bar immediately
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      systemNavigationBarColor: _midnight,
-      systemNavigationBarDividerColor: _midnight,
-    ));
+    // Force immersive mode immediately to prevent any system UI during loading
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     // Initialize exercise navigation animation controller
     _exerciseNavAnimationController = AnimationController(

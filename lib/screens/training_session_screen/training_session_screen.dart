@@ -8,6 +8,8 @@ import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
+import '../../providers/shared/navigation_provider.dart';
+import '../main_screen.dart';
 import '../../widgets/training_session_screen/exercise_tab_widget.dart';
 import '../../widgets/training_session_screen/rest_timer_widget.dart';
 import '../../widgets/training_session_screen/training_completion_widget.dart';
@@ -1288,20 +1290,19 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
-                    // BUGFIX: Navigation VOR completeTraining um Completion Widget Flash zu vermeiden
+                    // BUGFIX: Session cleanup ZUERST, dann Navigation
                     Navigator.of(context).pop(); // Close dialog
-                    Navigator.of(context).pop(); // Close training session screen
                     
                     try {
                       final sessionProvider =
                           Provider.of<TrainingSessionProvider>(context,
                               listen: false);
                       
+                      // Session SOFORT löschen um Recovery Dialog zu verhindern
+                      await sessionProvider.clearSavedSession();
+                      
                       // Training als abgeschlossen markieren und in DB speichern
                       await sessionProvider.completeTraining();
-                      
-                      // Sicherheitshalber nochmals clearSavedSession aufrufen
-                      await sessionProvider.clearSavedSession();
                       
                     } catch (e) {
                       print('Fehler beim Beenden des Trainings: $e');
@@ -1315,6 +1316,36 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                       } catch (clearError) {
                         print('Fehler beim Löschen der Session: $clearError');
                       }
+                    }
+                    
+                    // Sanfte Navigation ohne Screen-Überlappung
+                    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                    navigationProvider.setCurrentIndex(0); // Training Tab setzen
+                    
+                    // Context prüfen und Navigation
+                    if (context.mounted) {
+                      // Saubere Navigation ohne Überlappung
+                      Navigator.of(context).pushAndRemoveUntil(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return const MainScreen();
+                        },
+                        transitionDuration: const Duration(milliseconds: 500),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                            opacity: Tween<double>(
+                              begin: 0.0,
+                              end: 1.0,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOut,
+                            )),
+                            child: child,
+                          );
+                        },
+                      ),
+                      (route) => false, // Remove all previous routes
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(

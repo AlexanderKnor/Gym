@@ -694,6 +694,12 @@ class TrainingSessionProvider with ChangeNotifier {
     } else {
       // Es gibt noch offene Übungen, wechsle zur nächsten
       _currentExerciseIndex = nextOpenExerciseIndex;
+      
+      // Timer-Zustand zurücksetzen beim Übungswechsel
+      _isResting = false;
+      _isPaused = false;
+      _restTimeRemaining = 0;
+      _cancelRestTimer();
     }
     
     // Kein notifyListeners() hier - das wird bereits in completeCurrentSet() aufgerufen

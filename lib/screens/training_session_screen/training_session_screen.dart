@@ -611,13 +611,19 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               // Main content
               Column(
                 children: [
-                  // Rest timer if active
-                  if (sessionProvider.isResting)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0, vertical: 16.0),
-                      child: RestTimerWidget(),
-                    ),
+                  // Rest timer with smooth transitions
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: sessionProvider.isResting ? null : 0,
+                    curve: Curves.easeInOut,
+                    child: sessionProvider.isResting
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0, vertical: 16.0),
+                            child: RestTimerWidget(),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
 
                   // Exercise content
                   Expanded(

@@ -17,11 +17,8 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-  
+class _MainScreenState extends State<MainScreen> {
+
   // Ultra-refined color system
   static const Color _midnight = Color(0xFF000000);
   static const Color _obsidian = Color(0xFF0F0F0F);
@@ -32,7 +29,7 @@ class _MainScreenState extends State<MainScreen>
   static const Color _silver = Color(0xFFAEAEB2);
   static const Color _platinum = Color(0xFFE5E5EA);
   static const Color _snow = Color(0xFFFFFFFF);
-  
+
   // Signature orange gradient system
   static const Color _emberCore = Color(0xFFFF4500);
   static const Color _emberBright = Color(0xFFFF6B35);
@@ -51,27 +48,6 @@ class _MainScreenState extends State<MainScreen>
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
-
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _fadeController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
   }
 
   @override
@@ -89,10 +65,7 @@ class _MainScreenState extends State<MainScreen>
     return Scaffold(
       backgroundColor: _midnight,
       extendBodyBehindAppBar: true,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: screens[navigationProvider.currentIndex],
-      ),
+      body: screens[navigationProvider.currentIndex],
       bottomNavigationBar: const BottomNavigationBarWidget(),
     );
   }

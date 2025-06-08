@@ -478,22 +478,7 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Row(
                         children: [
-                          // Close button
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _showExitConfirmation(context),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  size: 20,
-                                  color: _snow,
-                                ),
-                              ),
-                            ),
-                          ),
+                          const SizedBox(width: 44), // Balance for close button
 
                           // Title
                           Expanded(
@@ -519,18 +504,33 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                             ),
                           ),
 
-                          const SizedBox(width: 44), // Balance for close button
+                          // Close button
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _showExitConfirmation(context),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  size: 20,
+                                  color: _snow,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
 
                     // Exercise navigation indicator
-                    GestureDetector(
-                      onTap: _toggleExerciseNavigation,
-                      child: Container(
-                        height: 50,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: GestureDetector(
+                        onTap: _toggleExerciseNavigation,
                         child: Container(
+                          height: 50,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(

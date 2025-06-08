@@ -9,7 +9,7 @@ import '../../providers/progression_manager_screen/progression_manager_provider.
 import '../../models/training_plan_screen/exercise_model.dart';
 import '../../models/progression_manager_screen/training_set_model.dart';
 import 'exercise_set_widget.dart';
-import '../../screens/strength_calculator_screen/strength_calculator_screen.dart';
+import 'strength_calculator_dialog.dart';
 import '../../widgets/shared/standard_increment_wheel_widget.dart';
 import '../../widgets/shared/rest_period_wheel_widget.dart';
 import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
@@ -404,21 +404,21 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final sessionProvider =
         Provider.of<TrainingSessionProvider>(context, listen: false);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => StrengthCalculatorScreen(
-          onApplyValues: (calculatedWeight, targetReps, targetRIR) {
-            final activeSetId =
-                sessionProvider.getActiveSetIdForCurrentExercise();
-            sessionProvider.applyCustomValues(
-              widget.exerciseIndex,
-              activeSetId,
-              calculatedWeight,
-              targetReps,
-              targetRIR,
-            );
-          },
-        ),
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => StrengthCalculatorDialog(
+        onApplyValues: (calculatedWeight, targetReps, targetRIR) {
+          final activeSetId =
+              sessionProvider.getActiveSetIdForCurrentExercise();
+          sessionProvider.applyCustomValues(
+            widget.exerciseIndex,
+            activeSetId,
+            calculatedWeight,
+            targetReps,
+            targetRIR,
+          );
+        },
       ),
     );
   }
@@ -729,7 +729,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Container(
                 key: _actionBarKey, // GlobalKey für Positionsreferenz
-                height: 34,
+                height: 42, // Erhöht für bessere Button-Darstellung
                 decoration: BoxDecoration(
                   color: _charcoal.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(12),
@@ -749,27 +749,27 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           child: Opacity(
                             opacity: allSetsCompleted ? 0.5 : 1.0,
                             child: Container(
-                              height: 34,
+                              height: 42,
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                                  const EdgeInsets.symmetric(horizontal: 10),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.calculate_outlined,
-                                    size: 18,
+                                    size: 16,
                                     color: allSetsCompleted ? _mercury : _snow,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Text(
                                     'Rechner',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                       color: allSetsCompleted ? _mercury : _snow,
+                                      letterSpacing: -0.2,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -826,27 +826,27 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           child: Opacity(
                             opacity: 1.0, // Immer volle Opacity
                             child: Container(
-                              height: 34,
+                              height: 42,
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                                  const EdgeInsets.symmetric(horizontal: 10),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.bolt,
-                                    size: 18,
+                                    size: 16,
                                     color: _emberCore, // Immer orange
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Text(
                                     'Progress',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                       color: _snow, // Immer weiß
+                                      letterSpacing: -0.2,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -880,18 +880,18 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                               children: [
                                 Icon(
                                   Icons.tune,
-                                  size: 18,
+                                  size: 16,
                                   color: _snow,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 4),
                                 Text(
                                   'Bearbeiten',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                     color: _snow,
+                                    letterSpacing: -0.2,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),

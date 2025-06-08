@@ -25,12 +25,8 @@ class _TrainingScreenState extends State<TrainingScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _heroController;
-  late AnimationController _parallaxController;
-  late AnimationController _pulseController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _heroScaleAnimation;
-  late Animation<double> _parallaxAnimation;
-  late Animation<double> _pulseAnimation;
 
   // Sophisticated color system
   static const Color _void = Color(0xFF000000);
@@ -66,16 +62,6 @@ class _TrainingScreenState extends State<TrainingScreen>
       vsync: this,
     );
 
-    _parallaxController = AnimationController(
-      duration: const Duration(seconds: 20),
-      vsync: this,
-    )..repeat();
-
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOutQuart,
@@ -84,16 +70,6 @@ class _TrainingScreenState extends State<TrainingScreen>
     _heroScaleAnimation = CurvedAnimation(
       parent: _heroController,
       curve: const Cubic(0.175, 0.885, 0.32, 1.275),
-    );
-
-    _parallaxAnimation = CurvedAnimation(
-      parent: _parallaxController,
-      curve: Curves.linear,
-    );
-
-    _pulseAnimation = CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
     );
 
     _fadeController.forward();
@@ -124,8 +100,6 @@ class _TrainingScreenState extends State<TrainingScreen>
   void dispose() {
     _fadeController.dispose();
     _heroController.dispose();
-    _parallaxController.dispose();
-    _pulseController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -141,61 +115,6 @@ class _TrainingScreenState extends State<TrainingScreen>
       backgroundColor: _void,
       body: Stack(
         children: [
-          // Dynamic gradient mesh background
-          AnimatedBuilder(
-            animation: _parallaxAnimation,
-            builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment(
-                      math.sin(_parallaxAnimation.value * 2 * math.pi) * 0.5,
-                      math.cos(_parallaxAnimation.value * 2 * math.pi) * 0.5 -
-                          0.5,
-                    ),
-                    radius: 1.5,
-                    colors: [
-                      _nebula.withOpacity(0.8),
-                      _cosmos.withOpacity(0.9),
-                      _void,
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                ),
-              );
-            },
-          ),
-
-          // Single subtle glow particle - top left
-          Positioned(
-            top: 100.0,
-            left: 50.0,
-            child: AnimatedBuilder(
-              animation: _parallaxAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(
-                    math.sin(_parallaxAnimation.value * 2 * math.pi) * 30,
-                    math.cos(_parallaxAnimation.value * 2 * math.pi) * 30,
-                  ),
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          _proverCore.withOpacity(0.1),
-                          _proverCore.withOpacity(0),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
           // Main content
           SafeArea(
             bottom: false,
@@ -234,31 +153,25 @@ class _TrainingScreenState extends State<TrainingScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Logo
-                    AnimatedBuilder(
-                      animation: _pulseAnimation,
-                      builder: (context, child) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: _proverCore.withOpacity(
-                                  0.3 + (_pulseAnimation.value * 0.2)),
-                              width: 1,
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'PROVER',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: _nova,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        );
-                      },
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _proverCore.withOpacity(0.4),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'PROVER',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: _nova,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
                     ),
 
                     // Edit button
@@ -271,7 +184,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 7),
 
                 // Plan info
                 Column(
@@ -654,24 +567,18 @@ class _TrainingScreenState extends State<TrainingScreen>
                 alignment: Alignment.center,
                 children: [
                   // Glow effect
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Container(
-                        width: 140 + (_pulseAnimation.value * 20),
-                        height: 140 + (_pulseAnimation.value * 20),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              _proverCore.withOpacity(
-                                  0.3 * (1 - _pulseAnimation.value)),
-                              _proverCore.withOpacity(0),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                  Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          _proverCore.withOpacity(0.15),
+                          _proverCore.withOpacity(0),
+                        ],
+                      ),
+                    ),
                   ),
                   // Main logo
                   Container(

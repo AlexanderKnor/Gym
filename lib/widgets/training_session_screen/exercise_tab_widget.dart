@@ -568,91 +568,53 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  // Ultra-sanfter Auto-Scroll mit perfekter Glätte
+  // Auto-Scroll mit dynamischer Höhenberechnung
   Future<void> _scrollToActiveSet(int activeSetIndex, int totalSets) async {
     if (!_setsScrollController.hasClients || !mounted) return;
     
-    // Erweiterte Wartezeit für vollständige Widget-Stabilisierung
+    // Längere Wartezeit für vollständigen Widget-Build
     await Future.delayed(const Duration(milliseconds: 100));
     
-    // Doppelte Überprüfung der Controller-Verfügbarkeit
     if (!_setsScrollController.hasClients || !mounted) return;
     
-    // Berechne die exakte Position basierend auf Action Bar
-    double? targetScrollOffset = _calculatePreciseScrollOffset(activeSetIndex);
-    
-    if (targetScrollOffset == null) {
-      // Fallback auf approximierte Berechnung
-      targetScrollOffset = _calculateFallbackScrollOffset(activeSetIndex);
-    }
-    
-    // Sichere Grenzen mit zusätzlicher Validierung
-    final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
-    final double minScrollExtent = _setsScrollController.position.minScrollExtent;
-    final double finalOffset = targetScrollOffset.clamp(minScrollExtent, maxScrollExtent);
-    
-    // Präziser Performance-Check
-    final double currentOffset = _setsScrollController.offset;
-    const double scrollThreshold = 10.0; // Noch präziser
-    
-    if ((finalOffset - currentOffset).abs() < scrollThreshold) {
-      return; // Bereits optimal positioniert
-    }
-    
-    try {
-      // Berechne optimale Animation-Parameter für maximale Sanftheit
-      final double scrollDistance = (finalOffset - currentOffset).abs();
-      
-      // Frame-Rate optimierte Dauer-Berechnung für perfekte Sanftheit
-      // Ziel: ~60fps mit smooth interpolation
-      final double pixelsPerSecond = 120.0; // Sanfte Geschwindigkeit
-      final int calculatedDuration = (scrollDistance / pixelsPerSecond * 1000).round();
-      final int duration = calculatedDuration.clamp(400, 1200); // Realistische Grenzen
-      
-      // Experimentiere mit verschiedenen Curves für maximale Sanftheit
-      Curve animationCurve;
-      
-      if (scrollDistance < 50) {
-        // Sehr kurze Distanz: Linear für absolute Glätte
-        animationCurve = Curves.linear;
-      } else if (scrollDistance < 150) {
-        // Mittlere Distanz: Sanfte Deceleration
-        animationCurve = Curves.easeOut;
-      } else {
-        // Lange Distanz: Ultra-sanfte exponentielle Kurve
-        animationCurve = Curves.easeOutExpo;
-      }
-      
-      // Ultra-sanfte Animation mit perfekter Frame-Rate
-      await _setsScrollController.animateTo(
-        finalOffset,
-        duration: Duration(milliseconds: duration),
-        curve: animationCurve,
+    // Verwende die gespeicherten Keys um die exakte Position zu finden
+    final targetKey = _setKeys[activeSetIndex];
+    if (targetKey?.currentContext != null) {
+      // Scrolle zum spezifischen Widget
+      await Scrollable.ensureVisible(
+        targetKey!.currentContext!,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0, // 0.0 = oben, 1.0 = unten
       );
       
-      // Verzögerte haptische Rückmeldung für natürlicheres Gefühl
-      if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        HapticFeedback.selectionClick();
+      // Haptisches Feedback
+      if (mounted && activeSetIndex > 0) {
+        HapticFeedback.lightImpact();
       }
+    } else {
+      // Fallback: Verwende geschätzte Höhe
+      const double estimatedSetHeight = 110.0;
+      final double targetOffset = activeSetIndex * estimatedSetHeight;
+      final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
+      final double finalOffset = targetOffset.clamp(0.0, maxScrollExtent);
       
-    } catch (e) {
-      // Sanftes Fallback auch bei Fehlern
-      if (mounted && _setsScrollController.hasClients) {
-        try {
-          await _setsScrollController.animateTo(
-            finalOffset,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeOut,
-          );
-        } catch (_) {
+      try {
+        await _setsScrollController.animateTo(
+          finalOffset,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+        );
+      } catch (e) {
+        if (mounted && _setsScrollController.hasClients) {
           _setsScrollController.jumpTo(finalOffset);
         }
       }
     }
   }
   
-  // Berechne exakte Scroll-Position basierend auf realen Widget-Positionen
+  // ENTFERNT: Komplexe Berechnungen nicht mehr n\u00f6tig
+  /*
   double? _calculatePreciseScrollOffset(int activeSetIndex) {
     try {
       // Action Bar Position ermitteln
@@ -676,7 +638,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
           final setPosition = setRenderBox.localToGlobal(Offset.zero);
           
           // Gewünschte Position: Satz direkt unter Action Bar mit optimiertem Gap
-          const double desiredGap = 16.0; // Etwas größerer Gap für bessere Optik
+          const double desiredGap = 8.0; // Kleinerer Gap für direktere Positionierung
           final double targetSetY = actionBarBottom + desiredGap;
           
           // Berechne erforderlichen Scroll-Offset
@@ -689,9 +651,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       }
       
       // Fallback: Verwende approximierte Position
-      const double desiredGap = 16.0;
+      const double desiredGap = 8.0;
       const double averageSetHeight = 104.0; // Gemessene Durchschnittshöhe
-      const double listTopPadding = 8.0;
+      const double listTopPadding = 4.0;
       
       final double targetSetY = actionBarBottom + desiredGap;
       final double listTop = listPosition.dy;
@@ -709,11 +671,11 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
   // Fallback-Berechnung falls keine genaue Position ermittelt werden kann
   double _calculateFallbackScrollOffset(int activeSetIndex) {
     // Approximierte Werte basierend auf typischer UI-Struktur
-    const double actionBarHeight = 38.0;
-    const double actionBarPadding = 16.0 + 8.0; // top + bottom padding
+    const double actionBarHeight = 34.0; // Neue reduzierte Höhe
+    const double actionBarPadding = 12.0 + 8.0; // top + bottom padding mit neuen Werten
     const double exerciseDetailsHeight = 0.0; // Nur wenn showDetails true ist
     const double setHeight = 108.0;
-    const double listTopPadding = 8.0;
+    const double listTopPadding = 4.0;
     
     // Berechne Position wo der aktive Satz beginnen soll
     final double actionBarTotalHeight = actionBarHeight + actionBarPadding;
@@ -723,6 +685,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final double setActualPosition = listTopPadding + (activeSetIndex * setHeight);
     return setActualPosition - targetSetPosition;
   }
+  */
 
   @override
   void dispose() {
@@ -759,17 +722,14 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Exercise details section - only show if enabled
-          if (widget.showDetails)
-            _buildExerciseDetailsButton(context, exercise),
 
           // Action Bar - immer sichtbar im Apple-Stil
           if (isActiveExercise)
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Container(
                 key: _actionBarKey, // GlobalKey für Positionsreferenz
-                height: 38,
+                height: 34,
                 decoration: BoxDecoration(
                   color: _charcoal.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(12),
@@ -789,9 +749,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           child: Opacity(
                             opacity: allSetsCompleted ? 0.5 : 1.0,
                             child: Container(
-                              height: 38,
+                              height: 34,
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                                  const EdgeInsets.symmetric(horizontal: 8),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -866,9 +826,9 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                           child: Opacity(
                             opacity: 1.0, // Immer volle Opacity
                             child: Container(
-                              height: 38,
+                              height: 34,
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                                  const EdgeInsets.symmetric(horizontal: 8),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -903,47 +863,37 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                       color: _steel.withOpacity(0.3),
                     ),
 
-                    // Zurück-Button - immer anzeigen, aber bei Bedarf ausgegraut
+                    // Übungseinstellungen-Button (verschoben vom unteren Bereich)
                     Expanded(
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: !_hasCompletedSets(
-                                  sessionProvider.currentExerciseSets)
-                              ? null
-                              : () =>
-                                  _showActionsMenu(context, sessionProvider),
+                          onTap: () => _showExerciseEditor(context, exercise),
                           borderRadius: BorderRadius.circular(12),
-                          child: Opacity(
-                            opacity: !_hasCompletedSets(
-                                    sessionProvider.currentExerciseSets)
-                                ? 0.5
-                                : 1.0,
-                            child: Container(
-                              height: 38,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.replay_rounded,
-                                    size: 18,
-                                    color: !_hasCompletedSets(sessionProvider.currentExerciseSets) ? _mercury : _snow,
+                          child: Container(
+                            height: 38,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.tune,
+                                  size: 18,
+                                  color: _snow,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Bearbeiten',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: _snow,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Zurück',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: !_hasCompletedSets(sessionProvider.currentExerciseSets) ? _mercury : _snow,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -1105,7 +1055,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     return ListView.builder(
       key: _setListKey,
       controller: _setsScrollController,
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: sets.length,
       itemBuilder: (context, index) {
         final set = sets[index];
@@ -1139,6 +1089,14 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                     'rir': set.empfRir,
                   }
                 : null,
+            onReactivate: set.abgeschlossen && isActiveExercise && 
+                set.id == _getLastCompletedSetId(sets)
+                ? () {
+                    HapticFeedback.mediumImpact();
+                    sessionProvider.reactivateLastCompletedSet(
+                        sessionProvider.currentExerciseIndex);
+                  }
+                : null,
           ),
         );
       },
@@ -1166,5 +1124,16 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
       }
     }
     return false;
+  }
+  
+  // Neue Funktion: Findet die ID des letzten abgeschlossenen Satzes
+  int? _getLastCompletedSetId(List<TrainingSetModel> sets) {
+    // Durchlaufe die Sätze in umgekehrter Reihenfolge
+    for (int i = sets.length - 1; i >= 0; i--) {
+      if (sets[i].abgeschlossen) {
+        return sets[i].id;
+      }
+    }
+    return null;
   }
 }

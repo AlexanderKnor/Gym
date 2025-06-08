@@ -13,6 +13,7 @@ class ExerciseSetWidget extends StatelessWidget {
   final bool isCompleted;
   final Function(String, dynamic) onValueChanged;
   final Map<String, dynamic>? recommendation;
+  final VoidCallback? onReactivate;
 
   // Clean color system matching training screen
   static const Color _midnight = Color(0xFF000000);
@@ -31,6 +32,7 @@ class ExerciseSetWidget extends StatelessWidget {
     required this.isCompleted,
     required this.onValueChanged,
     this.recommendation,
+    this.onReactivate,
   }) : super(key: key);
 
   // Prüft, ob Empfehlungen angezeigt werden sollen
@@ -134,7 +136,7 @@ class ExerciseSetWidget extends StatelessWidget {
               topRight: Radius.circular(15),
             ),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -231,8 +233,41 @@ class ExerciseSetWidget extends StatelessWidget {
 
                   const Spacer(),
 
-                  // Status-Icon: Nur Haken für abgeschlossene Sätze
-                  if (isCompleted)
+                  // Status-Icon und Reaktivieren-Button
+                  if (isCompleted && onReactivate != null) ...[                    
+                    // Reaktivieren-Button nur für den letzten abgeschlossenen Satz
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onReactivate,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.replay_rounded,
+                                color: Colors.green[700],
+                                size: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Reaktivieren',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]
+                  else if (isCompleted)
+                    // Normaler Haken für abgeschlossene Sätze ohne Reaktivieren-Option
                     Icon(
                       Icons.check_rounded,
                       color: Colors.green[700],
@@ -256,7 +291,7 @@ class ExerciseSetWidget extends StatelessWidget {
           if (isActive)
             // Spinner-Widgets für Werte im aktiven Zustand
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

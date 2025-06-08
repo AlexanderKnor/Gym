@@ -64,14 +64,14 @@ class RestTimerWidget extends StatelessWidget {
                 Text(
                   "${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}",
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                     color: restTimeRemaining <= 3
                         ? Colors.red
                         : restTimeRemaining <= 10
-                            ? Colors.orange
-                            : Colors.grey[800],
+                            ? _emberCore
+                            : _snow,
                   ),
                 ),
               ],
@@ -91,7 +91,7 @@ class RestTimerWidget extends StatelessWidget {
                     height: 4,
                     width: maxWidth,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: _steel.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                       boxShadow: [
                         BoxShadow(
@@ -117,8 +117,8 @@ class RestTimerWidget extends StatelessWidget {
                             colors: restTimeRemaining <= 3
                                 ? [Colors.red, Colors.red.shade800]
                                 : restTimeRemaining <= 10
-                                    ? [Colors.orange, Colors.deepOrange]
-                                    : [Colors.black, Colors.black87],
+                                    ? [_emberCore, _emberCore.withOpacity(0.8)]
+                                    : [_emberCore.withOpacity(0.7), _emberCore.withOpacity(0.5)],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),

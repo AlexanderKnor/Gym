@@ -1144,7 +1144,7 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
                 
                 const SizedBox(height: 32),
                 
-                // Clean stats grid
+                // Clean stats grid with duration
                 Row(
                   children: [
                     Expanded(
@@ -1154,12 +1154,20 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
                         'Übungen',
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _buildStatCard(
                         Icons.repeat_rounded,
                         totalSets.toString(),
                         'Sätze',
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        Icons.timer_rounded,
+                        _getFormattedDuration(),
+                        'Dauer',
                       ),
                     ),
                   ],
@@ -1170,6 +1178,32 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
         );
       },
     );
+  }
+
+  String _getFormattedDuration() {
+    final sessionProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
+    final session = sessionProvider.currentSession;
+    
+    if (session == null) return '0min';
+    
+    // Calculate duration from session start to now
+    final startTime = session.date;
+    final endTime = DateTime.now();
+    final duration = endTime.difference(startTime);
+    
+    final totalMinutes = duration.inMinutes;
+    
+    if (totalMinutes < 60) {
+      return '${totalMinutes}min';
+    } else {
+      final hours = totalMinutes ~/ 60;
+      final minutes = totalMinutes % 60;
+      if (minutes == 0) {
+        return '${hours}h';
+      } else {
+        return '${hours}h ${minutes}m';
+      }
+    }
   }
 
   Widget _buildMinimalSessionInfo(String planName, String dayName) {

@@ -1,5 +1,8 @@
 // lib/widgets/training_session_screen/training_completion_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../providers/shared/navigation_provider.dart';
@@ -14,8 +17,8 @@ class TrainingCompletionWidget extends StatefulWidget {
 }
 
 class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
-    with SingleTickerProviderStateMixin {
-  // Clean color system matching training screen
+    with TickerProviderStateMixin {
+  // Unified color system matching training session
   static const Color _midnight = Color(0xFF000000);
   static const Color _charcoal = Color(0xFF1C1C1E);
   static const Color _graphite = Color(0xFF2C2C2E);
@@ -27,45 +30,187 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
 
   bool _isSaving = false;
   bool _hasAskedForChanges = false;
-  bool _hasAskedForAddedExercises = false; // NEU: Für hinzugefügte Übungen
-  bool _hasAskedForDeletedExercises = false; // NEU: Für gelöschte Übungen
+  bool _hasAskedForAddedExercises = false;
+  bool _hasAskedForDeletedExercises = false;
   bool _saveCompleted = false;
-  late AnimationController _animationController;
+
+  // Enhanced animation system
+  late AnimationController _masterController;
+  late AnimationController _successPulseController;
+  late AnimationController _statsController;
+  late AnimationController _actionsController;
+  
+  // Entrance animations
+  late Animation<double> _fadeInAnimation;
+  late Animation<double> _slideUpAnimation;
   late Animation<double> _scaleAnimation;
+  
+  // Success indicator animations
+  late Animation<double> _successScaleAnimation;
+  late Animation<double> _successPulseAnimation;
+  late Animation<double> _successRotationAnimation;
+  
+  // Stats reveal animations
+  late Animation<double> _statsSlideAnimation;
+  late Animation<double> _statsFadeAnimation;
+  
+  // Action buttons animations
+  late Animation<double> _actionsSlideAnimation;
+  late Animation<double> _actionsFadeAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Configure animations
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
+    // Immediate dark UI
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: _midnight,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: _midnight,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
 
-    _scaleAnimation = Tween<double>(begin: 0.2, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.elasticOut,
-      ),
-    );
+    _initializeAnimations();
+    _startAnimationSequence();
 
-    // Start animations after short delay
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
-
-    // Initialize training completion process
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _saveTrainingAndCheckForChanges();
     });
   }
 
+  void _initializeAnimations() {
+    // Master controller for overall entrance
+    _masterController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    // Success pulse controller
+    _successPulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    // Stats controller
+    _statsController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    // Actions controller
+    _actionsController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    // Define entrance animations
+    _fadeInAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _masterController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+    ));
+
+    _slideUpAnimation = Tween<double>(
+      begin: 80.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _masterController,
+      curve: const Interval(0.1, 0.7, curve: Curves.easeOutCubic),
+    ));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _masterController,
+      curve: const Interval(0.0, 0.8, curve: Curves.elasticOut),
+    ));
+
+    // Success indicator animations
+    _successScaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _masterController,
+      curve: const Interval(0.3, 0.8, curve: Curves.elasticOut),
+    ));
+
+    _successPulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.15,
+    ).animate(CurvedAnimation(
+      parent: _successPulseController,
+      curve: Curves.easeInOut,
+    ));
+
+    _successRotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _masterController,
+      curve: const Interval(0.4, 0.9, curve: Curves.easeOutBack),
+    ));
+
+    // Stats animations
+    _statsSlideAnimation = Tween<double>(
+      begin: 40.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _statsController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _statsFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _statsController,
+      curve: Curves.easeOut,
+    ));
+
+    // Actions animations
+    _actionsSlideAnimation = Tween<double>(
+      begin: 30.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _actionsController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _actionsFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _actionsController,
+      curve: Curves.easeOut,
+    ));
+  }
+
+  void _startAnimationSequence() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (mounted) {
+      _masterController.forward();
+      
+      // Start continuous pulse for success indicator
+      _successPulseController.repeat(reverse: true);
+      
+      // Stagger additional animations
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (mounted) _statsController.forward();
+      
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) _actionsController.forward();
+    }
+  }
+
   @override
   void dispose() {
-    _animationController.dispose();
+    _masterController.dispose();
+    _successPulseController.dispose();
+    _statsController.dispose();
+    _actionsController.dispose();
     super.dispose();
   }
 
@@ -75,7 +220,7 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     final sessionProvider =
         Provider.of<TrainingSessionProvider>(context, listen: false);
 
-    // First save the training
+    // Save the training first
     await sessionProvider.completeTraining();
 
     if (mounted) {
@@ -83,342 +228,644 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
         _saveCompleted = true;
       });
 
-      // NEU: Prüfe zuerst, ob neue Übungen hinzugefügt wurden
-      if (sessionProvider.hasAddedExercises && !_hasAskedForAddedExercises) {
-        _showSaveAddedExercisesDialog(sessionProvider);
-        setState(() {
-          _hasAskedForAddedExercises = true;
-        });
-        return; // Weitere Dialoge erst nach diesem Dialog anzeigen
-      }
+      // Wait for initial animations to complete before showing dialogs
+      await Future.delayed(const Duration(milliseconds: 1800));
+      
+      if (!mounted) return;
 
-      // NEU: Prüfe dann, ob Übungen gelöscht wurden
-      if (sessionProvider.hasDeletedExercises &&
-          !_hasAskedForDeletedExercises) {
-        _showSaveDeletedExercisesDialog(sessionProvider);
-        setState(() {
-          _hasAskedForDeletedExercises = true;
-        });
-        return; // Weitere Dialoge erst nach diesem Dialog anzeigen
-      }
-
-      // Check if there were modifications to the training plan
-      if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
-        _showSaveChangesDialog(sessionProvider);
-        setState(() {
-          _hasAskedForChanges = true;
-        });
-      }
+      // Check for changes sequentially with proper UX flow
+      await _checkForChangesSequentially(sessionProvider);
     }
   }
 
-  void _showSaveChangesDialog(TrainingSessionProvider sessionProvider) {
-    showDialog(
+  Future<void> _checkForChangesSequentially(TrainingSessionProvider sessionProvider) async {
+    // Check for added exercises first
+    if (sessionProvider.hasAddedExercises && !_hasAskedForAddedExercises) {
+      await _showSaveAddedExercisesDialog(sessionProvider);
+      setState(() {
+        _hasAskedForAddedExercises = true;
+      });
+      if (!mounted) return;
+    }
+
+    // Then check for deleted exercises
+    if (sessionProvider.hasDeletedExercises && !_hasAskedForDeletedExercises) {
+      await _showSaveDeletedExercisesDialog(sessionProvider);
+      setState(() {
+        _hasAskedForDeletedExercises = true;
+      });
+      if (!mounted) return;
+    }
+
+    // Finally check for modified exercises
+    if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
+      await _showSaveChangesDialog(sessionProvider);
+      setState(() {
+        _hasAskedForChanges = true;
+      });
+    }
+  }
+
+  Future<void> _showSaveChangesDialog(TrainingSessionProvider sessionProvider) async {
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.save_outlined, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 8),
-            const Text('Änderungen speichern?'),
-          ],
-        ),
-        content: const Text(
-            'Du hast Änderungen an Übungen vorgenommen (Satzanzahl, Steigerung, Pause). '
-            'Möchtest du diese Änderungen in deinem Trainingsplan speichern?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Verwerfen'),
+      barrierColor: _midnight.withOpacity(0.95),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.3),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _saveChangesToTrainingPlan(sessionProvider);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _charcoal,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _steel.withOpacity(0.3),
+              width: 1,
             ),
-            child: const Text('Speichern'),
+            boxShadow: [
+              BoxShadow(
+                color: _midnight.withOpacity(0.6),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon and title
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _emberCore.withOpacity(0.15),
+                  border: Border.all(
+                    color: _emberCore.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.save_rounded,
+                  size: 32,
+                  color: _emberCore,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              const Text(
+                'Änderungen speichern?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _snow,
+                  letterSpacing: -0.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              Text(
+                'Du hast Änderungen an Übungen vorgenommen. Möchtest du diese in deinem Trainingsplan speichern?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: _silver,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _graphite,
+                          foregroundColor: _silver,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(
+                              color: _steel.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Verwerfen',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          HapticFeedback.mediumImpact();
+                          Navigator.pop(context);
+                          await _saveChangesToTrainingPlanWithFeedback(sessionProvider);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _emberCore,
+                          foregroundColor: _snow,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Speichern',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   // NEU: Dialog zur Speicherung hinzugefügter Übungen anzeigen
-  void _showSaveAddedExercisesDialog(TrainingSessionProvider sessionProvider) {
-    showDialog(
+  Future<void> _showSaveAddedExercisesDialog(TrainingSessionProvider sessionProvider) async {
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.add_circle_outline, color: Colors.blue[600]),
-            const SizedBox(width: 8),
-            const Text('Neue Übungen speichern?'),
-          ],
-        ),
-        content: const Text(
-            'Du hast während des Trainings neue Übungen hinzugefügt. '
-            'Möchtest du diese Übungen dauerhaft in deinem Trainingsplan speichern?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-
-              // Nach dem Schließen des Dialogs prüfen, ob es Änderungen gab
-              _continueWithNextDialogs(sessionProvider);
-            },
-            child: const Text('Verwerfen'),
+      barrierColor: _midnight.withOpacity(0.95),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.3),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _saveAddedExercisesToTrainingPlan(sessionProvider);
-
-              // Nach dem Speichern prüfen, ob es weitere Dialoge gibt
-              _continueWithNextDialogs(sessionProvider);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[600],
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _charcoal,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _steel.withOpacity(0.3),
+              width: 1,
             ),
-            child: const Text('Speichern'),
+            boxShadow: [
+              BoxShadow(
+                color: _midnight.withOpacity(0.6),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon and title
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _emberCore.withOpacity(0.15),
+                  border: Border.all(
+                    color: _emberCore.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.add_circle_outline_rounded,
+                  size: 32,
+                  color: _emberCore,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              const Text(
+                'Neue Übungen speichern?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _snow,
+                  letterSpacing: -0.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              Text(
+                'Du hast neue Übungen hinzugefügt. Möchtest du diese dauerhaft in deinem Trainingsplan speichern?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: _silver,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _graphite,
+                          foregroundColor: _silver,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(
+                              color: _steel.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Verwerfen',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          HapticFeedback.mediumImpact();
+                          Navigator.pop(context);
+                          await _saveAddedExercisesToTrainingPlanWithFeedback(sessionProvider);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _emberCore,
+                          foregroundColor: _snow,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Speichern',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   // NEU: Dialog zum Speichern gelöschter Übungen
-  void _showSaveDeletedExercisesDialog(
-      TrainingSessionProvider sessionProvider) {
-    showDialog(
+  Future<void> _showSaveDeletedExercisesDialog(
+      TrainingSessionProvider sessionProvider) async {
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.delete_outline, color: Colors.red[600]),
-            const SizedBox(width: 8),
-            const Text('Gelöschte Übungen speichern?'),
-          ],
-        ),
-        content: const Text('Du hast während des Trainings Übungen gelöscht. '
-            'Möchtest du diese Änderungen dauerhaft in deinem Trainingsplan speichern?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-
-              // Nach dem Schließen des Dialogs prüfen, ob es Änderungen gab
-              _continueWithNextDialogs(sessionProvider);
-            },
-            child: const Text('Verwerfen'),
+      barrierColor: _midnight.withOpacity(0.95),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.3),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _saveDeletedExercisesToTrainingPlan(sessionProvider);
-
-              // Nach dem Speichern prüfen, ob es weitere Dialoge gibt
-              _continueWithNextDialogs(sessionProvider);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _charcoal,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _steel.withOpacity(0.3),
+              width: 1,
             ),
-            child: const Text('Speichern'),
+            boxShadow: [
+              BoxShadow(
+                color: _midnight.withOpacity(0.6),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon and title
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.red.withOpacity(0.15),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 32,
+                  color: Colors.red[400],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              const Text(
+                'Gelöschte Übungen speichern?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _snow,
+                  letterSpacing: -0.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              Text(
+                'Du hast Übungen gelöscht. Möchtest du diese Änderungen dauerhaft in deinem Trainingsplan speichern?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: _silver,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _graphite,
+                          foregroundColor: _silver,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(
+                              color: _steel.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Verwerfen',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          HapticFeedback.mediumImpact();
+                          Navigator.pop(context);
+                          await _saveDeletedExercisesToTrainingPlanWithFeedback(sessionProvider);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[600],
+                          foregroundColor: _snow,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Speichern',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // NEU: Hilfsmethode, um mit den nächsten Dialogen fortzufahren
-  void _continueWithNextDialogs(TrainingSessionProvider sessionProvider) {
-    if (mounted) {
-      // Prüfen, ob gelöschte Übungen vorhanden sind
-      if (sessionProvider.hasDeletedExercises &&
-          !_hasAskedForDeletedExercises) {
-        _showSaveDeletedExercisesDialog(sessionProvider);
-        setState(() {
-          _hasAskedForDeletedExercises = true;
-        });
-      }
-      // Prüfen, ob Änderungen vorhanden sind
-      else if (sessionProvider.hasModifiedExercises && !_hasAskedForChanges) {
-        _showSaveChangesDialog(sessionProvider);
-        setState(() {
-          _hasAskedForChanges = true;
-        });
-      }
-    }
-  }
-
-  Future<void> _saveChangesToTrainingPlan(
-      TrainingSessionProvider sessionProvider) async {
-    if (!mounted) return;
-
-    setState(() {
-      _isSaving = true;
-    });
-
+  // Enhanced feedback methods with proper UX
+  Future<void> _saveChangesToTrainingPlanWithFeedback(TrainingSessionProvider sessionProvider) async {
     try {
       final success = await sessionProvider.saveModificationsToTrainingPlan();
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success
-                ? 'Änderungen wurden im Trainingsplan gespeichert'
-                : 'Fehler beim Speichern der Änderungen'),
-            backgroundColor: success ? Colors.green[600] : Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        setState(() {
-          _isSaving = false;
-        });
+        _showInlineSuccessMessage(success ? 'Änderungen gespeichert' : 'Fehler beim Speichern');
       }
     } catch (e) {
-      print('Fehler beim Speichern der Änderungen: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Ein Fehler ist aufgetreten'),
-            backgroundColor: Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        setState(() {
-          _isSaving = false;
-        });
+        _showInlineSuccessMessage('Fehler beim Speichern');
       }
     }
   }
 
-  // NEU: Methode zum Speichern hinzugefügter Übungen
-  Future<void> _saveAddedExercisesToTrainingPlan(
-      TrainingSessionProvider sessionProvider) async {
-    if (!mounted) return;
-
-    setState(() {
-      _isSaving = true;
-    });
-
+  Future<void> _saveAddedExercisesToTrainingPlanWithFeedback(TrainingSessionProvider sessionProvider) async {
     try {
       final success = await sessionProvider.saveAddedExercisesToTrainingPlan();
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success
-                ? 'Neue Übungen wurden im Trainingsplan gespeichert'
-                : 'Fehler beim Speichern der neuen Übungen'),
-            backgroundColor: success ? Colors.green[600] : Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        setState(() {
-          _isSaving = false;
-        });
+        _showInlineSuccessMessage(success ? 'Neue Übungen gespeichert' : 'Fehler beim Speichern');
       }
     } catch (e) {
-      print('Fehler beim Speichern der hinzugefügten Übungen: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Ein Fehler ist aufgetreten'),
-            backgroundColor: Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        setState(() {
-          _isSaving = false;
-        });
+        _showInlineSuccessMessage('Fehler beim Speichern');
       }
     }
   }
 
-  // NEU: Methode zum Speichern gelöschter Übungen
-  Future<void> _saveDeletedExercisesToTrainingPlan(
-      TrainingSessionProvider sessionProvider) async {
-    if (!mounted) return;
-
-    setState(() {
-      _isSaving = true;
-    });
-
+  Future<void> _saveDeletedExercisesToTrainingPlanWithFeedback(TrainingSessionProvider sessionProvider) async {
     try {
-      final success =
-          await sessionProvider.saveDeletedExercisesToTrainingPlan();
-
+      final success = await sessionProvider.saveDeletedExercisesToTrainingPlan();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success
-                ? 'Gelöschte Übungen wurden im Trainingsplan gespeichert'
-                : 'Fehler beim Speichern der gelöschten Übungen'),
-            backgroundColor: success ? Colors.green[600] : Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        setState(() {
-          _isSaving = false;
-        });
+        _showInlineSuccessMessage(success ? 'Änderungen gespeichert' : 'Fehler beim Speichern');
       }
     } catch (e) {
-      print('Fehler beim Speichern der gelöschten Übungen: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Ein Fehler ist aufgetreten'),
-            backgroundColor: Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        setState(() {
-          _isSaving = false;
-        });
+        _showInlineSuccessMessage('Fehler beim Speichern');
       }
     }
   }
+
+  void _showInlineSuccessMessage(String message) {
+    // Show elegant inline success message that matches the design
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+    
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 60,
+        left: 24,
+        right: 24,
+        child: TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 300),
+          tween: Tween(begin: 0.0, end: 1.0),
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, -20 * (1 - value)),
+              child: Opacity(
+                opacity: value,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _charcoal,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _emberCore.withOpacity(0.3),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _midnight.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _emberCore.withOpacity(0.15),
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 16,
+                          color: _emberCore,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _snow,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    
+    overlay.insert(overlayEntry);
+    
+    // Remove after delay
+    Future.delayed(const Duration(milliseconds: 2000), () {
+      overlayEntry.remove();
+    });
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -427,340 +874,149 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     final trainingDay = sessionProvider.trainingDay;
 
     if (trainingPlan == null || trainingDay == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Training'),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return _buildLoadingState('Training laden...');
     }
 
-    // If still saving
     if (!_saveCompleted) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Training wird gespeichert'),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(
-                color: Theme.of(context).primaryColor,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Training wird gespeichert...',
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildLoadingState('Training speichern...');
     }
 
-    // If saving modifications
     if (_isSaving) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Änderungen werden gespeichert'),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(
-                color: Theme.of(context).primaryColor,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Änderungen werden gespeichert...',
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildLoadingState('Änderungen speichern...');
     }
 
-    // Calculate stats
+    // Calculate training stats
     final totalExercises = trainingDay.exercises.length;
     int totalSets = 0;
     for (final exercise in trainingDay.exercises) {
       totalSets += exercise.numberOfSets;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Training abgeschlossen'),
-        centerTitle: true,
-        elevation: 0,
-        automaticallyImplyLeading: false,
+    return Container(
+      color: _midnight,
+      child: Scaffold(
+        backgroundColor: _midnight,
+        extendBodyBehindAppBar: true,
+        extendBody: true,
+        body: AnimatedBuilder(
+          animation: _masterController,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, _slideUpAnimation.value),
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Opacity(
+                  opacity: _fadeInAnimation.value,
+                  child: SafeArea(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 40),
+                            
+                            // Sophisticated success indicator
+                            _buildSuccessIndicator(),
+                            
+                            const SizedBox(height: 48),
+                            
+                            // Elegant completion message
+                            _buildCompletionMessage(),
+                            
+                            const SizedBox(height: 56),
+                            
+                            // Animated training stats
+                            _buildTrainingStats(trainingPlan, trainingDay, totalExercises, totalSets),
+                            
+                            const SizedBox(height: 40),
+                            
+                            // Action buttons with sophisticated animations
+                            _buildActionButtons(sessionProvider),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Success animation
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.withOpacity(0.2),
-                          spreadRadius: 2,
-                          blurRadius: 12,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 80,
-                      color: Colors.green[600],
-                    ),
-                  ),
-                ),
+    );
+  }
 
-                const SizedBox(height: 24),
-
-                // Title and subtitle
-                const Text(
-                  'Herzlichen Glückwunsch!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Du hast dein Training erfolgreich abgeschlossen.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Training summary card
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.fitness_center,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Trainingsübersicht',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const Divider(height: 32),
-
-                        // Plan and Day info
-                        _buildInfoRow(
-                          context,
-                          Icons.assignment_outlined,
-                          'Trainingsplan:',
-                          trainingPlan.name,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoRow(
-                          context,
-                          Icons.event_outlined,
-                          'Trainingstag:',
-                          trainingDay.name,
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Statistics cards
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                context,
-                                Icons.fitness_center,
-                                'Übungen',
-                                totalExercises.toString(),
-                                Colors.indigo,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildStatCard(
-                                context,
-                                Icons.replay,
-                                'Sätze',
-                                totalSets.toString(),
-                                Colors.teal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Motivation card
-                Card(
-                  elevation: 2,
-                  color: Colors.amber[50],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.amber,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.emoji_events,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            'Großartige Arbeit! Regelmäßiges Training ist der Schlüssel zum Erfolg.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.amber[900],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // NEU: Button zum Speichern hinzugefügter Übungen, wenn benötigt
-                if (sessionProvider.hasAddedExercises &&
-                    !_hasAskedForAddedExercises)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showSaveAddedExercisesDialog(sessionProvider);
-                        setState(() {
-                          _hasAskedForAddedExercises = true;
-                        });
+  Widget _buildLoadingState(String message) {
+    return Container(
+      color: _midnight,
+      child: Material(
+        color: _midnight,
+        child: Scaffold(
+          backgroundColor: _midnight,
+          extendBodyBehindAppBar: true,
+          extendBody: true,
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: _midnight,
+            child: SafeArea(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 1000),
+                      tween: Tween(begin: 0.9, end: 1.0),
+                      onEnd: () {
+                        if (mounted) setState(() {});
                       },
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: const Text(
-                        'Neue Übungen im Trainingsplan speichern',
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[600],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                    ),
-                  ),
-
-                // Save changes button if needed
-                if (sessionProvider.hasModifiedExercises &&
-                    !_hasAskedForChanges)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showSaveChangesDialog(sessionProvider);
-                        setState(() {
-                          _hasAskedForChanges = true;
-                        });
+                      builder: (context, scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _emberCore.withOpacity(0.08),
+                              border: Border.all(
+                                color: _emberCore.withOpacity(0.25), 
+                                width: 1
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.fitness_center_rounded,
+                              size: 28,
+                              color: _emberCore,
+                            ),
+                          ),
+                        );
                       },
-                      icon: const Icon(Icons.save),
-                      label: const Text(
-                        'Änderungen im Trainingsplan speichern',
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal[600],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        minimumSize: const Size(double.infinity, 50),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: _snow,
+                        letterSpacing: -0.3,
                       ),
                     ),
-                  ),
-
-                // Return to home button
-                ElevatedButton.icon(
-                  onPressed: () => _returnToHomeScreen(context),
-                  icon: const Icon(Icons.home),
-                  label: const Text(
-                    'Zum Startbildschirm',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 14, horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(_emberCore.withOpacity(0.4)),
+                        backgroundColor: Colors.transparent,
+                      ),
                     ),
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -768,30 +1024,198 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     );
   }
 
-  Widget _buildInfoRow(
-      BuildContext context, IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: Colors.grey[700]),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+  Widget _buildSuccessIndicator() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_successPulseController, _masterController]),
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _successScaleAnimation.value * _successPulseAnimation.value,
+          child: Transform.rotate(
+            angle: _successRotationAnimation.value * 2 * math.pi,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    _emberCore.withOpacity(0.15),
+                    _emberCore.withOpacity(0.05),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.3, 0.7, 1.0],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _emberCore.withOpacity(0.3),
+                    blurRadius: 40,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _charcoal,
+                  border: Border.all(
+                    color: _emberCore.withOpacity(0.6),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _midnight.withOpacity(0.8),
+                      blurRadius: 12,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: 60,
+                    color: _emberCore,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 2),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompletionMessage() {
+    return Column(
+      children: [
+        const Text(
+          'TRAINING\nERFOLGREICH',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: _snow,
+            letterSpacing: 1.2,
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: 80,
+          height: 2,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                _emberCore.withOpacity(0.8),
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Dein Training wurde abgeschlossen',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: _silver,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrainingStats(dynamic trainingPlan, dynamic trainingDay, int totalExercises, int totalSets) {
+    return AnimatedBuilder(
+      animation: _statsController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _statsSlideAnimation.value),
+          child: Opacity(
+            opacity: _statsFadeAnimation.value,
+            child: Column(
+              children: [
+                // Elegant session information display
+                _buildMinimalSessionInfo(trainingPlan.name, trainingDay.name),
+                
+                const SizedBox(height: 32),
+                
+                // Clean stats grid
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        Icons.fitness_center_rounded,
+                        totalExercises.toString(),
+                        'Übungen',
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: _buildStatCard(
+                        Icons.repeat_rounded,
+                        totalSets.toString(),
+                        'Sätze',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMinimalSessionInfo(String planName, String dayName) {
+    return Column(
+      children: [
+        // Training plan - clean text format
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.assignment_rounded,
+              size: 16,
+              color: _emberCore.withOpacity(0.7),
+            ),
+            const SizedBox(width: 8),
             Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).primaryColor,
+              planName,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: _silver,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Training day - clean text format
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_rounded,
+              size: 16,
+              color: _emberCore.withOpacity(0.7),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              dayName,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: _silver,
+                letterSpacing: -0.1,
               ),
             ),
           ],
@@ -800,70 +1224,139 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
     );
   }
 
-  Widget _buildStatCard(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-    MaterialColor color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color[50],
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            spreadRadius: 0,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.1),
-                  spreadRadius: 0,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
+
+  Widget _buildStatCard(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        // Floating icon with subtle glow
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                _emberCore.withOpacity(0.08),
+                _emberCore.withOpacity(0.03),
+                Colors.transparent,
               ],
+              stops: const [0.3, 0.7, 1.0],
             ),
-            child: Icon(icon, color: color[700], size: 20),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: color[700],
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: _emberCore.withOpacity(0.12),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ],
+          child: Center(
+            child: Icon(
+              icon,
+              size: 28,
+              color: _emberCore.withOpacity(0.9),
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 20),
+        
+        // Large value display
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: _snow,
+            letterSpacing: -1.0,
+            height: 1.0,
+          ),
+        ),
+        
+        const SizedBox(height: 8),
+        
+        // Clean label
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: _silver,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(dynamic sessionProvider) {
+    return AnimatedBuilder(
+      animation: _actionsController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _actionsSlideAnimation.value),
+          child: Opacity(
+            opacity: _actionsFadeAnimation.value,
+            child: Column(
+              children: [
+                // Primary return button only
+                _buildActionButton(
+                  'ZUM STARTBILDSCHIRM',
+                  Icons.home_rounded,
+                  () {
+                    HapticFeedback.mediumImpact();
+                    _returnToHomeScreen(context);
+                  },
+                  isPrimary: true,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButton(String text, IconData icon, VoidCallback onPressed, {bool isPrimary = false, bool isSecondary = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: isPrimary ? 20 : 18),
+        label: Text(
+          text,
+          style: TextStyle(
+            fontSize: isPrimary ? 15 : 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: isPrimary ? 0.8 : 0.3,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isPrimary 
+              ? _emberCore 
+              : isSecondary 
+                  ? _charcoal.withOpacity(0.8)
+                  : _graphite,
+          foregroundColor: isPrimary ? _snow : _snow,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isPrimary 
+                  ? _emberCore.withOpacity(0.6)
+                  : _steel.withOpacity(0.3),
+              width: isPrimary ? 2 : 1,
+            ),
+          ),
+        ),
       ),
     );
   }
+
 
   void _returnToHomeScreen(BuildContext context) {
     // Update navigation index and return to main screen

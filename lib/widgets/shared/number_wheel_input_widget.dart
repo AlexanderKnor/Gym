@@ -828,28 +828,6 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
             ),
           ),
         
-        // Subtle center focus indicator
-        if (widget.isEnabled)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Center(
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        NumberWheelPickerWidget._emberCore.withOpacity(0.6),
-                        NumberWheelPickerWidget._emberCore.withOpacity(0.2),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }

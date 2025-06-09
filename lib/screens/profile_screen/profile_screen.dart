@@ -1,5 +1,6 @@
 // lib/screens/profile_screen/profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
 import '../../providers/profile_screen/profile_screen_provider.dart';
@@ -18,6 +19,22 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isInitialized = false;
+
+  // PROVER color system - consistent with progression manager and training plans
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
 
   @override
   void didChangeDependencies() {
@@ -55,80 +72,295 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userData = authProvider.userData;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        // Alle actions wurden entfernt (Glocke und Refresh-Button)
-      ),
+      backgroundColor: _void,
       floatingActionButton: profileProvider.selectedTabIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const AddFriendDialogWidget(),
-                );
-              },
-              child: const Icon(Icons.person_add),
+          ? Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_proverCore, _proverGlow],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: _proverCore.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    showDialog(
+                      context: context,
+                      builder: (context) => const AddFriendDialogWidget(),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Icon(
+                      Icons.person_add,
+                      color: _nova,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
             )
           : null,
-      body: Column(
-        children: [
-          // Profil-Header
-          _buildProfileHeader(
-              context, userData?.username ?? 'Benutzer', userData?.email ?? ''),
-
-          // Tab-Navigation
-          _buildTabBar(context, profileProvider),
-
-          // Tab-Inhalt
-          Expanded(
-            child: _buildTabContent(
-                profileProvider.selectedTabIndex, friendshipProvider),
-          ),
-
-          // Abmelden-Button
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final shouldSignOut =
-                      await profileProvider.confirmSignOut(context);
-
-                  if (shouldSignOut && context.mounted) {
-                    print('PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
-
-                    // Vor dem Abmelden den FriendshipProvider zurücksetzen
-                    Provider.of<FriendshipProvider>(context, listen: false)
-                        .reset();
-                    print('PROFILE SCREEN: FriendshipProvider zurückgesetzt');
-
-                    // Dann abmelden (dadurch wird der Auth-Status geändert)
-                    await authProvider.signOut();
-                    print('PROFILE SCREEN: Benutzer abgemeldet');
-
-                    // Manuell zum AuthCheckerScreen navigieren, um sicherzustellen, dass
-                    // der Login-Screen angezeigt wird
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (context) => const AuthCheckerScreen()),
-                        (route) => false, // Entferne alle bisherigen Routen
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text('Abmelden'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Consistent PROVER header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // PROVER Brand Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _stellar.withOpacity(0.8),
+                            _nebula.withOpacity(0.6),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _proverCore.withOpacity(0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _proverCore.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // PROVER Logo and branding
+                          Row(
+                            children: [
+                              // Logo icon
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [_proverCore, _proverGlow],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _proverCore.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'P',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: _nova,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Brand text
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) => LinearGradient(
+                                      colors: [_proverCore, _proverGlow],
+                                    ).createShader(bounds),
+                                    child: Text(
+                                      'PROVER',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                        color: _nova,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Profile',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: _stardust,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          // Status indicator
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _lunar.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _asteroid.withOpacity(0.5),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _proverCore,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'AKTIV',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _stardust,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
+
+            // Profile Header Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child: _buildProfileHeader(
+                    context, userData?.username ?? 'Benutzer', userData?.email ?? ''),
+              ),
+            ),
+
+            // Tab Navigation
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: _buildTabBar(context, profileProvider),
+              ),
+            ),
+
+            // Tab Content
+            SliverFillRemaining(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: _buildTabContent(
+                    profileProvider.selectedTabIndex, friendshipProvider),
+              ),
+            ),
+
+            // Sign out button at the bottom
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.red[600]!, Colors.red[400]!],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        HapticFeedback.lightImpact();
+                        final shouldSignOut =
+                            await profileProvider.confirmSignOut(context);
+
+                        if (shouldSignOut && context.mounted) {
+                          print('PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
+
+                          // Vor dem Abmelden den FriendshipProvider zurücksetzen
+                          Provider.of<FriendshipProvider>(context, listen: false)
+                              .reset();
+                          print('PROFILE SCREEN: FriendshipProvider zurückgesetzt');
+
+                          // Dann abmelden (dadurch wird der Auth-Status geändert)
+                          await authProvider.signOut();
+                          print('PROFILE SCREEN: Benutzer abgemeldet');
+
+                          // Manuell zum AuthCheckerScreen navigieren, um sicherzustellen, dass
+                          // der Login-Screen angezeigt wird
+                          if (context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => const AuthCheckerScreen()),
+                              (route) => false, // Entferne alle bisherigen Routen
+                            );
+                          }
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.logout, color: _nova, size: 20),
+                            const SizedBox(width: 12),
+                            Text(
+                              'ABMELDEN',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -136,25 +368,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileHeader(
       BuildContext context, String username, String email) {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           // Profilbild
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.blue,
-            child: Text(
-              username.isNotEmpty
-                  ? username.substring(0, 1).toUpperCase()
-                  : '?',
-              style: const TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_proverCore, _proverGlow],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: _proverCore.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                username.isNotEmpty
+                    ? username.substring(0, 1).toUpperCase()
+                    : '?',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: _nova,
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
 
           // Benutzerdaten
           Expanded(
@@ -163,17 +432,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   username,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
+                    color: _nova,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
                   email,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: _stardust,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -187,8 +459,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildTabBar(BuildContext context, ProfileProvider provider) {
     return Container(
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[300]!),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.3),
+            _nebula.withOpacity(0.2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
         ),
       ),
       child: Row(

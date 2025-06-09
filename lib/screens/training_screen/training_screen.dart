@@ -25,8 +25,10 @@ class _TrainingScreenState extends State<TrainingScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _heroController;
+  late AnimationController _pulseController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _heroScaleAnimation;
+  late Animation<double> _pulseAnimation;
 
   // Sophisticated color system
   static const Color _void = Color(0xFF000000);
@@ -62,6 +64,11 @@ class _TrainingScreenState extends State<TrainingScreen>
       vsync: this,
     );
 
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 3000),
+      vsync: this,
+    )..repeat();
+
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOutQuart,
@@ -70,6 +77,11 @@ class _TrainingScreenState extends State<TrainingScreen>
     _heroScaleAnimation = CurvedAnimation(
       parent: _heroController,
       curve: const Cubic(0.175, 0.885, 0.32, 1.275),
+    );
+
+    _pulseAnimation = CurvedAnimation(
+      parent: _pulseController,
+      curve: const Interval(0.0, 1.0, curve: Curves.easeInOutCubic),
     );
 
     _fadeController.forward();
@@ -100,6 +112,7 @@ class _TrainingScreenState extends State<TrainingScreen>
   void dispose() {
     _fadeController.dispose();
     _heroController.dispose();
+    _pulseController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -127,6 +140,50 @@ class _TrainingScreenState extends State<TrainingScreen>
                       : _buildEmptyStateView(context),
             ),
           ),
+          // Fixed header with logo
+          SafeArea(
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    _void,
+                    _void.withOpacity(0.95),
+                    _void.withOpacity(0.8),
+                    _void.withOpacity(0),
+                  ],
+                  stops: const [0.0, 0.6, 0.8, 1.0],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _proverCore.withOpacity(0.4),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'PROVER',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: _nova,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -148,83 +205,83 @@ class _TrainingScreenState extends State<TrainingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: _proverCore.withOpacity(0.4),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'PROVER',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: _nova,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
+                // Space for fixed header
+                const SizedBox(height: 60),
 
-                    // Edit button
-                    IconButton(
-                      onPressed: () => _navigateToEditPlan(context, activePlan),
-                      icon: Icon(Icons.more_horiz, color: _stardust, size: 20),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 11),
-
-                // Plan info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'AKTIVER PLAN',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: _comet,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
+                // Plan info - full width card matching training days
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _stellar.withOpacity(0.5),
+                        _nebula.withOpacity(0.3),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      activePlan.name.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: _nova,
-                        letterSpacing: -0.5,
-                        height: 1,
-                      ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _lunar.withOpacity(0.3),
+                      width: 1,
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${activePlan.days.length} Trainingstage',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: _stardust,
-                        letterSpacing: 0.3,
+                  ),
+                  child: Stack(
+                    children: [
+                      // Main content
+                      Column(
+                        children: [
+                          // Active plan label
+                          Center(
+                            child: Text(
+                              'AKTIVER PLAN',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _proverCore,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Plan name
+                          Center(
+                            child: Text(
+                              activePlan.name.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: -0.5,
+                                height: 1,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                       ),
-                    ),
-                  ],
+                      // Options button positioned top right
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _showPlanOptions(context, activePlan);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              Icons.more_horiz,
+                              color: _stardust,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -546,6 +603,205 @@ class _TrainingScreenState extends State<TrainingScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: _nova,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: _comet,
+            letterSpacing: 0.8,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMinimalStat(String value, String label) {
+    return Row(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: _nova,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: _stardust.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  int _getTotalExercises(TrainingPlanModel plan) {
+    int total = 0;
+    for (var day in plan.days) {
+      total += day.exercises.length;
+    }
+    return total;
+  }
+
+  int _getTotalSetsPerWeek(TrainingPlanModel plan, int weekIndex) {
+    int total = 0;
+    for (int dayIndex = 0; dayIndex < plan.days.length; dayIndex++) {
+      total += _getTrainingDaySets(plan, dayIndex, weekIndex);
+    }
+    return total;
+  }
+
+  void _showPlanOptions(BuildContext context, TrainingPlanModel plan) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [_stellar, _nebula],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: _lunar.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header mit Titel
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_proverCore, _proverGlow],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.fitness_center,
+                        color: _nova,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Trainingsplan Optionen',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                        color: _nova,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close, size: 22, color: _stardust),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Option: Trainingsplan bearbeiten
+                _buildPlanOptionButton(
+                  icon: Icons.edit_outlined,
+                  label: 'Trainingsplan bearbeiten',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _navigateToEditPlan(context, plan);
+                  },
+                  isPrimary: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isPrimary,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isPrimary
+            ? LinearGradient(colors: [_proverCore, _proverGlow])
+            : LinearGradient(
+                colors: [_lunar.withOpacity(0.3), _lunar.withOpacity(0.1)]),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isPrimary
+              ? _proverCore.withOpacity(0.5)
+              : _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isPrimary ? _nova : _stardust,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.3,
+                    color: isPrimary ? _nova : _stardust,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

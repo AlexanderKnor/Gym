@@ -115,6 +115,50 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                   : _buildProfilesView(context, profiles),
             ),
           ),
+          // Fixed header with logo
+          SafeArea(
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    _void,
+                    _void.withOpacity(0.95),
+                    _void.withOpacity(0.8),
+                    _void.withOpacity(0),
+                  ],
+                  stops: const [0.0, 0.6, 0.8, 1.0],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _proverCore.withOpacity(0.4),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'PROVER',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: _nova,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -125,125 +169,94 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // Compact header
+        // Space for fixed header and page content
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(
+                24, 76, 24, 24), // 60px header + 16px spacing
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Header row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: _proverCore.withOpacity(0.4),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'PROVER',
+                // Title section
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PROGRESSION',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _proverCore,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'PROFILE MANAGER',
+                        style: TextStyle(
+                          fontSize: 26,
                           fontWeight: FontWeight.w800,
                           color: _nova,
-                          letterSpacing: 1.5,
+                          letterSpacing: -0.5,
+                          height: 1,
                         ),
                       ),
-                    ),
-
-                    // Add button
-                    IconButton(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        _createNewProfile(context);
-                      },
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                      icon: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [_proverCore, _proverGlow],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _proverCore.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add, color: _nova, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              'NEU',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: _nova,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text(
+                        '${profiles.length} Profile verfügbar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: _stardust,
+                          letterSpacing: 0.3,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
-                const SizedBox(height: 11),
-
-                // Plan info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                // Add button - consistent with demo button style
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _createNewProfile(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _stellar.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _proverCore.withOpacity(0.3),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _void.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        Icon(Icons.add_rounded, color: _proverCore, size: 16),
+                        const SizedBox(width: 8),
                         Text(
-                          'PROGRESSION',
+                          'NEU',
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: _comet,
-                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w800,
+                            color: _proverCore,
+                            letterSpacing: 1,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'PROFILE MANAGER',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: _nova,
-                        letterSpacing: -0.5,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${profiles.length} Profile verfügbar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: _stardust,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -252,7 +265,7 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
 
         // Profile list with stagger animation
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {

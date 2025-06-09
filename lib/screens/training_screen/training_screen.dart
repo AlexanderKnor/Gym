@@ -184,7 +184,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                   ],
                 ),
 
-                const SizedBox(height: 7),
+                const SizedBox(height: 5),
 
                 // Plan info
                 Column(
@@ -638,7 +638,7 @@ class _TrainingScreenState extends State<TrainingScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 50),
 
             Text(
               'Elite Performance Training',

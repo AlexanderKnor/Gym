@@ -1,25 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import 'profile_detail_screen.dart';
 import 'profile_editor_screen.dart';
 
-class ProgressionManagerScreen extends StatefulWidget {
-  const ProgressionManagerScreen({super.key});
+class ProgressionManagerScreen extends StatelessWidget {
+  const ProgressionManagerScreen({Key? key}) : super(key: key);
 
   @override
-  State<ProgressionManagerScreen> createState() =>
-      _ProgressionManagerScreenState();
+  Widget build(BuildContext context) {
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+    return ChangeNotifierProvider.value(
+      value: provider,
+      child: const ProgressionManagerScreenContent(),
+    );
+  }
 }
 
-class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
+class ProgressionManagerScreenContent extends StatefulWidget {
+  const ProgressionManagerScreenContent({Key? key}) : super(key: key);
+
+  @override
+  State<ProgressionManagerScreenContent> createState() =>
+      _ProgressionManagerScreenContentState();
+}
+
+class _ProgressionManagerScreenContentState
+    extends State<ProgressionManagerScreenContent>
     with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _heroController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _heroScaleAnimation;
+  bool _isLoading = false;
+  AnimationController? _fadeController;
+  AnimationController? _heroController;
+  Animation<double>? _fadeAnimation;
+  Animation<double>? _heroScaleAnimation;
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
 
   // Sophisticated color system
   static const Color _void = Color(0xFF000000);
@@ -37,13 +56,34 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
   static const Color _proverGlow = Color(0xFFFF6B3D);
   static const Color _proverFlare = Color(0xFFFFA500);
 
-  bool _sessionRecoveryChecked = false;
-  final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0;
-
   @override
   void initState() {
     super.initState();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: _void,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
+
+    _initializeAnimations();
+
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider =
+          Provider.of<ProgressionManagerProvider>(context, listen: false);
+      _loadProfiles(provider);
+    });
+  }
+
+  void _initializeAnimations() {
+    _fadeController?.dispose();
+    _heroController?.dispose();
 
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -56,42 +96,35 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
     );
 
     _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
+      parent: _fadeController!,
       curve: Curves.easeOutQuart,
     );
 
     _heroScaleAnimation = CurvedAnimation(
-      parent: _heroController,
+      parent: _heroController!,
       curve: const Cubic(0.175, 0.885, 0.32, 1.275),
     );
 
-    _fadeController.forward();
-    _heroController.forward();
-
-    _scrollController.addListener(() {
-      setState(() {
-        _scrollOffset = _scrollController.offset;
-      });
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadProfiles();
-    });
+    _fadeController!.forward();
+    _heroController!.forward();
   }
 
-  Future<void> _loadProfiles() async {
-    if (_sessionRecoveryChecked) return;
-    _sessionRecoveryChecked = true;
+  Future<void> _loadProfiles(ProgressionManagerProvider provider) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-    final provider =
-        Provider.of<ProgressionManagerProvider>(context, listen: false);
     await provider.refreshProfiles();
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _heroController.dispose();
+    _fadeController?.dispose();
+    _heroController?.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -100,6 +133,7 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
     final profiles = provider.progressionsProfile;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: _void,
@@ -108,16 +142,28 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
           // Main content
           SafeArea(
             bottom: false,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: profiles.isEmpty
-                  ? _buildEmptyStateView(context)
-                  : _buildProfilesView(context, profiles),
-            ),
+            child: _fadeAnimation != null
+                ? FadeTransition(
+                    opacity: _fadeAnimation!,
+                    child: _isLoading
+                        ? _buildLoadingView()
+                        : profiles.isEmpty
+                            ? _buildEmptyState()
+                            : _buildProfilesView(context, profiles),
+                  )
+                : _isLoading
+                    ? _buildLoadingView()
+                    : profiles.isEmpty
+                        ? _buildEmptyState()
+                        : _buildProfilesView(context, profiles),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildLoadingView() {
+    return const SizedBox.shrink();
   }
 
   Widget _buildProfilesView(BuildContext context, List<dynamic> profiles) {
@@ -159,57 +205,47 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                     ),
 
                     // Add button
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [_proverCore, _proverGlow],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _proverCore.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _createNewProfile(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [_proverCore, _proverGlow],
                           ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _createNewProfile(context);
-                          },
                           borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 0, vertical: 0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.add, color: _nova, size: 16),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'NEU',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: _nova,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ],
+                          boxShadow: [
+                            BoxShadow(
+                              color: _proverCore.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add, color: _nova, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              'NEU',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 10),
 
                 // Plan info
                 Column(
@@ -293,7 +329,7 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
     );
   }
 
-  Widget _buildEmptyStateView(BuildContext context) {
+  Widget _buildEmptyState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -301,62 +337,116 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo with animation
-            ScaleTransition(
-              scale: _heroScaleAnimation,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Glow effect
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          _proverCore.withOpacity(0.15),
-                          _proverCore.withOpacity(0),
-                        ],
-                      ),
+            _heroScaleAnimation != null
+                ? ScaleTransition(
+                    scale: _heroScaleAnimation!,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Glow effect
+                        Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                _proverCore.withOpacity(0.15),
+                                _proverCore.withOpacity(0),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Main logo
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [_stellar, _nebula],
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: _proverCore.withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [_proverCore, _proverGlow],
+                              ).createShader(bounds),
+                              child: Text(
+                                'P',
+                                style: TextStyle(
+                                  fontSize: 60,
+                                  fontWeight: FontWeight.w800,
+                                  color: _nova,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  // Main logo
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [_stellar, _nebula],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: _proverCore.withOpacity(0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [_proverCore, _proverGlow],
-                        ).createShader(bounds),
-                        child: Text(
-                          'P',
-                          style: TextStyle(
-                            fontSize: 60,
-                            fontWeight: FontWeight.w800,
-                            color: _nova,
+                  )
+                : Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Glow effect
+                      Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _proverCore.withOpacity(0.15),
+                              _proverCore.withOpacity(0),
+                            ],
                           ),
                         ),
                       ),
-                    ),
+                      // Main logo
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [_stellar, _nebula],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: _proverCore.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [_proverCore, _proverGlow],
+                            ).createShader(bounds),
+                            child: Text(
+                              'P',
+                              style: TextStyle(
+                                fontSize: 60,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
 
             const SizedBox(height: 48),
 
@@ -747,10 +837,10 @@ class ProfileCard extends StatelessWidget {
   static const Color _systemBlueLight = Color(0xFF40A2FF);
 
   const ProfileCard({
-    super.key,
+    Key? key,
     required this.profile,
     required this.onDemo,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -928,15 +1018,128 @@ class ProfileCard extends StatelessWidget {
         profileId == 'rir-based' ||
         profileId == 'set-consistency';
   }
+
+  void _confirmDeleteProfile(BuildContext context, dynamic profile) {
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: Colors.red[700],
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Profil löschen',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Möchtest du das Profil "${profile.name}" wirklich löschen?',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    // Löschen-Button (jetzt links)
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await provider.deleteProfile(profile.id);
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.red[600],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Löschen',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Abbrechen-Button (jetzt rechts)
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Abbrechen',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class DuplicateProfileScreen extends StatefulWidget {
   final String profileId;
 
   const DuplicateProfileScreen({
-    super.key,
+    Key? key,
     required this.profileId,
-  });
+  }) : super(key: key);
 
   @override
   State<DuplicateProfileScreen> createState() => _DuplicateProfileScreenState();
@@ -992,7 +1195,7 @@ class _DuplicateProfileScreenState extends State<DuplicateProfileScreen> {
 }
 
 class NewProfileScreen extends StatefulWidget {
-  const NewProfileScreen({super.key});
+  const NewProfileScreen({Key? key}) : super(key: key);
 
   @override
   State<NewProfileScreen> createState() => _NewProfileScreenState();

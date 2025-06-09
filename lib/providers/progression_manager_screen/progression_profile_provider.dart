@@ -142,33 +142,6 @@ class ProgressionProfileProvider with ChangeNotifier {
       rules: _createDoubleProgressionRules(),
     );
 
-    final linearPeriodizationProfile = ProgressionProfileModel(
-      id: 'linear-periodization',
-      name: 'Lineare Periodisierung',
-      description: 'Gewicht steigt, Wiederholungen nehmen ab',
-      config: {
-        'targetRepsMin': 6,
-        'targetRepsMax': 8,
-        'targetRIRMin': 1,
-        'targetRIRMax': 3,
-        'increment': 2.5,
-      },
-      rules: _createLinearPeriodizationRules(),
-    );
-
-    final rirBasedProfile = ProgressionProfileModel(
-      id: 'rir-based',
-      name: 'RIR-basiert',
-      description: 'Progression basierend auf RIR-Werten',
-      config: {
-        'targetRepsMin': 6,
-        'targetRepsMax': 12,
-        'targetRIRMin': 0,
-        'targetRIRMax': 2,
-        'increment': 2.5,
-      },
-      rules: _createRirBasedRules(),
-    );
 
     final setConsistencyProfile = ProgressionProfileModel(
       id: 'set-consistency',
@@ -187,8 +160,6 @@ class ProgressionProfileProvider with ChangeNotifier {
 
     _progressionsProfile = [
       doubleProgressionProfile,
-      linearPeriodizationProfile,
-      rirBasedProfile,
       setConsistencyProfile,
     ];
   }
@@ -315,142 +286,6 @@ class ProgressionProfileProvider with ChangeNotifier {
     ];
   }
 
-  // Regeln für lineare Periodisierung erstellen
-  List<ProgressionRuleModel> _createLinearPeriodizationRules() {
-    return [
-      // Gewicht erhöhen
-      ProgressionRuleModel(
-        id: 'lp_rule1',
-        type: 'assignment',
-        children: [
-          ProgressionActionModel(
-            id: 'lp_action1',
-            type: 'assignment',
-            target: 'kg',
-            value: {
-              'type': 'operation',
-              'left': {'type': 'variable', 'value': 'lastKg'},
-              'operator': 'add',
-              'right': {'type': 'variable', 'value': 'increment'},
-            },
-          ),
-        ],
-      ),
-      // Wiederholungen verringern
-      ProgressionRuleModel(
-        id: 'lp_rule2',
-        type: 'assignment',
-        children: [
-          ProgressionActionModel(
-            id: 'lp_action2',
-            type: 'assignment',
-            target: 'reps',
-            value: {
-              'type': 'operation',
-              'left': {'type': 'variable', 'value': 'lastReps'},
-              'operator': 'subtract',
-              'right': {'type': 'constant', 'value': 1},
-            },
-          ),
-        ],
-      ),
-      // RIR beibehalten
-      ProgressionRuleModel(
-        id: 'lp_rule3',
-        type: 'assignment',
-        children: [
-          ProgressionActionModel(
-            id: 'lp_action3',
-            type: 'assignment',
-            target: 'rir',
-            value: {'type': 'variable', 'value': 'lastRIR'},
-          ),
-        ],
-      ),
-    ];
-  }
-
-  // Regeln für RIR-basiertes Profil erstellen
-  List<ProgressionRuleModel> _createRirBasedRules() {
-    return [
-      // Regel 1: Wenn lastRIR == 0
-      ProgressionRuleModel(
-        id: 'rir_rule1',
-        type: 'condition',
-        conditions: [
-          ProgressionConditionModel(
-            left: {'type': 'variable', 'value': 'lastRIR'},
-            operator: 'eq',
-            right: {'type': 'constant', 'value': 0},
-          ),
-        ],
-        logicalOperator: 'AND',
-        children: [
-          ProgressionActionModel(
-            id: 'rir_action1',
-            type: 'assignment',
-            target: 'kg',
-            value: {'type': 'variable', 'value': 'lastKg'},
-          ),
-          ProgressionActionModel(
-            id: 'rir_action2',
-            type: 'assignment',
-            target: 'reps',
-            value: {'type': 'variable', 'value': 'lastReps'},
-          ),
-          ProgressionActionModel(
-            id: 'rir_action3',
-            type: 'assignment',
-            target: 'rir',
-            value: {'type': 'constant', 'value': 1},
-          ),
-        ],
-      ),
-      // Regel 2: Wenn lastRIR > targetRIRMax
-      ProgressionRuleModel(
-        id: 'rir_rule2',
-        type: 'condition',
-        conditions: [
-          ProgressionConditionModel(
-            left: {'type': 'variable', 'value': 'lastRIR'},
-            operator: 'gt',
-            right: {'type': 'variable', 'value': 'targetRIRMax'},
-          ),
-        ],
-        logicalOperator: 'AND',
-        children: [
-          ProgressionActionModel(
-            id: 'rir_action4',
-            type: 'assignment',
-            target: 'kg',
-            value: {
-              'type': 'operation',
-              'left': {'type': 'variable', 'value': 'lastKg'},
-              'operator': 'add',
-              'right': {'type': 'variable', 'value': 'increment'},
-            },
-          ),
-          ProgressionActionModel(
-            id: 'rir_action5',
-            type: 'assignment',
-            target: 'reps',
-            value: {'type': 'variable', 'value': 'lastReps'},
-          ),
-          ProgressionActionModel(
-            id: 'rir_action6',
-            type: 'assignment',
-            target: 'rir',
-            value: {
-              'type': 'operation',
-              'left': {'type': 'variable', 'value': 'lastRIR'},
-              'operator': 'subtract',
-              'right': {'type': 'constant', 'value': 1},
-            },
-          ),
-        ],
-      ),
-    ];
-  }
 
   // Regeln für Satz-Konsistenz erstellen
   List<ProgressionRuleModel> _createSetConsistencyRules() {

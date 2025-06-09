@@ -285,6 +285,7 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                           child: ProfileCard(
                             profile: profile,
                             onDemo: () => _openProfileDemo(context, profile),
+                            onOptions: () => _showProfileOptions(context, profile),
                           ),
                         ),
                       ),
@@ -731,11 +732,287 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
         profileId == 'rir-based' ||
         profileId == 'set-consistency';
   }
+
+  void _showProfileOptions(BuildContext context, dynamic profile) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [_stellar, _nebula],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: _lunar.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header mit Titel
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_proverCore, _proverGlow],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.settings_outlined,
+                        color: _nova,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Profil Optionen',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                        color: _nova,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close, size: 22, color: _stardust),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Option 1: Profil bearbeiten
+                _buildProfileOptionButton(
+                  icon: Icons.edit_outlined,
+                  label: 'Profil bearbeiten',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _editProfile(context, profile);
+                  },
+                  isPrimary: false,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Option 2: Profil löschen
+                _buildProfileOptionButton(
+                  icon: Icons.delete_outline,
+                  label: 'Profil löschen',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _confirmDeleteProfile(context, profile);
+                  },
+                  isPrimary: false,
+                  isDestructive: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isPrimary,
+    bool isDestructive = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isPrimary
+            ? LinearGradient(colors: [_proverCore, _proverGlow])
+            : LinearGradient(
+                colors: [_lunar.withOpacity(0.3), _lunar.withOpacity(0.1)]),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isPrimary
+              ? _proverCore.withOpacity(0.5)
+              : isDestructive
+                  ? Colors.red.withOpacity(0.4)
+                  : _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isPrimary 
+                      ? _nova 
+                      : isDestructive 
+                          ? Colors.red 
+                          : _stardust,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.3,
+                    color: isPrimary 
+                        ? _nova 
+                        : isDestructive 
+                            ? Colors.red 
+                            : _stardust,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _editProfile(BuildContext context, dynamic profile) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProfileDetailScreen(
+          profile: profile,
+          initialTab: 0, // Editor tab (0 = Editor, 1 = Demo)
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteProfile(BuildContext context, dynamic profile) {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+        child: AlertDialog(
+          backgroundColor: _stellar,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: _lunar.withOpacity(0.3)),
+          ),
+          title: Text(
+            'Profil löschen',
+            style: TextStyle(
+              color: _nova,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Sind Sie sicher, dass Sie "${profile.name}" dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+            style: TextStyle(
+              color: _stardust,
+              fontSize: 15,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Abbrechen',
+                style: TextStyle(
+                  color: _stardust,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.red, Colors.red.shade400],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _deleteProfile(context, profile);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'Löschen',
+                      style: TextStyle(
+                        color: _nova,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _deleteProfile(BuildContext context, dynamic profile) async {
+    final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+    
+    try {
+      await provider.deleteProfile(profile.id);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Profil "${profile.name}" wurde gelöscht',
+              style: TextStyle(color: _nova),
+            ),
+            backgroundColor: _stellar,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Fehler beim Löschen des Profils',
+              style: TextStyle(color: _nova),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
 }
 
 class ProfileCard extends StatelessWidget {
   final dynamic profile;
   final VoidCallback onDemo;
+  final VoidCallback onOptions;
 
   // Color constants
   static const Color _void = Color(0xFF000000);
@@ -757,6 +1034,7 @@ class ProfileCard extends StatelessWidget {
     super.key,
     required this.profile,
     required this.onDemo,
+    required this.onOptions,
   });
 
   @override
@@ -790,7 +1068,7 @@ class ProfileCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row with title and system badge
+            // Header row with title and badge/options
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -824,6 +1102,21 @@ class ProfileCard extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         color: _nova,
                         letterSpacing: 0.8,
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onOptions();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.more_horiz,
+                        color: _stardust,
+                        size: 20,
                       ),
                     ),
                   ),

@@ -13,8 +13,10 @@ class CreateTrainingPlanScreen extends StatelessWidget {
     final createProvider =
         Provider.of<CreateTrainingPlanProvider>(context, listen: false);
 
-    // Zurücksetzen für einen sauberen Start
-    createProvider.reset();
+    // Zurücksetzen für einen sauberen Start - nach dem Build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      createProvider.reset();
+    });
 
     return Scaffold(
       appBar: AppBar(

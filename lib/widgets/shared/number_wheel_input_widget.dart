@@ -19,15 +19,21 @@ class NumberWheelPickerWidget extends StatefulWidget {
   final bool useIntValue; // Wenn true, werden nur ganzzahlige Werte angezeigt
   final bool allowCustomValues; // Wenn true, werden beliebige Werte akzeptiert
 
-  // Clean color system matching training screen
-  static const Color _midnight = Color(0xFF000000);
-  static const Color _charcoal = Color(0xFF1C1C1E);
-  static const Color _graphite = Color(0xFF2C2C2E);
-  static const Color _steel = Color(0xFF48484A);
-  static const Color _mercury = Color(0xFF8E8E93);
-  static const Color _silver = Color(0xFFAEAEB2);
-  static const Color _snow = Color(0xFFFFFFFF);
-  static const Color _emberCore = Color(0xFFFF4500);
+  // PROVER sophisticated color system
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
 
   const NumberWheelPickerWidget({
     Key? key,
@@ -249,10 +255,14 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
       builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
-          backgroundColor: NumberWheelPickerWidget._charcoal,
+          backgroundColor: NumberWheelPickerWidget._stellar,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: NumberWheelPickerWidget._lunar.withOpacity(0.4),
+              width: 1,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -264,17 +274,26 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                 Row(
                   children: [
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: NumberWheelPickerWidget._steel.withOpacity(0.3),
+                        gradient: LinearGradient(
+                          colors: [NumberWheelPickerWidget._proverCore, NumberWheelPickerWidget._proverGlow],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: NumberWheelPickerWidget._proverCore.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: Icon(
                           Icons.edit_outlined,
                           size: 18,
-                          color: NumberWheelPickerWidget._silver,
+                          color: NumberWheelPickerWidget._nova,
                         ),
                       ),
                     ),
@@ -282,10 +301,10 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                     Text(
                       '${widget.label} eingeben',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
-                        color: NumberWheelPickerWidget._snow,
+                        color: NumberWheelPickerWidget._nova,
                       ),
                     ),
                   ],
@@ -301,32 +320,46 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                       : const TextInputType.numberWithOptions(decimal: true),
                   autofocus: true,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: NumberWheelPickerWidget._snow,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: NumberWheelPickerWidget._nova,
                   ),
                   decoration: InputDecoration(
                     suffixText: widget.suffix,
+                    suffixStyle: TextStyle(
+                      color: NumberWheelPickerWidget._stardust,
+                      fontWeight: FontWeight.w500,
+                    ),
                     filled: true,
-                    fillColor: NumberWheelPickerWidget._graphite.withOpacity(0.8),
+                    fillColor: NumberWheelPickerWidget._nebula.withOpacity(0.8),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 16),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: NumberWheelPickerWidget._lunar.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: NumberWheelPickerWidget._lunar.withOpacity(0.3),
+                        width: 1,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(
-                        color: NumberWheelPickerWidget._emberCore,
-                        width: 1.5,
+                        color: NumberWheelPickerWidget._proverCore,
+                        width: 2,
                       ),
                     ),
                     errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(
                         color: Colors.red[400]!,
-                        width: 1,
+                        width: 1.5,
                       ),
                     ),
                   ),
@@ -339,47 +372,78 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                 // Action Buttons
                 Row(
                   children: [
-                    // Cancel button
+                    // Cancel button with sophisticated styling
                     Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        style: TextButton.styleFrom(
-                          foregroundColor: NumberWheelPickerWidget._silver,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: NumberWheelPickerWidget._lunar.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: NumberWheelPickerWidget._asteroid.withOpacity(0.5),
+                            width: 1,
                           ),
                         ),
-                        child: const Text(
-                          'Abbrechen',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.pop(dialogContext),
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: Text(
+                                  'ABBRECHEN',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: NumberWheelPickerWidget._stardust,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
 
-                    // Confirm button
+                    // Confirm button with enhanced gradient design
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () =>
-                            _applyEditedValue(dialogContext, controller.text),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: NumberWheelPickerWidget._emberCore,
-                          foregroundColor: NumberWheelPickerWidget._snow,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [NumberWheelPickerWidget._proverCore, NumberWheelPickerWidget._proverGlow],
                           ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: NumberWheelPickerWidget._proverCore.withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'Bestätigen',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () =>
+                                _applyEditedValue(dialogContext, controller.text),
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: Text(
+                                  'BESTÄTIGEN',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: NumberWheelPickerWidget._nova,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -488,56 +552,59 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Label mit Recommendation-Badge
+        // Enhanced label with sophisticated recommendation badge
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               widget.label,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: NumberWheelPickerWidget._silver,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: NumberWheelPickerWidget._stardust,
+                letterSpacing: 1.2,
               ),
             ),
 
-            // Empfehlungs-Badge im modernen schwarzen Design
+            // Sophisticated recommendation badge with PROVER styling
             if (widget.isEnabled && widget.recommendationValue != null)
               GestureDetector(
                 onTap: () =>
                     _handleRecommendationValue(widget.recommendationValue!),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: NumberWheelPickerWidget._emberCore,
-                    borderRadius: BorderRadius.circular(6),
+                    gradient: LinearGradient(
+                      colors: [NumberWheelPickerWidget._proverCore, NumberWheelPickerWidget._proverGlow],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 1,
-                        offset: const Offset(0, 1),
+                        color: NumberWheelPickerWidget._proverCore.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.arrow_upward_rounded,
-                        size: 8,
-                        color: Colors.white,
+                        size: 10,
+                        color: NumberWheelPickerWidget._nova,
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 3),
                       Text(
                         widget.recommendationValue!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                          letterSpacing: -0.2,
+                          fontWeight: FontWeight.w700,
+                          color: NumberWheelPickerWidget._nova,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
@@ -549,35 +616,53 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
 
         const SizedBox(height: 4),
 
-        // Enhanced Input container with quick controls
+        // Sophisticated input container with enhanced design
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.isEnabled
+                  ? [
+                      NumberWheelPickerWidget._stellar.withOpacity(0.8),
+                      NumberWheelPickerWidget._nebula.withOpacity(0.6),
+                    ]
+                  : widget.isCompleted
+                      ? [
+                          Colors.green.withOpacity(0.15),
+                          Colors.green.withOpacity(0.08),
+                        ]
+                      : [
+                          NumberWheelPickerWidget._stellar.withOpacity(0.4),
+                          NumberWheelPickerWidget._nebula.withOpacity(0.3),
+                        ],
+            ),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: widget.isEnabled
-                  ? NumberWheelPickerWidget._steel.withOpacity(0.4)
+                  ? NumberWheelPickerWidget._lunar.withOpacity(0.6)
                   : widget.isCompleted
                       ? Colors.green.withOpacity(0.5)
-                      : NumberWheelPickerWidget._steel.withOpacity(0.3),
-              width: widget.isEnabled ? 2 : 1,
+                      : NumberWheelPickerWidget._lunar.withOpacity(0.3),
+              width: widget.isEnabled ? 2 : 1.5,
             ),
-            color: widget.isEnabled
-                ? NumberWheelPickerWidget._charcoal
-                : widget.isCompleted
-                    ? Colors.green.withOpacity(0.1)
-                    : NumberWheelPickerWidget._graphite.withOpacity(0.5),
             boxShadow: widget.isEnabled
                 ? [
                     BoxShadow(
-                      color: NumberWheelPickerWidget._emberCore.withOpacity(0.1),
-                      blurRadius: 8,
+                      color: NumberWheelPickerWidget._proverCore.withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: NumberWheelPickerWidget._void.withOpacity(0.2),
+                      blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ]
                 : null,
           ),
           child: SizedBox(
-            height: 140, // Optimale Höhe für das Wheel
+            height: 150, // Enhanced height for better wheel interaction
             child: _buildOptimizedWheelPicker(),
           ),
         ),
@@ -605,22 +690,22 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
             squeeze: 0.8, // Kompaktere Darstellung für mehr sichtbare Items
             onSelectedItemChanged: (index) {
               if (widget.isEnabled) {
-                HapticFeedback.selectionClick();
+                HapticFeedback.lightImpact(); // Enhanced haptic feedback
                 setState(() {
                   _selectedIndex = index;
                 });
-                // Wert anwenden
+                // Apply value
                 widget.onChanged(_displayValues[index]);
 
-                // Prüfen ob es ein benutzerdefinierter oder Standardwert ist
+                // Check if it's a custom or standard value
                 _isCustomValue = false;
                 for (int i = 0; i < _displayValues.length; i++) {
-                  if (i == index) continue; // Aktueller Wert überspringen
+                  if (i == index) continue; // Skip current value
                   if (((_displayValues[index] - _displayValues[i]) %
                               widget.step)
                           .abs() <
                       0.001) {
-                    // Es ist ein Standardwert (auf dem Raster)
+                    // It's a standard value (on grid)
                     _isCustomValue = false;
                     break;
                   }
@@ -656,47 +741,47 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                   },
                   child: Center(
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
+                      duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: isSelected
                           ? BoxDecoration(
                               gradient: LinearGradient(
                                 colors: widget.isEnabled
                                     ? [
-                                        NumberWheelPickerWidget._emberCore.withOpacity(0.4),
-                                        NumberWheelPickerWidget._emberCore.withOpacity(0.2),
-                                        NumberWheelPickerWidget._emberCore.withOpacity(0.4),
+                                        NumberWheelPickerWidget._proverCore.withOpacity(0.6),
+                                        NumberWheelPickerWidget._proverGlow.withOpacity(0.4),
+                                        NumberWheelPickerWidget._proverCore.withOpacity(0.6),
                                       ]
                                     : [Colors.transparent, Colors.transparent, Colors.transparent],
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                               ),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(16),
                               border: widget.isEnabled
                                   ? Border.all(
-                                      color: NumberWheelPickerWidget._emberCore,
+                                      color: NumberWheelPickerWidget._proverCore,
                                       width: 2.5,
                                     )
                                   : null,
                               boxShadow: widget.isEnabled
                                   ? [
                                       BoxShadow(
-                                        color: NumberWheelPickerWidget._emberCore.withOpacity(0.4),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 3),
+                                        color: NumberWheelPickerWidget._proverCore.withOpacity(0.5),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 4),
                                       ),
                                       BoxShadow(
-                                        color: NumberWheelPickerWidget._emberCore.withOpacity(0.2),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 1),
+                                        color: NumberWheelPickerWidget._proverCore.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
                                       ),
                                     ]
                                   : null,
                             )
                           : widget.isEnabled
                               ? BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(12),
                                   color: Colors.transparent,
                                 )
                               : null,
@@ -710,17 +795,17 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                               style: TextStyle(
                               fontSize: _getAdaptiveFontSize(_formatValue(value), isSelected),
                               fontWeight: isSelected
-                                  ? FontWeight.w700
+                                  ? FontWeight.w800
                                   : FontWeight.w600,
                               color: isSelected
                                   ? widget.isEnabled
-                                      ? NumberWheelPickerWidget._snow
+                                      ? NumberWheelPickerWidget._nova
                                       : widget.isCompleted
                                           ? Colors.green
-                                          : NumberWheelPickerWidget._silver
-                                  : NumberWheelPickerWidget._silver,
+                                          : NumberWheelPickerWidget._stardust
+                                  : NumberWheelPickerWidget._stardust.withOpacity(0.7),
                               letterSpacing: isSelected ? -0.5 : -0.2,
-                              height: 1.0, // Kompakte Zeilenhöhe
+                              height: 1.0, // Compact line height
                               ),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
@@ -732,11 +817,11 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
                               style: TextStyle(
                                 fontSize: isSelected ? 14 : 12,
                                 fontWeight: isSelected
-                                    ? FontWeight.w600
+                                    ? FontWeight.w700
                                     : FontWeight.w500,
                                 color: isSelected
-                                    ? NumberWheelPickerWidget._silver
-                                    : NumberWheelPickerWidget._mercury,
+                                    ? NumberWheelPickerWidget._stardust
+                                    : NumberWheelPickerWidget._comet,
                                 letterSpacing: -0.2,
                                 height: 1.0,
                               ),
@@ -752,21 +837,22 @@ class _NumberWheelPickerWidgetState extends State<NumberWheelPickerWidget> {
           ),
         ),
 
-        // Optimierte Auswahl-Guides - subtile Linien für präzise Orientierung
+        // Sophisticated selection guides with enhanced visual clarity
         if (widget.isEnabled)
           Positioned.fill(
             child: IgnorePointer(
               child: Center(
                 child: Container(
-                  height: 54,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  height: 58,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     border: Border.symmetric(
                       horizontal: BorderSide(
-                        color: NumberWheelPickerWidget._emberCore.withOpacity(0.4),
-                        width: 1.5,
+                        color: NumberWheelPickerWidget._proverCore.withOpacity(0.5),
+                        width: 2,
                       ),
                     ),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),

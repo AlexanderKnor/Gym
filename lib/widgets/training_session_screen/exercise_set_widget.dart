@@ -15,15 +15,21 @@ class ExerciseSetWidget extends StatelessWidget {
   final Map<String, dynamic>? recommendation;
   final VoidCallback? onReactivate;
 
-  // Clean color system matching training screen
-  static const Color _midnight = Color(0xFF000000);
-  static const Color _charcoal = Color(0xFF1C1C1E);
-  static const Color _graphite = Color(0xFF2C2C2E);
-  static const Color _steel = Color(0xFF48484A);
-  static const Color _mercury = Color(0xFF8E8E93);
-  static const Color _silver = Color(0xFFAEAEB2);
-  static const Color _snow = Color(0xFFFFFFFF);
-  static const Color _emberCore = Color(0xFFFF4500);
+  // PROVER sophisticated color system
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
 
   const ExerciseSetWidget({
     Key? key,
@@ -77,121 +83,148 @@ class ExerciseSetWidget extends StatelessWidget {
       }
     }
 
-    // Schatten definieren basierend auf dem Status
+    // Sophisticated shadows based on state
     final List<BoxShadow> cardShadows = isActive
         ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, 2),
-              blurRadius: 8,
-              spreadRadius: 0,
+              color: _proverCore.withOpacity(0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              offset: const Offset(0, 1),
-              blurRadius: 4,
-              spreadRadius: 0,
+              color: _void.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ]
         : isCompleted
             ? [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.08),
-                  offset: const Offset(0, 1),
-                  blurRadius: 4,
-                  spreadRadius: 0,
+                  color: Colors.green.withOpacity(0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: _void.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  offset: const Offset(0, 1),
-                  blurRadius: 3,
-                  spreadRadius: 0,
+                  color: _void.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ];
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: _charcoal,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isActive
+              ? [
+                  _stellar.withOpacity(0.9),
+                  _nebula.withOpacity(0.7),
+                ]
+              : isCompleted
+                  ? [
+                      _stellar.withOpacity(0.6),
+                      _nebula.withOpacity(0.4),
+                    ]
+                  : [
+                      _stellar.withOpacity(0.4),
+                      _nebula.withOpacity(0.3),
+                    ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isActive
-              ? _emberCore
+              ? _proverCore.withOpacity(0.8)
               : isCompleted
-                  ? Colors.green
-                  : _steel.withOpacity(0.4),
-          width: isActive ? 2 : 1,
+                  ? Colors.green.withOpacity(0.6)
+                  : _lunar.withOpacity(0.4),
+          width: isActive ? 2.5 : 1.5,
         ),
         boxShadow: cardShadows,
       ),
       child: Column(
         children: [
-          // Header mit Set-Nummer und Status
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(15),
-              topRight: Radius.circular(15),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isActive
-                      ? [_emberCore, _emberCore.withOpacity(0.8)]
-                      : isCompleted
-                          ? [
-                              Colors.green.withOpacity(0.2),
-                              Colors.green.withOpacity(0.1)
-                            ]
-                          : [
-                              _steel.withOpacity(0.3),
-                              _steel.withOpacity(0.1)
-                            ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isActive
-                        ? Colors.black.withOpacity(0.1)
-                        : Colors.transparent,
-                    offset: const Offset(0, 2),
-                    blurRadius: 4,
-                  ),
-                ],
+          // Elegant header with sophisticated design
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isActive
+                    ? [_proverCore, _proverGlow]
+                    : isCompleted
+                        ? [
+                            Colors.green.withOpacity(0.15),
+                            Colors.green.withOpacity(0.08)
+                          ]
+                        : [
+                            _asteroid.withOpacity(0.4),
+                            _asteroid.withOpacity(0.2)
+                          ],
               ),
-              child: Row(
-                children: [
-                  // Set-Nummer mit verbessertem Design
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(isActive ? 17.5 : 18.5),
+                topRight: Radius.circular(isActive ? 17.5 : 18.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isActive
+                      ? _proverCore.withOpacity(0.3)
+                      : isCompleted
+                          ? Colors.green.withOpacity(0.2)
+                          : _void.withOpacity(0.1),
+                  offset: const Offset(0, 2),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                  // Elegant set number badge with sophisticated styling
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isActive
-                          ? Colors.white
-                          : isCompleted
-                              ? Colors.green
-                              : _graphite, // Dunkler Hintergrund für starken Kontrast
-                      border: isActive || isCompleted 
-                          ? null 
-                          : Border.all(
-                              color: _silver.withOpacity(0.3),
-                              width: 1,
-                            ), // Subtiler Border für ausstehende Sätze
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isActive
+                            ? [_nova, _stardust.withOpacity(0.9)]
+                            : isCompleted
+                                ? [Colors.green, Colors.green.shade700]
+                                : [
+                                    _lunar.withOpacity(0.8),
+                                    _stellar.withOpacity(0.6),
+                                  ],
+                      ),
+                      border: Border.all(
+                        color: isActive
+                            ? _proverCore.withOpacity(0.3)
+                            : isCompleted
+                                ? Colors.green.withOpacity(0.4)
+                                : _stardust.withOpacity(0.3),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: (isActive
-                                  ? Colors.black
-                                  : isCompleted
-                                      ? Colors.green
-                                      : _graphite)!
-                              .withOpacity(0.2),
-                          offset: const Offset(0, 1),
-                          blurRadius: 2,
+                          color: isActive
+                              ? _proverCore.withOpacity(0.4)
+                              : isCompleted
+                                  ? Colors.green.withOpacity(0.3)
+                                  : _void.withOpacity(0.2),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
                         ),
                       ],
                     ),
@@ -199,35 +232,36 @@ class ExerciseSetWidget extends StatelessWidget {
                       child: Text(
                         '${set.id}',
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
                           color: isActive 
-                              ? Colors.black 
+                              ? _stellar
                               : isCompleted 
-                                  ? Colors.white
-                                  : _snow, // Weißer Text für bessere Lesbarkeit auf dunklem Hintergrund
+                                  ? _nova
+                                  : _nova,
+                          letterSpacing: -0.3,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
 
-                  // Status-Text mit verbesserter Typografie
+                  // Elegant status text with sophisticated typography
                   Text(
                     isActive
-                        ? 'Aktueller Satz'
+                        ? 'AKTUELLER SATZ'
                         : isCompleted
-                            ? 'Abgeschlossen'
-                            : 'Satz ${set.id}',
+                            ? 'ABGESCHLOSSEN'
+                            : 'SATZ ${set.id}',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.3,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
                       color: isActive
-                          ? Colors.white
+                          ? _nova
                           : isCompleted
-                              ? Colors.green[700]
-                              : Colors.grey[700],
+                              ? Colors.green[200]
+                              : _stardust,
                     ),
                   ),
 
@@ -282,20 +316,18 @@ class ExerciseSetWidget extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                ],
-              ),
+              ],
             ),
           ),
 
-          // Widget für Werte - unterschiedliches Layout je nach Zustand
+          // Interactive input widgets for active state with enhanced spacing
           if (isActive)
-            // Spinner-Widgets für Werte im aktiven Zustand
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gewicht-Spinner
+                  // Weight spinner with enhanced design
                   Expanded(
                     flex: 3,
                     child: WeightSpinnerWidget(
@@ -317,9 +349,9 @@ class ExerciseSetWidget extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 14),
 
-                  // Wiederholungen-Spinner
+                  // Repetitions spinner with enhanced design
                   Expanded(
                     flex: 2,
                     child: RepetitionSpinnerWidget(
@@ -342,9 +374,9 @@ class ExerciseSetWidget extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 14),
 
-                  // RIR-Spinner
+                  // RIR spinner with enhanced design
                   Expanded(
                     flex: 2,
                     child: RirSpinnerWidget(
@@ -370,39 +402,39 @@ class ExerciseSetWidget extends StatelessWidget {
               ),
             )
           else
-            // Elegante kompakte Darstellung für nicht-aktive Sätze
+            // Sophisticated compact display for non-active sets
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Gewicht
+                  // Weight display
                   _buildMinimalValueDisplay(
                     context: context,
-                    label: 'Gewicht',
+                    label: 'GEWICHT',
                     value: '${set.kg}',
                     unit: 'kg',
                     isCompleted: isCompleted,
                     flex: 3,
                   ),
 
-                  // Vertikaler Trenner
+                  // Elegant vertical separator
                   _buildMinimalSeparator(isCompleted: isCompleted),
 
-                  // Wiederholungen
+                  // Repetitions display
                   _buildMinimalValueDisplay(
                     context: context,
-                    label: 'Wdh',
+                    label: 'WDH',
                     value: '${set.wiederholungen}',
                     unit: '',
                     isCompleted: isCompleted,
                     flex: 2,
                   ),
 
-                  // Vertikaler Trenner
+                  // Elegant vertical separator
                   _buildMinimalSeparator(isCompleted: isCompleted),
 
-                  // RIR
+                  // RIR display
                   _buildMinimalValueDisplay(
                     context: context,
                     label: 'RIR',
@@ -415,19 +447,26 @@ class ExerciseSetWidget extends StatelessWidget {
               ),
             ),
 
-          // 1RM Info als elegante Fußzeile
+          // Sophisticated 1RM footer with elegant design
           if (einRM != null || (isActive && empfohlener1RM != null))
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
-                color: _graphite.withOpacity(0.5),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(15),
-                  bottomRight: Radius.circular(15),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    _stellar.withOpacity(0.3),
+                    _nebula.withOpacity(0.5),
+                  ],
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(isActive ? 17.5 : 18.5),
+                  bottomRight: Radius.circular(isActive ? 17.5 : 18.5),
                 ),
                 border: Border(
                   top: BorderSide(
-                    color: _steel.withOpacity(0.3),
+                    color: _lunar.withOpacity(0.4),
                     width: 1,
                   ),
                 ),
@@ -435,36 +474,45 @@ class ExerciseSetWidget extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // 1RM mit besserem Styling
+                  // Enhanced 1RM display
                   Text(
                     '1RM: ${einRM != null ? einRM.toStringAsFixed(1) : "—"} kg',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: _silver,
-                      letterSpacing: -0.3,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _stardust,
+                      letterSpacing: 0.5,
                     ),
                   ),
 
-                  // Empfohlene 1RM mit verbessertem Design
+                  // Sophisticated recommended 1RM badge
                   if (isActive && empfohlener1RM != null)
                     Container(
-                      margin: const EdgeInsets.only(left: 10),
+                      margin: const EdgeInsets.only(left: 12),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 5,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          colors: [_proverCore, _proverGlow],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _proverCore.withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         '${empfohlener1RM.toStringAsFixed(1)} kg',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: -0.2,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _nova,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ),
@@ -476,29 +524,30 @@ class ExerciseSetWidget extends StatelessWidget {
     );
   }
 
-  // Minimalistischer Trenner
+  // Sophisticated separator with elegant gradients
   Widget _buildMinimalSeparator({required bool isCompleted}) {
     return Container(
-      height: 36,
-      width: 1,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      height: 40,
+      width: 1.5,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.grey[200]!.withOpacity(0.0),
+            Colors.transparent,
             isCompleted
-                ? Colors.green[200]!.withOpacity(0.7)
-                : _steel.withOpacity(0.4), // Bessere Sichtbarkeit auf dunklem Hintergrund
-            Colors.grey[200]!.withOpacity(0.0),
+                ? Colors.green.withOpacity(0.6)
+                : _lunar.withOpacity(0.6),
+            Colors.transparent,
           ],
         ),
+        borderRadius: BorderRadius.circular(1),
       ),
     );
   }
 
-  // Hilfsmethode für die minimalistische Werteanzeige ohne Icons
+  // Sophisticated value display with enhanced typography
   Widget _buildMinimalValueDisplay({
     required BuildContext context,
     required String label,
@@ -508,28 +557,30 @@ class ExerciseSetWidget extends StatelessWidget {
     required int flex,
   }) {
     final Color valueColor =
-        isCompleted ? Colors.green[700]! : _silver; // Ausgegrauter Text für ausstehende Sätze  
+        isCompleted ? Colors.green[300]! : _nova;
     final Color labelColor =
-        isCompleted ? Colors.green[600]! : _mercury; // Noch subtilere Labels
+        isCompleted ? Colors.green[400]! : _stardust;
+    final Color unitColor =
+        isCompleted ? Colors.green[500]! : _comet;
 
     return Expanded(
       flex: flex,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Label
+          // Enhanced label with sophisticated typography
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
               color: labelColor,
-              letterSpacing: -0.3,
+              letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          // Wert mit Einheit
+          // Enhanced value display with unit
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
@@ -537,20 +588,21 @@ class ExerciseSetWidget extends StatelessWidget {
                 TextSpan(
                   text: value,
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                     color: valueColor,
                     letterSpacing: -0.5,
+                    height: 1.0,
                   ),
                 ),
                 if (unit.isNotEmpty)
                   TextSpan(
                     text: ' $unit',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isCompleted ? Colors.green[600] : Colors.grey[600],
-                      letterSpacing: -0.3,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: unitColor,
+                      letterSpacing: -0.2,
                     ),
                   ),
               ],

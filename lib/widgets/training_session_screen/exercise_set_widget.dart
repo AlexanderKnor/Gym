@@ -15,21 +15,15 @@ class ExerciseSetWidget extends StatelessWidget {
   final Map<String, dynamic>? recommendation;
   final VoidCallback? onReactivate;
 
-  // PROVER sophisticated color system
-  static const Color _void = Color(0xFF000000);
-  static const Color _cosmos = Color(0xFF050507);
-  static const Color _nebula = Color(0xFF0F0F12);
-  static const Color _stellar = Color(0xFF18181C);
-  static const Color _lunar = Color(0xFF242429);
-  static const Color _asteroid = Color(0xFF35353C);
-  static const Color _comet = Color(0xFF65656F);
-  static const Color _stardust = Color(0xFFA5A5B0);
-  static const Color _nova = Color(0xFFF5F5F7);
-
-  // Prover signature gradient
-  static const Color _proverCore = Color(0xFFFF4500);
-  static const Color _proverGlow = Color(0xFFFF6B3D);
-  static const Color _proverFlare = Color(0xFFFFA500);
+  // Clean color system matching other screens
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
 
   const ExerciseSetWidget({
     Key? key,
@@ -83,16 +77,16 @@ class ExerciseSetWidget extends StatelessWidget {
       }
     }
 
-    // Sophisticated shadows based on state
-    final List<BoxShadow> cardShadows = isActive
+    // Modern shadows matching wheel design
+    final List<BoxShadow>? cardShadows = isActive
         ? [
             BoxShadow(
-              color: _proverCore.withOpacity(0.25),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: _midnight.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
             BoxShadow(
-              color: _void.withOpacity(0.4),
+              color: _emberCore.withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -100,131 +94,141 @@ class ExerciseSetWidget extends StatelessWidget {
         : isCompleted
             ? [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: _void.withOpacity(0.3),
-                  blurRadius: 8,
+                  color: _midnight.withOpacity(0.2),
+                  blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ]
-            : [
-                BoxShadow(
-                  color: _void.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ];
+            : null;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 16),
+      duration: const Duration(milliseconds: 250),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isActive
               ? [
-                  _stellar.withOpacity(0.9),
-                  _nebula.withOpacity(0.7),
+                  _charcoal.withOpacity(0.95),
+                  _midnight.withOpacity(0.85),
                 ]
               : isCompleted
                   ? [
-                      _stellar.withOpacity(0.6),
-                      _nebula.withOpacity(0.4),
+                      _midnight.withOpacity(0.85),
+                      _midnight.withOpacity(0.7),
                     ]
                   : [
-                      _stellar.withOpacity(0.4),
-                      _nebula.withOpacity(0.3),
+                      _midnight.withOpacity(0.7),
+                      _midnight.withOpacity(0.5),
                     ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isActive
-              ? _proverCore.withOpacity(0.8)
+              ? _emberCore.withOpacity(0.5)
               : isCompleted
-                  ? Colors.green.withOpacity(0.6)
-                  : _lunar.withOpacity(0.4),
-          width: isActive ? 2.5 : 1.5,
+                  ? Colors.green.withOpacity(0.4)
+                  : _steel.withOpacity(0.3),
+          width: isActive ? 1.5 : 1,
         ),
         boxShadow: cardShadows,
       ),
       child: Column(
         children: [
-          // Elegant header with sophisticated design
+          // Modern elevated header matching wheel design
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: isActive
-                    ? [_proverCore, _proverGlow]
+                    ? [
+                        _steel.withOpacity(0.4),
+                        _steel.withOpacity(0.2),
+                      ]
                     : isCompleted
                         ? [
-                            Colors.green.withOpacity(0.15),
-                            Colors.green.withOpacity(0.08)
+                            Colors.green.withOpacity(0.08),
+                            Colors.green.withOpacity(0.03),
                           ]
                         : [
-                            _asteroid.withOpacity(0.4),
-                            _asteroid.withOpacity(0.2)
+                            _charcoal.withOpacity(0.4),
+                            _charcoal.withOpacity(0.2),
                           ],
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(isActive ? 17.5 : 18.5),
-                topRight: Radius.circular(isActive ? 17.5 : 18.5),
+                topLeft: Radius.circular(isActive ? 14.5 : 15),
+                topRight: Radius.circular(isActive ? 14.5 : 15),
               ),
-              boxShadow: [
-                BoxShadow(
+              border: Border(
+                bottom: BorderSide(
                   color: isActive
-                      ? _proverCore.withOpacity(0.3)
+                      ? _emberCore.withOpacity(0.3)
                       : isCompleted
                           ? Colors.green.withOpacity(0.2)
-                          : _void.withOpacity(0.1),
-                  offset: const Offset(0, 2),
-                  blurRadius: 6,
+                          : _steel.withOpacity(0.15),
+                  width: isActive ? 1.5 : 1,
                 ),
-              ],
+              ),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: _emberCore.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               children: [
-                  // Elegant set number badge with sophisticated styling
+                  // Modern elevated badge matching wheel design
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isActive
-                            ? [_nova, _stardust.withOpacity(0.9)]
-                            : isCompleted
-                                ? [Colors.green, Colors.green.shade700]
-                                : [
-                                    _lunar.withOpacity(0.8),
-                                    _stellar.withOpacity(0.6),
+                      gradient: isActive
+                          ? LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                _emberCore.withOpacity(0.2),
+                                _emberCore.withOpacity(0.1),
+                              ],
+                            )
+                          : isCompleted
+                              ? LinearGradient(
+                                  colors: [
+                                    Colors.green.withOpacity(0.2),
+                                    Colors.green.withOpacity(0.1),
                                   ],
-                      ),
+                                )
+                              : LinearGradient(
+                                  colors: [
+                                    _steel.withOpacity(0.4),
+                                    _steel.withOpacity(0.2),
+                                  ],
+                                ),
                       border: Border.all(
                         color: isActive
-                            ? _proverCore.withOpacity(0.3)
+                            ? _emberCore.withOpacity(0.6)
                             : isCompleted
-                                ? Colors.green.withOpacity(0.4)
-                                : _stardust.withOpacity(0.3),
+                                ? Colors.green.withOpacity(0.5)
+                                : _steel.withOpacity(0.5),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: isActive
-                              ? _proverCore.withOpacity(0.4)
+                              ? _emberCore.withOpacity(0.15)
                               : isCompleted
-                                  ? Colors.green.withOpacity(0.3)
-                                  : _void.withOpacity(0.2),
-                          offset: const Offset(0, 2),
+                                  ? Colors.green.withOpacity(0.1)
+                                  : _midnight.withOpacity(0.1),
                           blurRadius: 4,
+                          offset: const Offset(0, 1),
                         ),
                       ],
                     ),
@@ -232,36 +236,34 @@ class ExerciseSetWidget extends StatelessWidget {
                       child: Text(
                         '${set.id}',
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                           color: isActive 
-                              ? _stellar
+                              ? _emberCore
                               : isCompleted 
-                                  ? _nova
-                                  : _nova,
-                          letterSpacing: -0.3,
+                                  ? Colors.green
+                                  : _snow,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
 
-                  // Elegant status text with sophisticated typography
+                  // Clean status text
                   Text(
                     isActive
-                        ? 'AKTUELLER SATZ'
+                        ? 'Aktueller Satz'
                         : isCompleted
-                            ? 'ABGESCHLOSSEN'
-                            : 'SATZ ${set.id}',
+                            ? 'Abgeschlossen'
+                            : 'Satz ${set.id}',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: isActive
-                          ? _nova
+                          ? _snow
                           : isCompleted
-                              ? Colors.green[200]
-                              : _stardust,
+                              ? Colors.green
+                              : _silver,
                     ),
                   ),
 
@@ -309,21 +311,21 @@ class ExerciseSetWidget extends StatelessWidget {
                     )
                   else if (isActive)
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 6,
+                      height: 6,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: _emberCore,
                       ),
                     ),
               ],
             ),
           ),
 
-          // Interactive input widgets for active state with enhanced spacing
+          // Interactive input widgets for active state
           if (isActive)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -402,9 +404,9 @@ class ExerciseSetWidget extends StatelessWidget {
               ),
             )
           else
-            // Sophisticated compact display for non-active sets
+            // Clean compact display for non-active sets
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -447,72 +449,72 @@ class ExerciseSetWidget extends StatelessWidget {
               ),
             ),
 
-          // Sophisticated 1RM footer with elegant design
+          // Modern elevated footer matching wheel design
           if (einRM != null || (isActive && empfohlener1RM != null))
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    _stellar.withOpacity(0.3),
-                    _nebula.withOpacity(0.5),
+                    _charcoal.withOpacity(0.3),
+                    _charcoal.withOpacity(0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(isActive ? 17.5 : 18.5),
-                  bottomRight: Radius.circular(isActive ? 17.5 : 18.5),
+                  bottomLeft: Radius.circular(isActive ? 14.5 : 15),
+                  bottomRight: Radius.circular(isActive ? 14.5 : 15),
                 ),
                 border: Border(
                   top: BorderSide(
-                    color: _lunar.withOpacity(0.4),
+                    color: _steel.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _midnight.withOpacity(0.1),
+                    blurRadius: 2,
+                    offset: const Offset(0, -1),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Enhanced 1RM display
+                  // Clean 1RM display
                   Text(
                     '1RM: ${einRM != null ? einRM.toStringAsFixed(1) : "—"} kg',
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _stardust,
-                      letterSpacing: 0.5,
+                      fontWeight: FontWeight.w500,
+                      color: _silver,
                     ),
                   ),
 
-                  // Sophisticated recommended 1RM badge
+                  // Clean recommended 1RM badge
                   if (isActive && empfohlener1RM != null)
                     Container(
-                      margin: const EdgeInsets.only(left: 12),
+                      margin: const EdgeInsets.only(left: 10),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [_proverCore, _proverGlow],
+                        color: _emberCore.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: _emberCore.withOpacity(0.3),
+                          width: 1,
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _proverCore.withOpacity(0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
                       child: Text(
                         '${empfohlener1RM.toStringAsFixed(1)} kg',
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: _nova,
-                          letterSpacing: 0.3,
+                          fontWeight: FontWeight.w600,
+                          color: _emberCore,
                         ),
                       ),
                     ),
@@ -524,30 +526,22 @@ class ExerciseSetWidget extends StatelessWidget {
     );
   }
 
-  // Sophisticated separator with elegant gradients
+  // Clean separator
   Widget _buildMinimalSeparator({required bool isCompleted}) {
     return Container(
-      height: 40,
-      width: 1.5,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
+      height: 32,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            isCompleted
-                ? Colors.green.withOpacity(0.6)
-                : _lunar.withOpacity(0.6),
-            Colors.transparent,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(1),
+        color: isCompleted
+            ? Colors.green.withOpacity(0.3)
+            : _steel.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(0.5),
       ),
     );
   }
 
-  // Sophisticated value display with enhanced typography
+  // Clean value display
   Widget _buildMinimalValueDisplay({
     required BuildContext context,
     required String label,
@@ -557,30 +551,30 @@ class ExerciseSetWidget extends StatelessWidget {
     required int flex,
   }) {
     final Color valueColor =
-        isCompleted ? Colors.green[300]! : _nova;
+        isCompleted ? Colors.green : _snow;
     final Color labelColor =
-        isCompleted ? Colors.green[400]! : _stardust;
+        isCompleted ? Colors.green.withOpacity(0.8) : _silver;
     final Color unitColor =
-        isCompleted ? Colors.green[500]! : _comet;
+        isCompleted ? Colors.green.withOpacity(0.7) : _mercury;
 
     return Expanded(
       flex: flex,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Enhanced label with sophisticated typography
+          // Clean label
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
               color: labelColor,
-              letterSpacing: 1.2,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
-          // Enhanced value display with unit
+          // Clean value display with unit
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
@@ -588,10 +582,10 @@ class ExerciseSetWidget extends StatelessWidget {
                 TextSpan(
                   text: value,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: valueColor,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.3,
                     height: 1.0,
                   ),
                 ),
@@ -599,10 +593,9 @@ class ExerciseSetWidget extends StatelessWidget {
                   TextSpan(
                     text: ' $unit',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                       color: unitColor,
-                      letterSpacing: -0.2,
                     ),
                   ),
               ],

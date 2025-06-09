@@ -568,46 +568,101 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  // Auto-Scroll mit dynamischer Höhenberechnung
+  // Verbessertes Auto-Scroll mit präziser Positionierung unter Action Bar
   Future<void> _scrollToActiveSet(int activeSetIndex, int totalSets) async {
     if (!_setsScrollController.hasClients || !mounted) return;
     
-    // Längere Wartezeit für vollständigen Widget-Build
-    await Future.delayed(const Duration(milliseconds: 100));
+    // Wartezeit für vollständigen Widget-Build nach UI-Updates
+    await Future.delayed(const Duration(milliseconds: 150));
     
     if (!_setsScrollController.hasClients || !mounted) return;
     
-    // Verwende die gespeicherten Keys um die exakte Position zu finden
-    final targetKey = _setKeys[activeSetIndex];
-    if (targetKey?.currentContext != null) {
-      // Scrolle zum spezifischen Widget
-      await Scrollable.ensureVisible(
-        targetKey!.currentContext!,
-        duration: const Duration(milliseconds: 400),
+    try {
+      // Berechne die ideale Position direkt unter der Action Bar
+      final actionBarRenderBox = _actionBarKey.currentContext?.findRenderObject() as RenderBox?;
+      final listRenderBox = _setListKey.currentContext?.findRenderObject() as RenderBox?;
+      
+      if (actionBarRenderBox != null && listRenderBox != null) {
+        // Berechne exakte Positionen
+        final actionBarGlobalPosition = actionBarRenderBox.localToGlobal(Offset.zero);
+        final listGlobalPosition = listRenderBox.localToGlobal(Offset.zero);
+        
+        // Action Bar Bottom + kleiner Gap = ideale Position für aktiven Satz
+        final actionBarBottom = actionBarGlobalPosition.dy + actionBarRenderBox.size.height;
+        const double idealGap = 8.0; // Kleiner Gap unter Action Bar
+        final double idealActiveSetPosition = actionBarBottom + idealGap;
+        
+        // Verwende Widget-Key für präzise Positionierung
+        final targetKey = _setKeys[activeSetIndex];
+        if (targetKey?.currentContext != null) {
+          final setRenderBox = targetKey!.currentContext!.findRenderObject() as RenderBox?;
+          if (setRenderBox != null) {
+            final currentSetPosition = setRenderBox.localToGlobal(Offset.zero);
+            
+            // Berechne benötigten Scroll-Offset
+            final double scrollAdjustment = currentSetPosition.dy - idealActiveSetPosition;
+            final double targetScrollOffset = _setsScrollController.offset + scrollAdjustment;
+            
+            // Begrenze auf gültige Scroll-Grenzen
+            final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
+            final double minScrollExtent = _setsScrollController.position.minScrollExtent;
+            final double finalOffset = targetScrollOffset.clamp(minScrollExtent, maxScrollExtent);
+            
+            // Smooth Animation zur idealen Position
+            await _setsScrollController.animateTo(
+              finalOffset,
+              duration: const Duration(milliseconds: 450),
+              curve: Curves.easeOutCubic,
+            );
+            
+            // Haptisches Feedback
+            if (mounted && activeSetIndex > 0) {
+              HapticFeedback.lightImpact();
+            }
+            return;
+          }
+        }
+      }
+      
+      // Fallback: Verbesserte Schätzung basierend auf neuen Card-Höhen
+      const double estimatedSetHeight = 118.0; // Angepasst für neue Card-Größen
+      const double actionBarHeight = 42.0; // Action Bar Höhe
+      const double actionBarPadding = 20.0; // Top + Bottom Padding
+      const double idealGap = 8.0;
+      
+      // Berechne Ziel-Offset für ideale Positionierung
+      final double setPosition = activeSetIndex * estimatedSetHeight;
+      final double actionBarSpace = actionBarHeight + actionBarPadding + idealGap;
+      final double targetOffset = setPosition - actionBarSpace;
+      
+      final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
+      final double minScrollExtent = _setsScrollController.position.minScrollExtent;
+      final double finalOffset = targetOffset.clamp(minScrollExtent, maxScrollExtent);
+      
+      await _setsScrollController.animateTo(
+        finalOffset,
+        duration: const Duration(milliseconds: 450),
         curve: Curves.easeOutCubic,
-        alignment: 0.0, // 0.0 = oben, 1.0 = unten
       );
       
       // Haptisches Feedback
       if (mounted && activeSetIndex > 0) {
         HapticFeedback.lightImpact();
       }
-    } else {
-      // Fallback: Verwende geschätzte Höhe
-      const double estimatedSetHeight = 110.0;
-      final double targetOffset = activeSetIndex * estimatedSetHeight;
-      final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
-      final double finalOffset = targetOffset.clamp(0.0, maxScrollExtent);
       
-      try {
-        await _setsScrollController.animateTo(
-          finalOffset,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-        );
-      } catch (e) {
-        if (mounted && _setsScrollController.hasClients) {
+    } catch (e) {
+      print('Auto-scroll error: $e');
+      // Fallback: Einfacher Scroll zum Index
+      if (mounted && _setsScrollController.hasClients) {
+        try {
+          const double fallbackSetHeight = 118.0;
+          final double fallbackOffset = activeSetIndex * fallbackSetHeight;
+          final double maxScrollExtent = _setsScrollController.position.maxScrollExtent;
+          final double finalOffset = fallbackOffset.clamp(0.0, maxScrollExtent);
+          
           _setsScrollController.jumpTo(finalOffset);
+        } catch (fallbackError) {
+          print('Fallback scroll error: $fallbackError');
         }
       }
     }

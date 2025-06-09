@@ -908,34 +908,44 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
                 child: Opacity(
                   opacity: _fadeInAnimation.value,
                   child: SafeArea(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 40),
-                            
-                            // Sophisticated success indicator
-                            _buildSuccessIndicator(),
-                            
-                            const SizedBox(height: 48),
-                            
-                            // Elegant completion message
-                            _buildCompletionMessage(),
-                            
-                            const SizedBox(height: 56),
-                            
-                            // Animated training stats
-                            _buildTrainingStats(trainingPlan, trainingDay, totalExercises, totalSets),
-                            
-                            const SizedBox(height: 40),
-                            
-                            // Action buttons with sophisticated animations
-                            _buildActionButtons(sessionProvider),
-                          ],
+                    child: Column(
+                      children: [
+                        // Main content - scrollable
+                        Expanded(
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 40),
+                                  
+                                  // Sophisticated success indicator
+                                  _buildSuccessIndicator(),
+                                  
+                                  const SizedBox(height: 48),
+                                  
+                                  // Elegant completion message
+                                  _buildCompletionMessage(),
+                                  
+                                  const SizedBox(height: 56),
+                                  
+                                  // Animated training stats
+                                  _buildTrainingStats(trainingPlan, trainingDay, totalExercises, totalSets),
+                                  
+                                  const SizedBox(height: 40),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        
+                        // Fixed bottom button
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: _buildActionButtons(sessionProvider),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1139,11 +1149,6 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
             opacity: _statsFadeAnimation.value,
             child: Column(
               children: [
-                // Elegant session information display
-                _buildMinimalSessionInfo(trainingPlan.name, trainingDay.name),
-                
-                const SizedBox(height: 32),
-                
                 // Clean stats grid with duration
                 Row(
                   children: [
@@ -1205,59 +1210,6 @@ class _TrainingCompletionWidgetState extends State<TrainingCompletionWidget>
       }
     }
   }
-
-  Widget _buildMinimalSessionInfo(String planName, String dayName) {
-    return Column(
-      children: [
-        // Training plan - clean text format
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.assignment_rounded,
-              size: 16,
-              color: _emberCore.withOpacity(0.7),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              planName,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: _silver,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: 12),
-        
-        // Training day - clean text format
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_rounded,
-              size: 16,
-              color: _emberCore.withOpacity(0.7),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              dayName,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: _silver,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
 
   Widget _buildStatCard(IconData icon, String value, String label) {
     return Column(

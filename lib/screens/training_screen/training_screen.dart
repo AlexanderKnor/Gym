@@ -184,7 +184,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                   ],
                 ),
 
-                const SizedBox(height: 5),
+                const SizedBox(height: 7),
 
                 // Plan info
                 Column(

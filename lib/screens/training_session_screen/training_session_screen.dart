@@ -1245,54 +1245,76 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Container(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom +
-                MediaQuery.of(context).padding.bottom),
-        decoration: const BoxDecoration(
-          color: _charcoal,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [_charcoal, _midnight],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: _steel.withOpacity(0.3),
+              width: 1,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  color: _steel.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(2),
+          padding: const EdgeInsets.all(20),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header mit Titel
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.red, Colors.red.shade400],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.exit_to_app,
+                        color: _snow,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Training beenden',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                        color: _snow,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close, size: 22, color: _silver),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
-              ),
-              const Text(
-                'Training beenden?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: _snow,
-                  letterSpacing: -0.5,
+                const SizedBox(height: 16),
+                Text(
+                  'Dein Fortschritt wird gespeichert, aber das Training wird als nicht abgeschlossen markiert.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: _silver,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Dein Fortschritt wird gespeichert, aber das Training wird als nicht abgeschlossen markiert.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: _silver,
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
+                const SizedBox(height: 20),
+
+                // Option: Training beenden
+                _buildExitOptionButton(
+                  icon: Icons.exit_to_app,
+                  label: 'Training beenden',
+                  onTap: () async {
                     // BUGFIX: Provider VOR Navigation speichern
                     final sessionProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
                     final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
@@ -1341,52 +1363,85 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.15),
-                    foregroundColor: Colors.red,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.red.withOpacity(0.3)),
-                    ),
-                  ),
-                  child: const Text(
-                    'TRAINING BEENDEN',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  isPrimary: false,
+                  isDestructive: true,
                 ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _emberCore,
-                    foregroundColor: _snow,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'WEITER TRAINIEREN',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+
+                const SizedBox(height: 12),
+
+                // Option: Weiter trainieren
+                _buildExitOptionButton(
+                  icon: Icons.fitness_center,
+                  label: 'Weiter trainieren',
+                  onTap: () => Navigator.of(context).pop(),
+                  isPrimary: true,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildExitOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isPrimary,
+    bool isDestructive = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isPrimary
+            ? LinearGradient(colors: [_emberCore, _emberCore.withOpacity(0.8)])
+            : LinearGradient(
+                colors: [_steel.withOpacity(0.3), _steel.withOpacity(0.1)]),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isPrimary
+              ? _emberCore.withOpacity(0.5)
+              : isDestructive
+                  ? Colors.red.withOpacity(0.4)
+                  : _steel.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isPrimary 
+                      ? _snow 
+                      : isDestructive 
+                          ? Colors.red 
+                          : _silver,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.3,
+                    color: isPrimary 
+                        ? _snow 
+                        : isDestructive 
+                            ? Colors.red 
+                            : _silver,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

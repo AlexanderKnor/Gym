@@ -743,7 +743,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                     Navigator.of(context).pop();
                     _navigateToEditPlan(context, plan);
                   },
-                  isPrimary: true,
+                  isPrimary: false,
                 ),
               ],
             ),

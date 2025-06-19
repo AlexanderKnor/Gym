@@ -657,42 +657,44 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             letterSpacing: -0.5,
           ),
         ),
-        // Add Rule Button
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => provider.openRuleEditor(null),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _emberCore.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _emberCore.withOpacity(0.3),
-                  width: 1,
+        // Add Rule Button - exaktes Design wie "NEU" Button
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            provider.openRuleEditor(null);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _charcoal.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _emberCore.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _midnight.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.add_rounded,
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_rounded, color: _emberCore, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'NEU',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                     color: _emberCore,
-                    size: 16,
+                    letterSpacing: 1,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Hinzufügen',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _emberCore,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -12,6 +12,16 @@ import '../../shared/rir_wheel_input_widget.dart';
 class SetCardWidget extends StatelessWidget {
   final TrainingSetModel satz;
 
+  // Clean color system matching training screen
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
+
   const SetCardWidget({
     Key? key,
     required this.satz,
@@ -48,49 +58,40 @@ class SetCardWidget extends StatelessWidget {
     final List<BoxShadow> cardShadows = istAktiv
         ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: _emberCore.withOpacity(0.2),
               offset: const Offset(0, 2),
               blurRadius: 8,
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              offset: const Offset(0, 1),
-              blurRadius: 4,
               spreadRadius: 0,
             ),
           ]
         : istAbgeschlossen
             ? [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.08),
+                  color: Colors.green.withOpacity(0.15),
                   offset: const Offset(0, 1),
                   blurRadius: 4,
                   spreadRadius: 0,
                 ),
               ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  offset: const Offset(0, 1),
-                  blurRadius: 3,
-                  spreadRadius: 0,
-                ),
-              ];
+            : [];
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: istAktiv
+            ? _charcoal.withOpacity(0.95)
+            : istAbgeschlossen
+                ? _charcoal.withOpacity(0.85)
+                : _charcoal.withOpacity(0.85),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: istAktiv
-              ? Colors.black
+              ? _emberCore
               : istAbgeschlossen
-                  ? Colors.green[300]!
-                  : Colors.grey[200]!,
-          width: istAktiv ? 1.5 : 1,
+                  ? Colors.green.withOpacity(0.6)
+                  : _steel.withOpacity(0.3),
+          width: istAktiv ? 2 : 1,
         ),
         boxShadow: cardShadows,
       ),
@@ -105,30 +106,21 @@ class SetCardWidget extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: istAktiv
-                      ? [Colors.black, Colors.black.withOpacity(0.9)]
-                      : istAbgeschlossen
-                          ? [
-                              Colors.green.withOpacity(0.12),
-                              Colors.green.withOpacity(0.05)
-                            ]
-                          : [
-                              Colors.grey.withOpacity(0.12),
-                              Colors.grey.withOpacity(0.05)
-                            ],
-                ),
-                boxShadow: [
-                  BoxShadow(
+                color: istAktiv
+                    ? _emberCore.withOpacity(0.15)
+                    : istAbgeschlossen
+                        ? Colors.green.withOpacity(0.1)
+                        : _graphite.withOpacity(0.5),
+                border: Border(
+                  bottom: BorderSide(
                     color: istAktiv
-                        ? Colors.black.withOpacity(0.1)
-                        : Colors.transparent,
-                    offset: const Offset(0, 2),
-                    blurRadius: 4,
+                        ? _emberCore.withOpacity(0.3)
+                        : istAbgeschlossen
+                            ? Colors.green.withOpacity(0.2)
+                            : _steel.withOpacity(0.2),
+                    width: 1,
                   ),
-                ],
+                ),
               ),
               child: Row(
                 children: [
@@ -139,22 +131,18 @@ class SetCardWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: istAktiv
-                          ? Colors.white
+                          ? _emberCore.withOpacity(0.15)
                           : istAbgeschlossen
-                              ? Colors.green
-                              : Colors.grey[400],
-                      boxShadow: [
-                        BoxShadow(
-                          color: (istAktiv
-                                  ? Colors.black
-                                  : istAbgeschlossen
-                                      ? Colors.green
-                                      : Colors.grey[400])!
-                              .withOpacity(0.2),
-                          offset: const Offset(0, 1),
-                          blurRadius: 2,
-                        ),
-                      ],
+                              ? Colors.green.withOpacity(0.15)
+                              : _steel.withOpacity(0.3),
+                      border: Border.all(
+                        color: istAktiv
+                            ? _emberCore
+                            : istAbgeschlossen
+                                ? Colors.green
+                                : _steel.withOpacity(0.4),
+                        width: 1,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -162,7 +150,11 @@ class SetCardWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: istAktiv ? Colors.black : Colors.white,
+                          color: istAktiv 
+                              ? _emberCore 
+                              : istAbgeschlossen
+                                  ? Colors.green
+                                  : _mercury,
                         ),
                       ),
                     ),
@@ -181,10 +173,10 @@ class SetCardWidget extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.3,
                       color: istAktiv
-                          ? Colors.white
+                          ? _snow
                           : istAbgeschlossen
-                              ? Colors.green[700]
-                              : Colors.grey[700],
+                              ? Colors.green
+                              : _silver,
                     ),
                   ),
 
@@ -194,7 +186,7 @@ class SetCardWidget extends StatelessWidget {
                   if (istAbgeschlossen)
                     Icon(
                       Icons.check_rounded,
-                      color: Colors.green[700],
+                      color: Colors.green,
                       size: 20,
                     )
                   else if (istAktiv)
@@ -203,7 +195,14 @@ class SetCardWidget extends StatelessWidget {
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: _emberCore,
+                        boxShadow: [
+                          BoxShadow(
+                            color: _emberCore.withOpacity(0.4),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
                     ),
                 ],
@@ -344,14 +343,14 @@ class SetCardWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: _graphite.withOpacity(0.5),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(15),
                   bottomRight: Radius.circular(15),
                 ),
                 border: Border(
                   top: BorderSide(
-                    color: Colors.grey[200]!,
+                    color: _steel.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
@@ -365,7 +364,7 @@ class SetCardWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
+                      color: _mercury,
                       letterSpacing: -0.3,
                     ),
                   ),
@@ -381,15 +380,19 @@ class SetCardWidget extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black,
+                        color: _emberCore.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _emberCore.withOpacity(0.4),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         '${empfohlener1RM.toStringAsFixed(1)} kg',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: _emberCore,
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -413,11 +416,11 @@ class SetCardWidget extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.grey[200]!.withOpacity(0.0),
+            _steel.withOpacity(0.0),
             isCompleted
-                ? Colors.green[200]!.withOpacity(0.7)
-                : Colors.grey[300]!.withOpacity(0.7),
-            Colors.grey[200]!.withOpacity(0.0),
+                ? Colors.green.withOpacity(0.3)
+                : _steel.withOpacity(0.3),
+            _steel.withOpacity(0.0),
           ],
         ),
       ),
@@ -434,9 +437,9 @@ class SetCardWidget extends StatelessWidget {
     required int flex,
   }) {
     final Color valueColor =
-        isCompleted ? Colors.green[700]! : Colors.grey[900]!;
+        isCompleted ? Colors.green : _snow;
     final Color labelColor =
-        isCompleted ? Colors.green[600]! : Colors.grey[600]!;
+        isCompleted ? Colors.green.withOpacity(0.8) : _mercury;
 
     return Expanded(
       flex: flex,
@@ -475,7 +478,7 @@ class SetCardWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: isCompleted ? Colors.green[600] : Colors.grey[600],
+                      color: isCompleted ? Colors.green.withOpacity(0.8) : _mercury,
                       letterSpacing: -0.3,
                     ),
                   ),

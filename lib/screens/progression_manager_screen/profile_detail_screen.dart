@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui'; // Import für BackdropFilter
+import 'dart:math'; // Import für sin, pi
 import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../widgets/progression_manager_screen/components/rule_list_widget.dart';
@@ -26,6 +27,10 @@ class ProfileDetailScreen extends StatefulWidget {
 class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _setCard1Key = GlobalKey();
+  final GlobalKey _setCard2Key = GlobalKey();
+  final GlobalKey _setCard3Key = GlobalKey();
 
   @override
   void initState() {
@@ -75,7 +80,37 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   void dispose() {
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToNextSet() {
+    final provider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+    
+    // Finde das aktuelle Set
+    final currentSetIndex = provider.aktiverSatz - 1;
+    
+    // Bestimme das Ziel-Widget basierend auf dem Index
+    GlobalKey? targetKey;
+    if (currentSetIndex == 0) {
+      targetKey = _setCard2Key;
+    } else if (currentSetIndex == 1) {
+      targetKey = _setCard3Key;
+    }
+    
+    if (targetKey != null && targetKey.currentContext != null) {
+      // Berechne die Position des Ziel-Widgets
+      final RenderBox renderBox = targetKey.currentContext!.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero);
+      
+      // Scrolle mit Animation zum nächsten Set
+      _scrollController.animateTo(
+        _scrollController.offset + position.dy - 100, // 100px Offset für bessere Sichtbarkeit
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   bool _hasCompletedSets(ProgressionManagerProvider provider) {
@@ -205,15 +240,21 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     }
 
     return Scaffold(
+      backgroundColor: _midnight,
       appBar: AppBar(
-        title: Text(widget.profile.name),
+        backgroundColor: _midnight,
+        title: Text(
+          widget.profile.name,
+          style: const TextStyle(color: _snow),
+        ),
+        iconTheme: const IconThemeData(color: _snow),
         elevation: 0, // Kein Schatten
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+                bottom: BorderSide(color: _steel.withOpacity(0.2), width: 1),
               ),
             ),
             child: TabBar(
@@ -222,10 +263,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                 Tab(text: 'Bearbeiten'),
                 Tab(text: 'Demo'),
               ],
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.grey[400],
+              labelColor: _snow,
+              unselectedLabelColor: _mercury,
               indicatorWeight: 3,
-              indicatorColor: Colors.black,
+              indicatorColor: _emberCore,
               labelStyle: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -237,7 +278,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                 letterSpacing: -0.3,
               ),
               indicator: UnderlineTabIndicator(
-                borderSide: BorderSide(color: Colors.black, width: 3),
+                borderSide: BorderSide(color: _emberCore, width: 3),
                 insets: const EdgeInsets.symmetric(horizontal: 24),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -272,124 +313,1377 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     ThemeData theme,
   ) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profilinformationen Card mit integriertem "Bearbeiten"-Button
-            Container(
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+      backgroundColor: _midnight,
+      body: Column(
+        children: [
+          // Einfacher Header
+          _buildSimpleHeader(context, provider),
+          
+          // Main Content Area
+          Expanded(
+            child: _buildMainContent(context, provider),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimpleHeader(BuildContext context, ProgressionManagerProvider provider) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Row(
+        children: [
+          // Profile Name
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.profile.name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: _snow,
+                    letterSpacing: -0.7,
                   ),
-                ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.profile.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _mercury,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Edit Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => provider.openProfileEditor(widget.profile),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _emberCore.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _emberCore.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: _emberCore,
+                  size: 20,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header mit Titel und Button
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Profilinformationen',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            provider.openProfileEditor(widget.profile);
-                          },
-                          icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('Bearbeiten'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.black87,
-                            side: BorderSide(color: Colors.grey[300]!),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            visualDensity: VisualDensity.compact,
-                            textStyle: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                        ),
-                      ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context, ProgressionManagerProvider provider) {
+    final profil = provider.aktuellesProfil;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Quick Stats Card
+          _buildQuickStats(context, provider),
+          
+          const SizedBox(height: 24),
+          
+          // Rules Section
+          _buildSimpleRulesSection(context, provider, profil),
+          
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStats(BuildContext context, ProgressionManagerProvider provider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _steel.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildStatItem(
+            '${widget.profile.config['targetRepsMin']}-${widget.profile.config['targetRepsMax']}',
+            'Wiederholungen',
+            Icons.repeat_rounded,
+          ),
+          _buildStatDivider(),
+          _buildStatItem(
+            '${widget.profile.config['targetRIRMin']}-${widget.profile.config['targetRIRMax']}',
+            'RIR',
+            Icons.trending_down_rounded,
+          ),
+          _buildStatDivider(),
+          _buildStatItem(
+            '${widget.profile.config['increment']} kg',
+            'Steigerung',
+            Icons.trending_up_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: _emberCore,
+            size: 18,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: _snow,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: _mercury,
+              letterSpacing: -0.1,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatDivider() {
+    return Container(
+      height: 40,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      color: _steel.withOpacity(0.2),
+    );
+  }
+
+  Widget _buildSimpleRulesSection(BuildContext context, ProgressionManagerProvider provider, dynamic profil) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Regeln',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: _snow,
+                letterSpacing: -0.5,
+              ),
+            ),
+            // Add Rule Button
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => provider.openRuleEditor(null),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _emberCore.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _emberCore.withOpacity(0.3),
+                      width: 1,
                     ),
                   ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        color: _emberCore,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Hinzufügen',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _emberCore,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Rules List or Empty State
+        _buildSimpleRulesList(context, provider, profil),
+      ],
+    );
+  }
 
-                  // Beschreibung
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+  Widget _buildSimpleRulesList(BuildContext context, ProgressionManagerProvider provider, dynamic profil) {
+    if (profil == null || profil.rules.isEmpty) {
+      return _buildSimpleEmptyState(context, provider);
+    }
+
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: profil.rules.length,
+      proxyDecorator: (child, index, animation) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (BuildContext context, Widget? child) {
+            final double animValue = Curves.easeInOut.transform(animation.value);
+            final double elevation = lerpDouble(0, 8, animValue)!;
+            final double scale = lerpDouble(1, 1.02, animValue)!;
+            
+            return Transform.scale(
+              scale: scale,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _emberCore.withOpacity(0.3),
+                      blurRadius: elevation,
+                      offset: Offset(0, elevation / 2),
+                    ),
+                  ],
+                ),
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+      },
+      onReorder: (oldIndex, newIndex) async {
+        // Provide haptic feedback
+        HapticFeedback.mediumImpact();
+        
+        if (oldIndex < newIndex) {
+          newIndex -= 1;
+        }
+        
+        // Skip if no actual movement
+        if (oldIndex == newIndex) return;
+        
+        try {
+          // Get the rule to move
+          final rule = profil.rules[oldIndex];
+          
+          // Use existing provider methods for reordering
+          provider.handleDragStart(rule.id);
+          
+          // Calculate target rule ID
+          String targetRuleId;
+          if (newIndex >= profil.rules.length - 1) {
+            // Moving to end - use the last rule's ID
+            targetRuleId = profil.rules.last.id;
+          } else {
+            // Moving to specific position
+            targetRuleId = profil.rules[newIndex].id;
+          }
+          
+          await provider.handleDrop(targetRuleId);
+        } catch (e) {
+          print('Error reordering rules: $e');
+          // Could show a snackbar here if needed
+        }
+      },
+      itemBuilder: (context, index) {
+        final rule = profil.rules[index];
+        final isLastRule = index == profil.rules.length - 1;
+        
+        return Column(
+          key: ValueKey('${rule.id}_column'),
+          children: [
+            _buildDraggableRuleCard(
+              context, 
+              provider, 
+              rule, 
+              index, 
+              profil.rules.length,
+              key: ValueKey(rule.id),
+            ),
+            // Flow connection between rules
+            if (!isLastRule) _buildFlowConnection(context, index),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFlowConnection(BuildContext context, int index) {
+    return Transform.translate(
+      offset: const Offset(0, -6), // Verschiebt das gesamte Element nach oben
+      child: Container(
+        height: 40,
+        width: double.infinity,
+        child: Stack(
+          children: [
+          // Main flow line
+          Positioned(
+            left: 32, // Align with drag handle
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    _emberCore.withOpacity(0.4),
+                    _emberCore.withOpacity(0.7),
+                    _emberCore.withOpacity(0.4),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+          ),
+          
+          // Flow arrows animation
+          _buildAnimatedFlowArrows(),
+          
+          // "Sonst" Label zentriert neben der Pfeilkaskade
+          Positioned(
+            left: 42, // Näher an der Pfeilkaskade, aber ohne Überlappung
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Text(
+                'sonst',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: _emberCore, // Gleiche Farbe wie die Pfeile
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ),
+        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedFlowArrows() {
+    return Positioned(
+      left: 28,
+      top: 4,
+      bottom: 4,
+      child: _FlowArrowsAnimationWidget(color: _emberCore),
+    );
+  }
+
+
+  Widget _buildSimpleEmptyState(BuildContext context, ProgressionManagerProvider provider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _steel.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.rule_rounded,
+            color: _mercury,
+            size: 48,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Keine Regeln',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: _snow,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Erstelle Regeln für automatische Progression',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: _mercury,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDraggableRuleCard(BuildContext context, ProgressionManagerProvider provider, dynamic rule, int index, int totalRules, {required Key key}) {
+    final bool isCondition = rule.type == 'condition';
+    
+    return Container(
+      key: key,
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _steel.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => provider.openRuleEditor(rule),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Drag Handle
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.drag_handle_rounded,
+                    color: _mercury,
+                    size: 20,
+                  ),
+                ),
+                
+                const SizedBox(width: 12),
+                
+                // Rule Number
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _emberCore.withOpacity(0.15),
+                    border: Border.all(
+                      color: _emberCore.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
                     child: Text(
-                      widget.profile.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                        height: 1.4,
+                      '${index + 1}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _emberCore,
                       ),
                     ),
                   ),
+                ),
+                
+                const SizedBox(width: 16),
+                
+                // Rule Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isCondition ? 'Wenn-Dann Regel' : 'Direkte Zuweisung',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _snow,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (isCondition && rule.conditions.isNotEmpty)
+                        Text(
+                          _formatConditionText(provider, rule.conditions.first),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _mercury,
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                // Actions (only delete now, since drag&drop handles reordering)
+                _buildQuickActionButton(
+                  Icons.delete_outline_rounded,
+                  () => _showDeleteRuleDialog(context, provider, rule.id),
+                  isDestructive: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                  // Trennlinie
-                  Divider(color: Colors.grey[200]),
-
-                  // Konfigurationswerte in moderner Darstellung
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        _buildConfigValue(
-                          context,
-                          'Wdh',
-                          '${widget.profile.config['targetRepsMin']} - ${widget.profile.config['targetRepsMax']}',
-                          'Wdh',
-                        ),
-                        _buildConfigSeparator(),
-                        _buildConfigValue(
-                          context,
-                          'RIR-Bereich',
-                          '${widget.profile.config['targetRIRMin']} - ${widget.profile.config['targetRIRMax']}',
-                          'RIR',
-                        ),
-                        _buildConfigSeparator(),
-                        _buildConfigValue(
-                          context,
-                          'Steigerung',
-                          '${widget.profile.config['increment']}',
-                          'kg',
-                        ),
-                      ],
+  Widget _buildSimpleRuleCard(BuildContext context, ProgressionManagerProvider provider, dynamic rule, int index, int totalRules) {
+    final bool isCondition = rule.type == 'condition';
+    
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _steel.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => provider.openRuleEditor(rule),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Rule Number
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _emberCore.withOpacity(0.15),
+                    border: Border.all(
+                      color: _emberCore.withOpacity(0.4),
+                      width: 1,
                     ),
                   ),
-                ],
+                  child: Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _emberCore,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(width: 16),
+                
+                // Rule Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isCondition ? 'Wenn-Dann Regel' : 'Direkte Zuweisung',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _snow,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (isCondition && rule.conditions.isNotEmpty)
+                        Text(
+                          _formatConditionText(provider, rule.conditions.first),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _mercury,
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                // Actions
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (index > 0)
+                      _buildQuickActionButton(
+                        Icons.keyboard_arrow_up_rounded,
+                        () => _handleRuleReorder(provider, rule, index, index - 1),
+                      ),
+                    if (index < totalRules - 1)
+                      _buildQuickActionButton(
+                        Icons.keyboard_arrow_down_rounded,
+                        () => _handleRuleReorder(provider, rule, index, index + 1),
+                      ),
+                    _buildQuickActionButton(
+                      Icons.delete_outline_rounded,
+                      () => _showDeleteRuleDialog(context, provider, rule.id),
+                      isDestructive: true,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(IconData icon, VoidCallback onTap, {bool isDestructive = false}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            icon,
+            size: 16,
+            color: isDestructive ? Colors.red.withOpacity(0.8) : _silver,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeaderCard(BuildContext context, ProgressionManagerProvider provider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _steel.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _emberCore.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            children: [
+              // Profile Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _emberCore.withOpacity(0.15),
+                  border: Border.all(
+                    color: _emberCore.withOpacity(0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.settings_rounded,
+                  color: _emberCore,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              
+              // Profile Name & Edit Button
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.profile.name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: _snow,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Progressionsprofil',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _mercury,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Edit Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => provider.openProfileEditor(widget.profile),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _emberCore.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _emberCore.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.edit_outlined,
+                      color: _emberCore,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Description
+          if (widget.profile.description.isNotEmpty) ...[
+            Text(
+              widget.profile.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: _silver,
+                height: 1.4,
+                letterSpacing: -0.2,
               ),
             ),
+            const SizedBox(height: 20),
+          ],
+          
+          // Configuration Values in Grid
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _graphite.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _steel.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildModernConfigValue(
+                  'Wiederholungen',
+                  '${widget.profile.config['targetRepsMin']} - ${widget.profile.config['targetRepsMax']}',
+                  Icons.repeat_rounded,
+                ),
+                _buildVerticalDivider(),
+                _buildModernConfigValue(
+                  'RIR-Bereich',
+                  '${widget.profile.config['targetRIRMin']} - ${widget.profile.config['targetRIRMax']}',
+                  Icons.trending_down_rounded,
+                ),
+                _buildVerticalDivider(),
+                _buildModernConfigValue(
+                  'Steigerung',
+                  '${widget.profile.config['increment']} kg',
+                  Icons.trending_up_rounded,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Angepasste Regel-Liste mit eigenem Header
-            _buildCustomRuleListHeader(context, provider, theme),
+  Widget _buildModernConfigValue(String label, String value, IconData icon) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: _emberCore,
+            size: 20,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: _mercury,
+              letterSpacing: -0.2,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: _snow,
+              letterSpacing: -0.3,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Regel-Liste ohne eigenen Header
-            _buildCustomRuleList(context, provider, theme),
+  Widget _buildVerticalDivider() {
+    return Container(
+      height: 60,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            _steel.withOpacity(0.0),
+            _steel.withOpacity(0.3),
+            _steel.withOpacity(0.0),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildRulesSection(BuildContext context, ProgressionManagerProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          children: [
+            Icon(
+              Icons.rule_rounded,
+              color: _emberCore,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Progressionsregeln',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: _snow,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const Spacer(),
+            // Add Rule Button
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => provider.openRuleEditor(null),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _emberCore.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _emberCore.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        color: _emberCore,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Regel',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _emberCore,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Rules Content
+        _buildModernRulesList(context, provider),
+      ],
+    );
+  }
+
+  Widget _buildModernRulesList(BuildContext context, ProgressionManagerProvider provider) {
+    final profil = provider.aktuellesProfil;
+    
+    if (profil == null) {
+      return _buildModernEmptyState(context, provider);
+    }
+
+    if (profil.rules.isEmpty) {
+      return _buildModernEmptyState(context, provider);
+    }
+
+    return Column(
+      children: [
+        // Info Banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _graphite.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _steel.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 18,
+                color: _emberCore,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Regeln werden von oben nach unten ausgewertet. Die erste zutreffende Regel wird angewendet.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: _silver,
+                    height: 1.3,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Rules List
+        ...profil.rules.asMap().entries.map((entry) {
+          final index = entry.key;
+          final rule = entry.value;
+          final isLastRule = index == profil.rules.length - 1;
+          
+          return Column(
+            children: [
+              _buildModernRuleCard(context, provider, rule, index, profil.rules.length),
+              if (!isLastRule) _buildModernRuleConnection(),
+            ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildModernEmptyState(BuildContext context, ProgressionManagerProvider provider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _steel.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _emberCore.withOpacity(0.1),
+              border: Border.all(
+                color: _emberCore.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              Icons.rule_rounded,
+              color: _emberCore,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Keine Regeln definiert',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: _snow,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Erstelle Regeln, um festzulegen, wie sich deine Trainingsparameter automatisch entwickeln sollen.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: _mercury,
+              height: 1.4,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => provider.openRuleEditor(null),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _emberCore.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _emberCore.withOpacity(0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.add_rounded,
+                      color: _emberCore,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Erste Regel erstellen',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _emberCore,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernRuleConnection() {
+    return Container(
+      height: 32,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Connection Line
+          Container(
+            width: 2,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  _steel.withOpacity(0.3),
+                  _steel.withOpacity(0.6),
+                  _steel.withOpacity(0.3),
+                ],
+              ),
+            ),
+          ),
+          
+          // "Sonst" Label
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: _charcoal,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _steel.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              'sonst',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: _mercury,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernRuleCard(BuildContext context, ProgressionManagerProvider provider, dynamic rule, int index, int totalRules) {
+    final bool isCondition = rule.type == 'condition';
+    
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _charcoal.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _steel.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _emberCore.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => provider.openRuleEditor(rule),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    // Rule Number
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _emberCore.withOpacity(0.15),
+                        border: Border.all(
+                          color: _emberCore.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _emberCore,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    
+                    // Rule Type
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isCondition ? 'Wenn-Dann Regel' : 'Direkte Zuweisung',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _snow,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          Text(
+                            isCondition ? 'Bedingte Ausführung' : 'Sofortige Anwendung',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: _mercury,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Actions
+                    _buildModernRuleActions(context, provider, rule, index, totalRules),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Rule Content Preview
+                _buildRuleContentPreview(context, provider, rule, isCondition),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernRuleActions(BuildContext context, ProgressionManagerProvider provider, dynamic rule, int index, int totalRules) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Move Up
+        if (index > 0)
+          _buildModernActionButton(
+            icon: Icons.keyboard_arrow_up_rounded,
+            onTap: () => _handleRuleReorder(provider, rule, index, index - 1),
+          ),
+        
+        // Move Down  
+        if (index < totalRules - 1)
+          _buildModernActionButton(
+            icon: Icons.keyboard_arrow_down_rounded,
+            onTap: () => _handleRuleReorder(provider, rule, index, index + 1),
+          ),
+        
+        // Edit
+        _buildModernActionButton(
+          icon: Icons.edit_outlined,
+          onTap: () => provider.openRuleEditor(rule),
+        ),
+        
+        // Delete
+        _buildModernActionButton(
+          icon: Icons.delete_outline_rounded,
+          onTap: () => _showDeleteRuleDialog(context, provider, rule.id),
+          isDestructive: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernActionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            icon,
+            size: 16,
+            color: isDestructive ? Colors.red.withOpacity(0.8) : _silver,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRuleContentPreview(BuildContext context, ProgressionManagerProvider provider, dynamic rule, bool isCondition) {
+    if (isCondition && rule.conditions.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _graphite.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _steel.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Wenn: ${_formatConditionText(provider, rule.conditions.first)}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: _silver,
+                letterSpacing: -0.1,
+              ),
+            ),
+            if (rule.conditions.length > 1)
+              Text(
+                '+ ${rule.conditions.length - 1} weitere Bedingung${rule.conditions.length > 2 ? 'en' : ''}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: _mercury,
+                  letterSpacing: -0.1,
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    
+    return const SizedBox.shrink();
   }
 
   // Elegante Wertanzeige ohne Icons
@@ -407,7 +1701,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: _mercury,
               letterSpacing: -0.3,
             ),
           ),
@@ -421,7 +1715,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[900],
+                    color: _snow,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -430,7 +1724,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
+                    color: _silver,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -607,7 +1901,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             child: Container(
               width: 2,
               height: double.infinity,
-              color: Colors.grey[300],
+              color: _steel.withOpacity(0.3),
             ),
           ),
 
@@ -649,12 +1943,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _charcoal.withOpacity(0.85),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: _steel.withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: _emberCore.withOpacity(0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -666,16 +1960,16 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
           Icon(
             Icons.rule,
             size: 48,
-            color: Colors.grey[400],
+            color: _mercury,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Keine Regeln definiert',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 16,
               letterSpacing: -0.3,
-              color: Colors.black87,
+              color: _snow,
             ),
           ),
           const SizedBox(height: 8),
@@ -684,7 +1978,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: _mercury,
               height: 1.4,
               letterSpacing: -0.2,
             ),
@@ -695,9 +1989,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             icon: const Icon(Icons.add, size: 16),
             label: const Text('Erste Regel erstellen'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey[800],
-              backgroundColor: Colors.grey[50],
-              side: BorderSide(color: Colors.grey[300]!),
+              foregroundColor: _silver,
+              backgroundColor: _graphite.withOpacity(0.5),
+              side: BorderSide(color: _steel.withOpacity(0.4)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -722,15 +2016,15 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(1, 4, 1, 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _charcoal.withOpacity(0.85),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Colors.grey[300]!,
+          color: _steel.withOpacity(0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: _emberCore.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -776,7 +2070,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[800],
+                            color: _silver,
                           ),
                         ),
                       ),
@@ -789,7 +2083,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
+                        color: _snow,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -918,7 +2212,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                       Expanded(
                         child: Container(
                           height: 1,
-                          color: Colors.grey[200],
+                          color: _steel.withOpacity(0.2),
                         ),
                       ),
                       Container(
@@ -938,7 +2232,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                       Expanded(
                         child: Container(
                           height: 1,
-                          color: Colors.grey[200],
+                          color: _steel.withOpacity(0.2),
                         ),
                       ),
                     ],
@@ -1291,6 +2585,16 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     // daher brauchen wir hier keine weitere Prüfung
   }
 
+  // Clean color system matching training screen
+  static const Color _midnight = Color(0xFF000000);
+  static const Color _charcoal = Color(0xFF1C1C1E);
+  static const Color _graphite = Color(0xFF2C2C2E);
+  static const Color _steel = Color(0xFF48484A);
+  static const Color _mercury = Color(0xFF8E8E93);
+  static const Color _silver = Color(0xFFAEAEB2);
+  static const Color _snow = Color(0xFFFFFFFF);
+  static const Color _emberCore = Color(0xFFFF4500);
+
   Widget _buildDemoTab(
       BuildContext context, ProgressionManagerProvider provider) {
     // Nur die ersten 3 Sätze berücksichtigen
@@ -1307,21 +2611,26 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     final bool isTrainingCompleted = allSetsCompleted;
 
     return Scaffold(
+      backgroundColor: _midnight,
       body: Column(
         children: [
-          // Action Bar - Apple-Stil
+          // Action Bar - Dark theme style matching training session
           if (!isTrainingCompleted)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Container(
-                height: 38,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
+                  color: _charcoal.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _steel.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    // Kraftrechner Button (Progress) - jetzt über volle Breite
+                    // Progress Button - jetzt über volle Breite
                     Expanded(
                       child: Material(
                         color: Colors.transparent,
@@ -1334,31 +2643,32 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                                     provider.empfehlungUebernehmen();
                                   }
                                 },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                           child: Opacity(
                             opacity: (!hasRecommendation || allSetsCompleted)
                                 ? 0.5
                                 : 1.0,
                             child: Container(
-                              height: 38,
+                              height: 44,
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.bolt,
-                                    size: 18,
-                                    color: Colors.grey[800],
+                                    size: 20,
+                                    color: _emberCore,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'Progress',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey[800],
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: _snow,
+                                      letterSpacing: -0.3,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1369,7 +2679,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
                         ),
                       ),
                     ),
-                    // Trennlinie und Zurück-Button wurden entfernt
                   ],
                 ),
               ),
@@ -1378,74 +2687,222 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
           // Content
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Sätze-Karten - nur die ersten 3 anzeigen
-                  ...displayedSets.map((satz) => SetCardWidget(satz: satz)),
+                  ...displayedSets.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final satz = entry.value;
+                    
+                    // Assign keys to each card
+                    GlobalKey? cardKey;
+                    if (index == 0) cardKey = _setCard1Key;
+                    else if (index == 1) cardKey = _setCard2Key;
+                    else if (index == 2) cardKey = _setCard3Key;
+                    
+                    return SetCardWidget(
+                      key: cardKey,
+                      satz: satz,
+                    );
+                  }).toList(),
                 ],
               ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Progress indicator - nur anzeigen, wenn das Training noch nicht abgeschlossen ist
-          if (!isTrainingCompleted)
-            LinearProgressIndicator(
-              value: displayedSets.isEmpty
-                  ? 0.0
-                  : displayedSets.where((satz) => satz.abgeschlossen).length /
-                      displayedSets.length,
-              minHeight: 2,
-              backgroundColor: Colors.grey[200],
-              color: Colors.black,
-            ),
+      bottomNavigationBar: Container(
+        color: _midnight,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Progress indicator - nur anzeigen, wenn das Training noch nicht abgeschlossen ist
+            if (!isTrainingCompleted)
+              LinearProgressIndicator(
+                value: displayedSets.isEmpty
+                    ? 0.0
+                    : displayedSets.where((satz) => satz.abgeschlossen).length /
+                        displayedSets.length,
+                minHeight: 3,
+                backgroundColor: _charcoal,
+                color: _emberCore,
+              ),
 
-          // Hauptbutton - angepasste Logik
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: isTrainingCompleted
-                      ? () => provider.trainingZuruecksetzen(
-                          resetRecommendations: true)
-                      : allSetsCompleted
-                          ? null
-                          : provider.satzAbschliessen,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    isTrainingCompleted
-                        ? 'Demo zurücksetzen'
+            // Hauptbutton - angepasste Logik
+            SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(24.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: isTrainingCompleted
+                        ? () => provider.trainingZuruecksetzen(
+                            resetRecommendations: true)
                         : allSetsCompleted
-                            ? 'Training abschließen'
-                            : 'Satz abschließen',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.3,
+                            ? null
+                            : () {
+                                provider.satzAbschliessen();
+                                // Nach kurzer Verzögerung zum nächsten Set scrollen
+                                Future.delayed(const Duration(milliseconds: 300), () {
+                                  if (mounted) {
+                                    _scrollToNextSet();
+                                  }
+                                });
+                              },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _emberCore,
+                      foregroundColor: _snow,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      isTrainingCompleted
+                          ? 'DEMO ZURÜCKSETZEN'
+                          : allSetsCompleted
+                              ? 'TRAINING ABSCHLIESSEN'
+                              : 'SATZ ABSCHLIESSEN',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+}
+
+// Stateful Widget für durchgängige Animation
+class _FlowArrowsAnimationWidget extends StatefulWidget {
+  final Color color;
+
+  const _FlowArrowsAnimationWidget({required this.color});
+
+  @override
+  _FlowArrowsAnimationWidgetState createState() => _FlowArrowsAnimationWidgetState();
+}
+
+class _FlowArrowsAnimationWidgetState extends State<_FlowArrowsAnimationWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 4000), // 4 Sekunden für elegante Bewegung
+      vsync: this,
+    );
+    
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.linear, // Gleichmäßige Bewegung
+    ));
+    
+    // Animation in Endlosschleife starten
+    _controller.repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return CustomPaint(
+          size: const Size(10, 32),
+          painter: FlowArrowsPainter(
+            animationValue: _animation.value,
+            color: widget.color,
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Custom Painter for animated flow arrows
+class FlowArrowsPainter extends CustomPainter {
+  final double animationValue;
+  final Color color;
+
+  FlowArrowsPainter({
+    required this.animationValue,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw 2 animated arrows mit gleichmäßigem Abstand für regelmäßigen Rhythmus
+    for (int i = 0; i < 2; i++) {
+      final progress = (animationValue + (i * 0.5)) % 1.0; // Gleichmäßiger 50% Abstand zwischen den Pfeilen
+      final y = size.height * progress;
+      
+      // Only draw if arrow is in visible area
+      if (y > 4 && y < size.height - 4) {
+        // Sanftere, längere Fade-Übergänge für elegantere Optik
+        double opacity;
+        if (progress < 0.15) {
+          opacity = progress / 0.15; // Längeres Fade in
+        } else if (progress > 0.85) {
+          opacity = (1.0 - progress) / 0.15; // Längeres Fade out
+        } else {
+          opacity = 1.0; // Full opacity in middle
+        }
+        
+        // Kleinere, subtilere Pfeile
+        final arrowPaint = Paint()
+          ..color = color.withOpacity(opacity * 0.6) // Subtilere Farbe
+          ..style = PaintingStyle.fill;
+        
+        final arrowPath = Path();
+        arrowPath.moveTo(size.width / 2, y + 2); // Kleinerer Pfeil - Bottom point
+        arrowPath.lineTo(size.width / 2 - 2, y - 1.5); // Left point
+        arrowPath.lineTo(size.width / 2 + 2, y - 1.5); // Right point
+        arrowPath.close();
+        
+        canvas.drawPath(arrowPath, arrowPaint);
+        
+        // Subtilere, kürzere Spur hinter dem Pfeil
+        final trailPaint = Paint()
+          ..color = color.withOpacity(opacity * 0.2) // Noch subtiler
+          ..strokeWidth = 1.5 // Dünner
+          ..strokeCap = StrokeCap.round;
+        
+        canvas.drawLine(
+          Offset(size.width / 2, y - 3),
+          Offset(size.width / 2, y - 6), // Kürzere Spur
+          trailPaint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant FlowArrowsPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }

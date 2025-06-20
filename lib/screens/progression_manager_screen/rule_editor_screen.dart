@@ -28,7 +28,7 @@ class RuleEditorScreen extends StatelessWidget {
             onTap: provider.closeRuleEditor,
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-              child: Container(color: Colors.black.withOpacity(0.4)),
+              child: Container(color: Colors.black.withOpacity(0.7)),
             ),
           ),
 
@@ -37,11 +37,11 @@ class RuleEditorScreen extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _charcoal,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withOpacity(0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
@@ -85,28 +85,42 @@ class RuleEditorScreen extends StatelessWidget {
         return false;
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _midnight,
         appBar: AppBar(
-          centerTitle: true,
-          backgroundColor: Colors.white,
+          backgroundColor: _midnight,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
           title: Text(
             provider.bearbeiteteRegel != null
                 ? 'Regel bearbeiten'
                 : 'Neue Regel erstellen',
             style: const TextStyle(
-              color: Color(0xFF212121),
+              color: _snow,
               fontSize: 18,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.3,
             ),
           ),
           // Zurück-Button statt Kreuz (X)
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
+            icon: const Icon(Icons.arrow_back, color: _snow, size: 24),
             onPressed: provider.closeRuleEditor,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: _snow,
+            ),
           ),
-          // Entfernen des Speichern-Buttons in der TopBar
-          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          // System-UI Style für dunkles Theme
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -119,7 +133,7 @@ class RuleEditorScreen extends StatelessWidget {
         ),
         // Speichern-Button am unteren Bildschirmrand mit angepasster Beschriftung
         bottomSheet: Container(
-          color: Colors.white,
+          color: _midnight,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: SizedBox(
             width: double.infinity,
@@ -130,12 +144,12 @@ class RuleEditorScreen extends StatelessWidget {
                 await provider.saveRule();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF212121),
-                foregroundColor: Colors.white,
+                backgroundColor: _emberCore,
+                foregroundColor: _snow,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: Text(
@@ -157,9 +171,9 @@ class RuleEditorScreen extends StatelessWidget {
   Widget _buildDialogHeader(
       BuildContext context, ProgressionManagerProvider provider) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF9F9F9),
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: _graphite,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
         ),
@@ -175,14 +189,19 @@ class RuleEditorScreen extends StatelessWidget {
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF212121),
+              color: _snow,
+              letterSpacing: -0.3,
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 24, color: Color(0xFF757575)),
+            icon: Icon(Icons.close, size: 24, color: _mercury),
             onPressed: provider.closeRuleEditor,
             padding: EdgeInsets.zero,
             visualDensity: VisualDensity.compact,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: _mercury,
+            ),
           ),
         ],
       ),
@@ -259,7 +278,7 @@ class RuleEditorContent extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF212121),
+            color: _snow,
           ),
         ),
         const SizedBox(height: 8),
@@ -299,9 +318,9 @@ class RuleEditorContent extends StatelessWidget {
             provider.regelTyp == 'condition'
                 ? 'Diese Regel wird nur angewendet, wenn alle Bedingungen erfüllt sind.'
                 : 'Diese Regel wird immer angewendet, ohne Bedingungen zu prüfen.',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF757575),
+              color: _mercury,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -321,17 +340,17 @@ class RuleEditorContent extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF212121),
+            color: _snow,
           ),
         ),
         const SizedBox(height: 4),
 
         // Untertitel
-        const Text(
+        Text(
           'Regel wird angewendet, wenn alle folgenden Bedingungen erfüllt sind:',
           style: TextStyle(
             fontSize: 13,
-            color: Color(0xFF757575),
+            color: _mercury,
           ),
         ),
         const SizedBox(height: 16),
@@ -358,25 +377,26 @@ class RuleEditorContent extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                Expanded(child: Divider(color: Colors.grey[300])),
+                Expanded(child: Divider(color: _steel.withOpacity(0.3))),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEEEEE),
+                    color: _graphite,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _steel.withOpacity(0.3)),
                   ),
-                  child: const Text(
+                  child: Text(
                     'UND',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF616161),
+                      color: _mercury,
                     ),
                   ),
                 ),
-                Expanded(child: Divider(color: Colors.grey[300])),
+                Expanded(child: Divider(color: _steel.withOpacity(0.3))),
               ],
             ),
           ),
@@ -395,15 +415,15 @@ class RuleEditorContent extends StatelessWidget {
           HapticFeedback.selectionClick();
           provider.addRegelBedingung();
         },
-        icon: const Icon(Icons.add, size: 18),
-        label: const Text('Weitere Bedingung hinzufügen'),
+        icon: Icon(Icons.add, size: 18, color: _emberCore),
+        label: Text('Weitere Bedingung hinzufügen',
+            style: TextStyle(color: _emberCore)),
         style: TextButton.styleFrom(
-          foregroundColor: const Color(0xFF424242),
-          backgroundColor: const Color(0xFFF5F5F5),
+          backgroundColor: _emberCore.withOpacity(0.1),
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Color(0xFFE0E0E0)),
+            side: BorderSide(color: _emberCore.withOpacity(0.3)),
           ),
         ),
       ),
@@ -417,9 +437,10 @@ class RuleEditorContent extends StatelessWidget {
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
+      color: _charcoal,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Color(0xFFE0E0E0)),
+        side: BorderSide(color: _steel.withOpacity(0.3)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -495,12 +516,10 @@ class RuleEditorContent extends StatelessWidget {
                         SelectionOption(
                           value: 'constant',
                           label: 'Zahlenwert',
-                          // Icon entfernt, um Textumbruch zu vermeiden
                         ),
                         SelectionOption(
                           value: 'variable',
                           label: 'Variable',
-                          // Icon entfernt, um Textumbruch zu vermeiden
                         ),
                       ],
                       onChanged: (value) {
@@ -553,10 +572,10 @@ class RuleEditorContent extends StatelessWidget {
                     HapticFeedback.selectionClick();
                     provider.removeRegelBedingung(index);
                   },
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Bedingung entfernen'),
+                  icon: Icon(Icons.delete_outline, size: 18, color: _mercury),
+                  label: Text('Bedingung entfernen',
+                      style: TextStyle(color: _mercury)),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF757575),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -586,8 +605,9 @@ class RuleEditorContent extends StatelessWidget {
       });
 
       // Temporär einen gültigen Wert zurückgeben, um den Fehler zu vermeiden
-      return const Center(
-        child: Text("Wird aktualisiert...", style: TextStyle(fontSize: 14)),
+      return Center(
+        child: Text("Wird aktualisiert...",
+            style: TextStyle(fontSize: 14, color: _mercury)),
       );
     }
 
@@ -623,7 +643,7 @@ class RuleEditorContent extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF212121),
+            color: _snow,
           ),
         ),
         const SizedBox(height: 4),
@@ -633,9 +653,9 @@ class RuleEditorContent extends StatelessWidget {
           provider.regelTyp == 'condition'
               ? 'Diese Werte werden gesetzt, wenn die Bedingungen erfüllt sind:'
               : 'Diese Werte werden immer direkt gesetzt (ohne Bedingungen):',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: Color(0xFF757575),
+            color: _mercury,
           ),
         ),
         const SizedBox(height: 16),
@@ -683,9 +703,10 @@ class RuleEditorContent extends StatelessWidget {
       child: Card(
         elevation: 0,
         margin: EdgeInsets.zero,
+        color: _charcoal,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Color(0xFFE0E0E0)),
+          side: BorderSide(color: _steel.withOpacity(0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,9 +715,9 @@ class RuleEditorContent extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: _graphite,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(8),
                   topRight: Radius.circular(8),
                 ),
@@ -706,7 +727,7 @@ class RuleEditorContent extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF424242),
+                  color: _snow,
                 ),
               ),
             ),
@@ -840,12 +861,12 @@ class RuleEditorContent extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'WERTQUELLE',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF757575),
+                          color: _mercury,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -912,7 +933,7 @@ class RuleEditorContent extends StatelessWidget {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F5),
+                            color: _graphite,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -920,6 +941,7 @@ class RuleEditorContent extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
+                              color: _snow,
                             ),
                           ),
                         ),
@@ -990,11 +1012,11 @@ class RuleEditorContent extends StatelessWidget {
 
           // Info-Text für 1RM
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Basiert auf Epley-Formel und den Zielwerten für Wiederholungen und RIR',
             style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF757575),
+              color: _mercury,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -1252,10 +1274,10 @@ class RuleEditorContent extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF757575),
+            color: _mercury,
             letterSpacing: 0.5,
           ),
         ),
@@ -1296,9 +1318,9 @@ class RuleEditorContent extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: _graphite,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
+          border: Border.all(color: _steel.withOpacity(0.3)),
         ),
         child: Row(
           children: [
@@ -1306,7 +1328,7 @@ class RuleEditorContent extends StatelessWidget {
               Icon(
                 selectedOption.icon,
                 size: 18,
-                color: const Color(0xFF757575),
+                color: _mercury,
               ),
               const SizedBox(width: 12),
             ],
@@ -1315,14 +1337,14 @@ class RuleEditorContent extends StatelessWidget {
                 selectedOption.label,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF212121),
+                  color: _snow,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 20,
-              color: Color(0xFF757575),
+              color: _mercury,
             ),
           ],
         ),
@@ -1343,7 +1365,7 @@ class RuleEditorContent extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withOpacity(0.7),
       builder: (context) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -1351,9 +1373,9 @@ class RuleEditorContent extends StatelessWidget {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            decoration: BoxDecoration(
+              color: _charcoal,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1366,7 +1388,7 @@ class RuleEditorContent extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: _steel,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1383,7 +1405,7 @@ class RuleEditorContent extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF212121),
+                          color: _snow,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -1393,7 +1415,7 @@ class RuleEditorContent extends StatelessWidget {
                           subtitle,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: _mercury,
                           ),
                         ),
                       ],
@@ -1401,7 +1423,7 @@ class RuleEditorContent extends StatelessWidget {
                   ),
                 ),
 
-                const Divider(height: 16),
+                Divider(height: 16, color: _steel.withOpacity(0.3)),
 
                 // Optionen-Liste
                 Flexible(
@@ -1432,16 +1454,16 @@ class RuleEditorContent extends StatelessWidget {
                                   height: 40,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? const Color(0xFF212121)
-                                        : Colors.grey[100],
+                                        ? _emberCore
+                                        : _graphite,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     option.icon,
                                     size: 20,
                                     color: isSelected
-                                        ? Colors.white
-                                        : Colors.grey[700],
+                                        ? _snow
+                                        : _mercury,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -1457,7 +1479,7 @@ class RuleEditorContent extends StatelessWidget {
                                         fontWeight: isSelected
                                             ? FontWeight.w600
                                             : FontWeight.w400,
-                                        color: const Color(0xFF212121),
+                                        color: _snow,
                                       ),
                                     ),
                                     if (option.description != null) ...[
@@ -1466,7 +1488,7 @@ class RuleEditorContent extends StatelessWidget {
                                         option.description!,
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.grey[600],
+                                          color: _mercury,
                                         ),
                                       ),
                                     ],
@@ -1474,9 +1496,9 @@ class RuleEditorContent extends StatelessWidget {
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(
+                                Icon(
                                   Icons.check_circle,
-                                  color: Color(0xFF212121),
+                                  color: _emberCore,
                                   size: 24,
                                 ),
                             ],
@@ -1515,9 +1537,9 @@ class RuleEditorContent extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: _graphite,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
+          border: Border.all(color: _steel.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1527,13 +1549,13 @@ class RuleEditorContent extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF212121),
+                color: _snow,
               ),
             ),
-            const Icon(
+            Icon(
               Icons.edit_outlined,
               size: 16,
-              color: Color(0xFF757575),
+              color: _mercury,
             ),
           ],
         ),
@@ -1561,7 +1583,7 @@ class RuleEditorContent extends StatelessWidget {
       builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: _charcoal,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -1580,13 +1602,13 @@ class RuleEditorContent extends StatelessWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.grey[200],
+                        color: _graphite,
                       ),
                       child: Center(
                         child: Icon(
                           Icons.edit_outlined,
                           size: 18,
-                          color: Colors.grey[700],
+                          color: _mercury,
                         ),
                       ),
                     ),
@@ -1597,6 +1619,7 @@ class RuleEditorContent extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.3,
+                        color: _snow,
                       ),
                     ),
                   ],
@@ -1612,11 +1635,13 @@ class RuleEditorContent extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
+                    color: _snow,
                   ),
                   decoration: InputDecoration(
                     suffixText: suffix,
+                    suffixStyle: TextStyle(color: _mercury),
                     filled: true,
-                    fillColor: Colors.grey[50],
+                    fillColor: _graphite,
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 16),
                     border: OutlineInputBorder(
@@ -1625,8 +1650,8 @@ class RuleEditorContent extends StatelessWidget {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.black,
+                      borderSide: BorderSide(
+                        color: _emberCore,
                         width: 1.5,
                       ),
                     ),
@@ -1654,7 +1679,7 @@ class RuleEditorContent extends StatelessWidget {
                       child: TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
                         style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[800],
+                          foregroundColor: _mercury,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1679,8 +1704,8 @@ class RuleEditorContent extends StatelessWidget {
                               dialogContext, controller.text, onValueChanged);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
+                          backgroundColor: _emberCore,
+                          foregroundColor: _snow,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -1731,6 +1756,7 @@ class RuleEditorContent extends StatelessWidget {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
         SnackBar(
           content: const Text('Bitte gib einen gültigen Wert ein'),
+          backgroundColor: _charcoal,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           duration: const Duration(seconds: 2),
@@ -1767,8 +1793,8 @@ class RuleEditorContent extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF212121)
-                      : const Color(0xFFBDBDBD),
+                      ? _emberCore
+                      : _steel,
                   width: 2,
                 ),
               ),
@@ -1777,9 +1803,9 @@ class RuleEditorContent extends StatelessWidget {
                     ? Container(
                         width: 12,
                         height: 12,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Color(0xFF212121),
+                          color: _emberCore,
                         ),
                       )
                     : null,
@@ -1790,7 +1816,7 @@ class RuleEditorContent extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 15,
-                color: const Color(0xFF212121),
+                color: _snow,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
               ),
             ),
@@ -1812,8 +1838,8 @@ class RuleEditorContent extends StatelessWidget {
           OutlinedButton(
             onPressed: provider.closeRuleEditor,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF757575),
-              side: const BorderSide(color: Color(0xFFE0E0E0)),
+              foregroundColor: _mercury,
+              side: BorderSide(color: _steel),
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 12,
@@ -1833,8 +1859,8 @@ class RuleEditorContent extends StatelessWidget {
               await provider.saveRule();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF212121),
-              foregroundColor: Colors.white,
+              backgroundColor: _emberCore,
+              foregroundColor: _snow,
               elevation: 0,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -1910,3 +1936,13 @@ class RuleEditorContent extends StatelessWidget {
         .toList();
   }
 }
+
+// Color constants matching profile_detail_screen.dart
+const Color _midnight = Color(0xFF000000);
+const Color _charcoal = Color(0xFF1C1C1E);
+const Color _graphite = Color(0xFF2C2C2E);
+const Color _steel = Color(0xFF48484A);
+const Color _mercury = Color(0xFF8E8E93);
+const Color _silver = Color(0xFFAEAEB2);
+const Color _snow = Color(0xFFFFFFFF);
+const Color _emberCore = Color(0xFFFF4500);

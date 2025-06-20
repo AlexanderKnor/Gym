@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../../../models/progression_manager_screen/progression_variable_model.dart';
 
-/// Ein moderner, intuitiver Editor für Progressionsregeln
+/// Ein moderner, intuitiver Editor für Progressionsregeln mit sequenziellem Workflow
 class RuleEditorScreen extends StatelessWidget {
   final bool isDialog;
 
@@ -47,7 +47,7 @@ class RuleEditorScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+              constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
@@ -125,42 +125,8 @@ class RuleEditorScreen extends StatelessWidget {
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  16, 8, 16, 120), // Extra padding am Boden
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               child: RuleEditorContent(isDialog: false),
-            ),
-          ),
-        ),
-        // Speichern-Button am unteren Bildschirmrand mit angepasster Beschriftung
-        bottomSheet: Container(
-          color: _midnight,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                // Haptisches Feedback hinzufügen
-                HapticFeedback.mediumImpact();
-                await provider.saveRule();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _emberCore,
-                foregroundColor: _snow,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                provider.bearbeiteteRegel != null
-                    ? 'Regel aktualisieren'
-                    : 'Regel hinzufügen',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ),
           ),
         ),
@@ -209,23 +175,8 @@ class RuleEditorScreen extends StatelessWidget {
   }
 }
 
-/// Option für Selektoren
-class SelectionOption {
-  final String value;
-  final String label;
-  final IconData? icon;
-  final String? description;
-
-  SelectionOption({
-    required this.value,
-    required this.label,
-    this.icon,
-    this.description,
-  });
-}
-
-/// Der eigentliche Inhalt des Regel-Editors
-class RuleEditorContent extends StatelessWidget {
+/// Der eigentliche Inhalt des Regel-Editors mit sequenziellem Workflow
+class RuleEditorContent extends StatefulWidget {
   final bool isDialog;
 
   const RuleEditorContent({
@@ -234,392 +185,679 @@ class RuleEditorContent extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<RuleEditorContent> createState() => _RuleEditorContentState();
+}
+
+class _RuleEditorContentState extends State<RuleEditorContent> {
+  final PageController _pageController = PageController();
+  int _currentStep = 0;
+  final int _totalSteps = 3;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _nextStep() {
+    if (_currentStep < _totalSteps - 1) {
+      final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+      
+      // Debug print
+      print('_nextStep called: currentStep=$_currentStep, regelTyp=${provider.regelTyp}');
+      
+      // Skip conditions step for direct assignment
+      if (_currentStep == 0 && provider.regelTyp == 'assignment') {
+        print('Skipping to step 2 (actions)');
+        _currentStep = 2; // Skip to actions step
+      } else {
+        print('Normal progression to step ${_currentStep + 1}');
+        _currentStep++;
+      }
+      
+      setState(() {});
+      
+      // Use a slight delay to ensure setState completes first
+      Future.delayed(const Duration(milliseconds: 50), () {
+        _pageController.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      _currentStep--;
+      setState(() {});
+      
+      // Use a slight delay to ensure setState completes first
+      Future.delayed(const Duration(milliseconds: 50), () {
+        _pageController.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+  }
+
+  void _goToStep(int step) {
+    _currentStep = step;
+    setState(() {});
+    
+    // Use a slight delay to ensure setState completes first
+    Future.delayed(const Duration(milliseconds: 50), () {
+      _pageController.animateToPage(
+        _currentStep,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Regeltyp-Auswahl
-        _buildRuleTypeSelector(context, provider),
+        // Progress Indicator
+        _buildProgressIndicator(),
+        const SizedBox(height: 24),
 
-        // Bedingungen - nur anzeigen wenn Regeltyp "condition" ist
-        if (provider.regelTyp == 'condition')
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        // Step Pages
+        SizedBox(
+          height: 500, // Fixed height for consistent layout
+          child: PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(), // Disable swipe
             children: [
-              const SizedBox(height: 24),
-              _buildConditionsSection(context, provider),
+              _buildRuleTypeStep(provider),
+              _buildConditionsStep(provider),
+              _buildActionsStep(provider),
             ],
           ),
+        ),
 
         const SizedBox(height: 24),
 
-        // Aktionen - immer anzeigen
-        _buildActionsSection(context, provider),
-
-        // Extra Platz am Ende für besseres Scrollen
-        const SizedBox(height: 24),
+        // Navigation buttons
+        _buildNavigationButtons(provider),
 
         // Dialog-Aktionen nur im Dialog-Modus
-        if (isDialog) _buildDialogActions(context, provider),
+        if (widget.isDialog) _buildDialogActions(context, provider),
       ],
     );
   }
 
-  Widget _buildRuleTypeSelector(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Titel
-        const Text(
-          'Regeltyp',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: _snow,
-          ),
-        ),
-        const SizedBox(height: 8),
+  Widget _buildProgressIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          for (int i = 0; i < _totalSteps; i++) ...[
+            _buildStepIndicator(i),
+            if (i < _totalSteps - 1) _buildStepConnector(i),
+          ],
+        ],
+      ),
+    );
+  }
 
-        // Selektor für Regeltyp
-        _buildSelectableButton(
-          context: context,
-          currentValue: provider.regelTyp,
-          title: 'Regeltyp wählen',
-          options: [
-            SelectionOption(
-              value: 'condition',
-              label: 'Bedingte Regel (Wenn... Dann...)',
-              icon: Icons.rule_folder,
-              description:
-                  'Diese Regel wird nur angewendet, wenn alle Bedingungen erfüllt sind.',
+  Widget _buildStepIndicator(int step) {
+    final isActive = step <= _currentStep;
+    final isCurrent = step == _currentStep;
+    
+    final stepTitles = ['Typ', 'Bedingungen', 'Aktionen'];
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _goToStep(step),
+        child: Column(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive ? _emberCore : _graphite,
+                border: Border.all(
+                  color: isCurrent ? _emberCore : _steel,
+                  width: isCurrent ? 2 : 1,
+                ),
+              ),
+              child: Center(
+                child: isActive
+                    ? Icon(
+                        step < _currentStep ? Icons.check : Icons.circle,
+                        color: _snow,
+                        size: 16,
+                      )
+                    : Text(
+                        '${step + 1}',
+                        style: TextStyle(
+                          color: _mercury,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
             ),
-            SelectionOption(
-              value: 'assignment',
-              label: 'Direkte Zuweisung',
-              icon: Icons.assignment,
-              description:
-                  'Diese Regel wird immer angewendet, ohne Bedingungen zu prüfen.',
+            const SizedBox(height: 8),
+            Text(
+              stepTitles[step],
+              style: TextStyle(
+                color: isActive ? _snow : _mercury,
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
             ),
           ],
-          onChanged: (value) {
-            if (value != null) {
-              provider.setRegelTyp(value);
-            }
-          },
         ),
+      ),
+    );
+  }
 
-        // Info-Text
-        Padding(
-          padding: const EdgeInsets.only(top: 8, left: 4),
-          child: Text(
-            provider.regelTyp == 'condition'
-                ? 'Diese Regel wird nur angewendet, wenn alle Bedingungen erfüllt sind.'
-                : 'Diese Regel wird immer angewendet, ohne Bedingungen zu prüfen.',
+  Widget _buildStepConnector(int step) {
+    final isCompleted = step < _currentStep;
+    
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(
+          color: isCompleted ? _emberCore : _steel,
+          borderRadius: BorderRadius.circular(1),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRuleTypeStep(ProgressionManagerProvider provider) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            'Regeltyp auswählen',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: _snow,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Bestimme, wie deine Regel funktionieren soll',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 15,
               color: _mercury,
-              fontStyle: FontStyle.italic,
             ),
           ),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: 32),
 
-  Widget _buildConditionsSection(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Titel
-        const Text(
-          'Bedingungen',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: _snow,
+          // Regel-Typ Optionen
+          _buildRuleTypeOption(
+            context: context,
+            title: 'Bedingte Regel',
+            subtitle: 'Wenn... Dann...',
+            description: 'Diese Regel wird nur angewendet, wenn bestimmte Bedingungen erfüllt sind.',
+            icon: Icons.rule_folder_rounded,
+            value: 'condition',
+            currentValue: provider.regelTyp,
+            onTap: () {
+              provider.setRegelTyp('condition');
+              HapticFeedback.selectionClick();
+            },
           ),
-        ),
-        const SizedBox(height: 4),
-
-        // Untertitel
-        Text(
-          'Regel wird angewendet, wenn alle folgenden Bedingungen erfüllt sind:',
-          style: TextStyle(
-            fontSize: 13,
-            color: _mercury,
+          const SizedBox(height: 16),
+          _buildRuleTypeOption(
+            context: context,
+            title: 'Direkte Zuweisung',
+            subtitle: 'Immer anwenden',
+            description: 'Diese Regel wird immer angewendet, ohne Bedingungen zu prüfen.',
+            icon: Icons.assignment_rounded,
+            value: 'assignment',
+            currentValue: provider.regelTyp,
+            onTap: () {
+              provider.setRegelTyp('assignment');
+              HapticFeedback.selectionClick();
+            },
           ),
-        ),
-        const SizedBox(height: 16),
-
-        // Liste der Bedingungen
-        for (int i = 0; i < provider.regelBedingungen.length; i++)
-          _buildConditionItem(context, provider, i),
-
-        // Button für zusätzliche Bedingung
-        const SizedBox(height: 12),
-        _buildAddConditionButton(provider),
-      ],
-    );
-  }
-
-  Widget _buildConditionItem(
-      BuildContext context, ProgressionManagerProvider provider, int index) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // AND-Connector (außer für die erste Bedingung)
-        if (index > 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Expanded(child: Divider(color: _steel.withOpacity(0.3))),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _graphite,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _steel.withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    'UND',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _mercury,
-                    ),
-                  ),
-                ),
-                Expanded(child: Divider(color: _steel.withOpacity(0.3))),
-              ],
-            ),
-          ),
-
-        // Bedingungseingabe-Card
-        _buildConditionEditor(context, provider, index),
-      ],
-    );
-  }
-
-  Widget _buildAddConditionButton(ProgressionManagerProvider provider) {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton.icon(
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          provider.addRegelBedingung();
-        },
-        icon: Icon(Icons.add, size: 18, color: _emberCore),
-        label: Text('Weitere Bedingung hinzufügen',
-            style: TextStyle(color: _emberCore)),
-        style: TextButton.styleFrom(
-          backgroundColor: _emberCore.withOpacity(0.1),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: _emberCore.withOpacity(0.3)),
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildConditionEditor(
-      BuildContext context, ProgressionManagerProvider provider, int index) {
-    final bedingung = provider.regelBedingungen[index];
+  Widget _buildRuleTypeOption({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required String description,
+    required IconData icon,
+    required String value,
+    required String currentValue,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = value == currentValue;
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: _charcoal,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: _steel.withOpacity(0.3)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected ? _emberCore.withOpacity(0.1) : _charcoal,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? _emberCore : _steel.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
           children: [
-            // Variable (linke Seite)
-            _buildEditorField(
-              context,
-              'Variable',
-              _buildSelectableButton(
-                context: context,
-                currentValue: bedingung.left['value'],
-                title: 'Variable auswählen',
-                subtitle:
-                    'Wähle eine Variable für die linke Seite der Bedingung',
-                options: provider.verfuegbareVariablen.map((variable) {
-                  return SelectionOption(
-                    value: variable.id,
-                    label: provider.getVariableLabel(variable.id),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    provider.updateRegelBedingung(index, 'leftVariable', value);
-                  }
-                },
+            // Icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isSelected ? _emberCore : _graphite,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? _snow : _mercury,
+                size: 24,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(width: 16),
 
-            // Operator
-            _buildEditorField(
-              context,
-              'Operator',
-              _buildSelectableButton(
-                context: context,
-                currentValue: bedingung.operator,
-                title: 'Operator auswählen',
-                subtitle: 'Wähle einen Vergleichsoperator',
-                options: provider.verfuegbareOperatoren
-                    .where((op) => op.type == 'comparison')
-                    .map((op) {
-                  return SelectionOption(
-                    value: op.id,
-                    label: op.label,
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    provider.updateRegelBedingung(index, 'operator', value);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Vergleichswert
-            _buildEditorField(
-              context,
-              'Vergleichswert',
-              Row(
+            // Content
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Typ (Variable oder Konstante) - OHNE Icon für bessere Textdarstellung
-                  Expanded(
-                    flex: 4,
-                    child: _buildSelectableButton(
-                      context: context,
-                      currentValue: bedingung.right['type'],
-                      title: 'Typ des Vergleichswerts',
-                      options: [
-                        SelectionOption(
-                          value: 'constant',
-                          label: 'Zahlenwert',
-                        ),
-                        SelectionOption(
-                          value: 'variable',
-                          label: 'Variable',
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          provider.updateRegelBedingung(
-                              index, 'rightType', value);
-                        }
-                      },
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? _emberCore : _snow,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(width: 8),
-
-                  // Wert (Variable oder Konstante)
-                  Expanded(
-                    flex: 6,
-                    child: bedingung.right['type'] == 'variable'
-                        ? _buildRightVariableSelector(
-                            context, provider, index, bedingung)
-                        : _buildNumberButton(
-                            value: bedingung.right['value'].toString(),
-                            onPressed: () {
-                              _showNumberInputDialog(
-                                context: context,
-                                title: 'Vergleichswert eingeben',
-                                initialValue:
-                                    bedingung.right['value'].toString(),
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                suffix: '',
-                                onValueChanged: (value) {
-                                  provider.updateRegelBedingung(
-                                      index, 'rightValue', value);
-                                },
-                              );
-                            },
-                          ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? _emberCore.withOpacity(0.8) : _mercury,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _mercury,
+                      height: 1.3,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            // Löschen-Button (nur wenn mehr als eine Bedingung vorhanden)
-            if (provider.regelBedingungen.length > 1) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    provider.removeRegelBedingung(index);
-                  },
-                  icon: Icon(Icons.delete_outline, size: 18, color: _mercury),
-                  label: Text('Bedingung entfernen',
-                      style: TextStyle(color: _mercury)),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    visualDensity: VisualDensity.compact,
-                  ),
+            // Selection indicator
+            if (isSelected)
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: _emberCore,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: _snow,
+                  size: 16,
                 ),
               ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRightVariableSelector(BuildContext context,
-      ProgressionManagerProvider provider, int index, dynamic bedingung) {
-    final relatedVariables =
-        _getRelatedVariables(provider, bedingung.left['value']);
-    final rightValue = bedingung.right['value'].toString();
-
-    // Überprüfen, ob der aktuelle Wert in den verfügbaren Optionen enthalten ist
-    bool containsValue = relatedVariables.any((v) => v.id == rightValue);
-
-    // Falls nicht, automatisch den ersten Wert auswählen
-    if (!containsValue && relatedVariables.isNotEmpty) {
-      Future.microtask(() {
-        provider.updateRegelBedingung(
-            index, 'rightValue', relatedVariables.first.id);
-      });
-
-      // Temporär einen gültigen Wert zurückgeben, um den Fehler zu vermeiden
+  Widget _buildConditionsStep(ProgressionManagerProvider provider) {
+    // Skip conditions step for direct assignment
+    if (provider.regelTyp == 'assignment') {
       return Center(
-        child: Text("Wird aktualisiert...",
-            style: TextStyle(fontSize: 14, color: _mercury)),
+        child: Text(
+          'Wird übersprungen...',
+          style: TextStyle(
+            color: _mercury,
+            fontSize: 16,
+          ),
+        ),
       );
     }
 
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            'Bedingungen festlegen',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: _snow,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Wann soll diese Regel angewendet werden?',
+            style: TextStyle(
+              fontSize: 15,
+              color: _mercury,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Conditions list
+          for (int i = 0; i < provider.regelBedingungen.length; i++) ...[
+            if (i > 0) _buildConditionConnector(),
+            _buildConditionCard(provider, i),
+          ],
+
+          const SizedBox(height: 16),
+          _buildAddConditionButton(provider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConditionConnector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(color: _steel)),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _graphite,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _steel),
+            ),
+            child: Text(
+              'UND',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _mercury,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          const Expanded(child: Divider(color: _steel)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConditionCard(ProgressionManagerProvider provider, int index) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _charcoal,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _steel.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Condition title
+          Row(
+            children: [
+              Text(
+                'Bedingung ${index + 1}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: _snow,
+                ),
+              ),
+              const Spacer(),
+              if (provider.regelBedingungen.length > 1)
+                IconButton(
+                  onPressed: () {
+                    provider.removeRegelBedingung(index);
+                    HapticFeedback.selectionClick();
+                  },
+                  icon: const Icon(Icons.close, color: _mercury, size: 20),
+                  style: IconButton.styleFrom(
+                    backgroundColor: _graphite,
+                    foregroundColor: _mercury,
+                    minimumSize: const Size(32, 32),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Condition builder steps
+          _buildConditionBuilder(provider, index),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConditionBuilder(ProgressionManagerProvider provider, int index) {
+    final bedingung = provider.regelBedingungen[index];
+
+    return Column(
+      children: [
+        // Step 1: Variable selection
+        _buildConditionStep(
+          stepNumber: 1,
+          title: 'Variable auswählen',
+          description: 'Was möchtest du überprüfen?',
+          child: _buildVariableSelector(provider, index, bedingung),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Step 2: Operator selection
+        _buildConditionStep(
+          stepNumber: 2,
+          title: 'Vergleich auswählen',
+          description: 'Wie soll verglichen werden?',
+          child: _buildOperatorSelector(provider, index, bedingung),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Step 3: Value selection
+        _buildConditionStep(
+          stepNumber: 3,
+          title: 'Vergleichswert',
+          description: 'Womit soll verglichen werden?',
+          child: _buildValueSelector(provider, index, bedingung),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConditionStep({
+    required int stepNumber,
+    required String title,
+    required String description,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: _emberCore,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '$stepNumber',
+                  style: const TextStyle(
+                    color: _snow,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _snow,
+                    ),
+                  ),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _mercury,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        child,
+      ],
+    );
+  }
+
+  Widget _buildVariableSelector(ProgressionManagerProvider provider, int index, dynamic bedingung) {
     return _buildSelectableButton(
       context: context,
-      currentValue: rightValue,
-      title: 'Vergleichsvariable',
-      subtitle: 'Wähle eine Variable für die rechte Seite der Bedingung',
+      currentValue: bedingung.left['value'],
+      title: 'Variable auswählen',
+      options: provider.verfuegbareVariablen.map((variable) {
+        return SelectionOption(
+          value: variable.id,
+          label: provider.getVariableLabel(variable.id),
+          icon: _getVariableIcon(variable.id),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) {
+          provider.updateRegelBedingung(index, 'leftVariable', value);
+        }
+      },
+    );
+  }
+
+  Widget _buildOperatorSelector(ProgressionManagerProvider provider, int index, dynamic bedingung) {
+    return _buildSelectableButton(
+      context: context,
+      currentValue: bedingung.operator,
+      title: 'Operator auswählen',
+      options: provider.verfuegbareOperatoren
+          .where((op) => op.type == 'comparison')
+          .map((op) {
+        return SelectionOption(
+          value: op.id,
+          label: op.label,
+          icon: _getOperatorIcon(op.id),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) {
+          provider.updateRegelBedingung(index, 'operator', value);
+        }
+      },
+    );
+  }
+
+  Widget _buildValueSelector(ProgressionManagerProvider provider, int index, dynamic bedingung) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: _buildSelectableButton(
+            context: context,
+            currentValue: bedingung.right['type'],
+            title: 'Wert-Typ',
+            options: [
+              SelectionOption(
+                value: 'constant',
+                label: 'Zahl',
+                icon: Icons.pin_rounded,
+              ),
+              SelectionOption(
+                value: 'variable',
+                label: 'Variable',
+                icon: Icons.data_object_rounded,
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                provider.updateRegelBedingung(index, 'rightType', value);
+              }
+            },
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 3,
+          child: bedingung.right['type'] == 'variable'
+              ? _buildRightVariableSelector(provider, index, bedingung)
+              : _buildNumberInput(
+                  value: bedingung.right['value'].toString(),
+                  onChanged: (value) {
+                    provider.updateRegelBedingung(index, 'rightValue', value);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRightVariableSelector(ProgressionManagerProvider provider, int index, dynamic bedingung) {
+    final relatedVariables = _getRelatedVariables(provider, bedingung.left['value']);
+    
+    return _buildSelectableButton(
+      context: context,
+      currentValue: bedingung.right['value'].toString(),
+      title: 'Variable',
       options: relatedVariables.map((variable) {
         return SelectionOption(
           value: variable.id,
           label: provider.getVariableLabel(variable.id),
+          icon: _getVariableIcon(variable.id),
         );
       }).toList(),
       onChanged: (value) {
@@ -630,112 +868,41 @@ class RuleEditorContent extends StatelessWidget {
     );
   }
 
-  Widget _buildActionsSection(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Titel
-        Text(
-          provider.regelTyp == 'condition'
-              ? 'Aktionen (wenn Bedingungen erfüllt)'
-              : 'Direkte Wertzuweisungen',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: _snow,
-          ),
+  Widget _buildNumberInput({
+    required String value,
+    required Function(String) onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        _showNumberInputDialog(
+          context: context,
+          title: 'Wert eingeben',
+          initialValue: value,
+          onValueChanged: onChanged,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _graphite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _steel.withOpacity(0.3)),
         ),
-        const SizedBox(height: 4),
-
-        // Untertitel
-        Text(
-          provider.regelTyp == 'condition'
-              ? 'Diese Werte werden gesetzt, wenn die Bedingungen erfüllt sind:'
-              : 'Diese Werte werden immer direkt gesetzt (ohne Bedingungen):',
-          style: TextStyle(
-            fontSize: 13,
-            color: _mercury,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Die drei Action-Sektionen
-        _buildParameterSections(context, provider),
-      ],
-    );
-  }
-
-  Widget _buildParameterSections(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Gewicht
-        _buildParameterCard(
-          context,
-          'Gewicht',
-          () => _buildKgAction(context, provider),
-        ),
-        const SizedBox(height: 16),
-
-        // Wiederholungen
-        _buildParameterCard(
-          context,
-          'Wiederholungen',
-          () => _buildRepsAction(context, provider),
-        ),
-        const SizedBox(height: 16),
-
-        // RIR
-        _buildParameterCard(
-          context,
-          'RIR (Reps in Reserve)',
-          () => _buildRirAction(context, provider),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildParameterCard(
-      BuildContext context, String title, Widget Function() contentBuilder) {
-    return IntrinsicHeight(
-      child: Card(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        color: _charcoal,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: _steel.withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: _graphite,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                ),
-              ),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: _snow,
-                ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: _snow,
               ),
             ),
-
-            // Inhalt
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: contentBuilder(),
+            const Icon(
+              Icons.edit_rounded,
+              size: 16,
+              color: _mercury,
             ),
           ],
         ),
@@ -743,32 +910,156 @@ class RuleEditorContent extends StatelessWidget {
     );
   }
 
-  Widget _buildKgAction(
-      BuildContext context, ProgressionManagerProvider provider) {
+  Widget _buildAddConditionButton(ProgressionManagerProvider provider) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          provider.addRegelBedingung();
+          HapticFeedback.selectionClick();
+        },
+        icon: Icon(Icons.add_circle_outline, size: 20, color: _emberCore),
+        label: Text(
+          'Weitere Bedingung hinzufügen',
+          style: TextStyle(color: _emberCore),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _emberCore,
+          side: BorderSide(color: _emberCore.withOpacity(0.5)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionsStep(ProgressionManagerProvider provider) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            provider.regelTyp == 'condition'
+                ? 'Aktionen festlegen'
+                : 'Werte zuweisen',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: _snow,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            provider.regelTyp == 'condition'
+                ? 'Was soll passieren, wenn die Bedingungen erfüllt sind?'
+                : 'Welche Werte sollen direkt gesetzt werden?',
+            style: TextStyle(
+              fontSize: 15,
+              color: _mercury,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Action categories
+          _buildActionCategory(
+            title: 'Gewicht',
+            icon: Icons.fitness_center_rounded,
+            builder: () => _buildKgAction(provider),
+          ),
+          const SizedBox(height: 20),
+          _buildActionCategory(
+            title: 'Wiederholungen',
+            icon: Icons.repeat_rounded,
+            builder: () => _buildRepsAction(provider),
+          ),
+          const SizedBox(height: 20),
+          _buildActionCategory(
+            title: 'RIR (Reps in Reserve)',
+            icon: Icons.speed_rounded,
+            builder: () => _buildRirAction(provider),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionCategory({
+    required String title,
+    required IconData icon,
+    required Widget Function() builder,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _charcoal,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _steel.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _graphite,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: _emberCore, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _snow,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: builder(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKgAction(ProgressionManagerProvider provider) {
+    // Simplified weight action for better UX
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Berechnungsmethode
-        _buildEditorField(
-          context,
-          'Berechnungsmethode',
-          _buildSelectableButton(
+        _buildActionField(
+          title: 'Berechnungsart',
+          child: _buildSelectableButton(
             context: context,
             currentValue: provider.kgAktion['type'],
-            title: 'Berechnungsmethode wählen',
+            title: 'Berechnungsart',
             options: [
               SelectionOption(
                 value: 'direct',
-                label: 'Direkter Wert',
+                label: 'Direkt berechnen',
                 icon: Icons.straighten_rounded,
-                description: 'Gewicht direkt anhand einer Basis berechnen',
+                description: 'Basierend auf letztem Gewicht',
               ),
               SelectionOption(
                 value: 'oneRM',
-                label: '1RM-basierte Berechnung',
+                label: '1RM-basiert',
                 icon: Icons.speed_rounded,
-                description:
-                    'Gewicht anhand des geschätzten 1-Wiederholungs-Maximum berechnen',
+                description: 'Basierend auf 1-Rep-Max',
               ),
             ],
             onChanged: (value) {
@@ -778,72 +1069,67 @@ class RuleEditorContent extends StatelessWidget {
             },
           ),
         ),
-
-        // Je nach Typ unterschiedliche Eingabefelder
+        
         if (provider.kgAktion['type'] == 'direct') ...[
           const SizedBox(height: 16),
-          _buildEditorField(
-            context,
-            'Basiswert',
-            _buildSelectableButton(
-              context: context,
-              currentValue: provider.kgAktion['variable'],
-              title: 'Basiswert für Gewicht',
-              subtitle: 'Wähle den Basiswert für die Gewichtsberechnung',
-              options: [
-                SelectionOption(
-                  value: 'lastKg',
-                  label: 'Letztes Gewicht',
-                  icon: Icons.history,
-                  description: 'Das Gewicht vom letzten Satz',
-                ),
-                SelectionOption(
-                  value: 'previousKg',
-                  label: 'Vorheriges Gewicht',
-                  icon: Icons.history_toggle_off,
-                  description: 'Das Gewicht vom vorletzten Satz',
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  provider.updateKgAktion('variable', value);
-                }
-              },
-            ),
-          ),
+          _buildDirectWeightAction(provider),
+        ] else if (provider.kgAktion['type'] == 'oneRM') ...[
           const SizedBox(height: 16),
+          _buildOneRMWeightAction(provider),
+        ],
+      ],
+    );
+  }
 
-          // Operator und Wert
-          _buildEditorField(
-            context,
-            'Berechnung',
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Operator Dropdown
-                _buildSelectableButton(
+  Widget _buildDirectWeightAction(ProgressionManagerProvider provider) {
+    return Column(
+      children: [
+        _buildActionField(
+          title: 'Basis',
+          child: _buildSelectableButton(
+            context: context,
+            currentValue: provider.kgAktion['variable'],
+            title: 'Basis-Gewicht',
+            options: [
+              SelectionOption(
+                value: 'lastKg',
+                label: 'Letztes Gewicht',
+                icon: Icons.history_rounded,
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                provider.updateKgAktion('variable', value);
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildActionField(
+          title: 'Änderung',
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: _buildSelectableButton(
                   context: context,
                   currentValue: provider.kgAktion['operator'],
-                  title: 'Berechnungsoperation wählen',
-                  subtitle: 'Wie soll der Basiswert verändert werden?',
+                  title: 'Operation',
                   options: [
                     SelectionOption(
-                      value: 'none',
-                      label: 'Wie ist',
-                      icon: Icons.drag_handle,
-                      description: 'Wert unverändert übernehmen',
-                    ),
-                    SelectionOption(
                       value: 'add',
-                      label: '+ Wert',
-                      icon: Icons.add_circle_outline,
-                      description: 'Wert zum Basiswert addieren',
+                      label: '+ kg',
+                      icon: Icons.add_rounded,
                     ),
                     SelectionOption(
                       value: 'subtract',
-                      label: '- Wert',
-                      icon: Icons.remove_circle_outline,
-                      description: 'Wert vom Basiswert subtrahieren',
+                      label: '- kg',
+                      icon: Icons.remove_rounded,
+                    ),
+                    SelectionOption(
+                      value: 'none',
+                      label: 'Gleich',
+                      icon: Icons.drag_handle_rounded,
                     ),
                   ],
                   onChanged: (value) {
@@ -852,225 +1138,69 @@ class RuleEditorContent extends StatelessWidget {
                     }
                   },
                 ),
-
-                // Wertauswahl (nur wenn ein Operator gewählt ist)
-                if (provider.kgAktion['operator'] != 'none') ...[
-                  const SizedBox(height: 16),
-
-                  // Optionen für die Wertquelle
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'WERTQUELLE',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: _mercury,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Fester Wert Option
-                      _buildSelectableRadioOption(
-                        context: context,
-                        label: 'Fester Wert',
-                        value: 'constant',
-                        groupValue: provider.kgAktion['valueType'],
-                        onChanged: (value) =>
-                            provider.updateKgAktion('valueType', value),
-                      ),
-
-                      // Eingabefeld für festen Wert
-                      if (provider.kgAktion['valueType'] == 'constant') ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildNumberButton(
-                                value: provider.kgAktion['value'].toString(),
-                                suffix: 'kg',
-                                onPressed: () {
-                                  _showNumberInputDialog(
-                                    context: context,
-                                    title: 'Gewichtswert eingeben',
-                                    initialValue:
-                                        provider.kgAktion['value'].toString(),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    suffix: 'kg',
-                                    onValueChanged: (value) {
-                                      provider.updateKgAktion('value', value);
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-
-                      const SizedBox(height: 16),
-
-                      // Standard-Steigerung Option
-                      _buildSelectableRadioOption(
-                        context: context,
-                        label: 'Standard-Steigerung',
-                        value: 'config',
-                        groupValue: provider.kgAktion['valueType'],
-                        onChanged: (value) =>
-                            provider.updateKgAktion('valueType', value),
-                      ),
-
-                      // Anzeige des Standardwerts
-                      if (provider.kgAktion['valueType'] == 'config') ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _graphite,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${provider.progressionsConfig['increment']} kg',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: _snow,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+              ),
+              if (provider.kgAktion['operator'] != 'none') ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: _buildNumberInput(
+                    value: provider.kgAktion['value'].toString(),
+                    onChanged: (value) {
+                      provider.updateKgAktion('value', value);
+                    },
                   ),
-                ],
-              ],
-            ),
-          ),
-        ] else if (provider.kgAktion['type'] == 'oneRM') ...[
-          const SizedBox(height: 16),
-          // 1RM-Quelle
-          _buildEditorField(
-            context,
-            '1RM Quelle',
-            _buildSelectableButton(
-              context: context,
-              currentValue: provider.kgAktion['source'] ?? 'last',
-              title: '1RM Quelle wählen',
-              subtitle:
-                  'Welcher Satz soll als Basis für die 1RM-Berechnung dienen?',
-              options: [
-                SelectionOption(
-                  value: 'last',
-                  label: 'Aktueller/Letzter Satz',
-                  icon: Icons.history,
-                  description: 'Das 1RM vom aktuellen/letzten Satz',
-                ),
-                SelectionOption(
-                  value: 'previous',
-                  label: 'Vorheriger Satz',
-                  icon: Icons.history_toggle_off,
-                  description: 'Das 1RM vom vorletzten Satz',
                 ),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  provider.updateKgAktion('source', value);
-                }
-              },
-            ),
+            ],
           ),
-          const SizedBox(height: 16),
-
-          // 1RM Steigerung
-          _buildEditorField(
-            context,
-            '1RM Steigerung',
-            _buildNumberButton(
-              value: provider.kgAktion['rmPercentage'].toString(),
-              suffix: '%',
-              onPressed: () {
-                _showNumberInputDialog(
-                  context: context,
-                  title: '1RM Prozentsatz eingeben',
-                  initialValue: provider.kgAktion['rmPercentage'].toString(),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  suffix: '%',
-                  onValueChanged: (value) {
-                    provider.updateKgAktion('rmPercentage', value);
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Info-Text für 1RM
-          const SizedBox(height: 8),
-          Text(
-            'Basiert auf Epley-Formel und den Zielwerten für Wiederholungen und RIR',
-            style: TextStyle(
-              fontSize: 12,
-              color: _mercury,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
+        ),
       ],
     );
   }
 
-  Widget _buildRepsAction(
-      BuildContext context, ProgressionManagerProvider provider) {
+  Widget _buildOneRMWeightAction(ProgressionManagerProvider provider) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Basiswert
-        _buildEditorField(
-          context,
-          'Basiswert',
-          _buildSelectableButton(
+        _buildActionField(
+          title: 'Prozentsatz vom 1RM',
+          child: _buildNumberInput(
+            value: '${provider.kgAktion['rmPercentage']}%',
+            onChanged: (value) {
+              final numValue = double.tryParse(value.replaceAll('%', ''));
+              if (numValue != null) {
+                provider.updateKgAktion('rmPercentage', numValue);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRepsAction(ProgressionManagerProvider provider) {
+    return Column(
+      children: [
+        _buildActionField(
+          title: 'Basis',
+          child: _buildSelectableButton(
             context: context,
             currentValue: provider.repsAktion['variable'],
-            title: 'Basiswert für Wiederholungen',
-            subtitle: 'Wähle den Basiswert für die Berechnung',
+            title: 'Basis-Wiederholungen',
             options: [
               SelectionOption(
                 value: 'lastReps',
                 label: 'Letzte Wiederh.',
-                icon: Icons.history,
-                description: 'Wiederholungen vom letzten Satz',
-              ),
-              SelectionOption(
-                value: 'previousReps',
-                label: 'Vorherige Wiederh.',
-                icon: Icons.history_toggle_off,
-                description: 'Wiederholungen vom vorletzten Satz',
+                icon: Icons.history_rounded,
               ),
               SelectionOption(
                 value: 'targetRepsMin',
-                label: 'Min. Wiederh.',
-                icon: Icons.arrow_downward,
-                description:
-                    'Minimaler Wiederholungswert aus der Konfiguration',
+                label: 'Min. Ziel',
+                icon: Icons.arrow_downward_rounded,
               ),
               SelectionOption(
                 value: 'targetRepsMax',
-                label: 'Max. Wiederh.',
-                icon: Icons.arrow_upward,
-                description:
-                    'Maximaler Wiederholungswert aus der Konfiguration',
-              ),
-              SelectionOption(
-                value: 'constant',
-                label: 'Konstante',
-                icon: Icons.lock,
-                description: 'Ein fester Wiederholungswert',
+                label: 'Max. Ziel',
+                icon: Icons.arrow_upward_rounded,
               ),
             ],
             onChanged: (value) {
@@ -1081,63 +1211,50 @@ class RuleEditorContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-
-        // Operator und Wert
-        _buildEditorField(
-          context,
-          'Berechnung',
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        _buildActionField(
+          title: 'Änderung',
+          child: Row(
             children: [
-              // Operator Dropdown
-              _buildSelectableButton(
-                context: context,
-                currentValue: provider.repsAktion['operator'],
-                title: 'Berechnungsoperation wählen',
-                subtitle: 'Wie soll der Basiswert verändert werden?',
-                options: [
-                  SelectionOption(
-                    value: 'none',
-                    label: 'Wie ist',
-                    icon: Icons.drag_handle,
-                    description: 'Wert unverändert übernehmen',
-                  ),
-                  SelectionOption(
-                    value: 'add',
-                    label: '+ Wert',
-                    icon: Icons.add_circle_outline,
-                    description: 'Wert zum Basiswert addieren',
-                  ),
-                  SelectionOption(
-                    value: 'subtract',
-                    label: '- Wert',
-                    icon: Icons.remove_circle_outline,
-                    description: 'Wert vom Basiswert subtrahieren',
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    provider.updateRepsAktion('operator', value);
-                  }
-                },
-              ),
-
-              // Wert (nur wenn ein Operator gewählt ist)
-              if (provider.repsAktion['operator'] != 'none') ...[
-                const SizedBox(height: 12),
-                _buildNumberButton(
-                  value: provider.repsAktion['value'].toString(),
-                  onPressed: () {
-                    _showNumberInputDialog(
-                      context: context,
-                      title: 'Wiederholungswert eingeben',
-                      initialValue: provider.repsAktion['value'].toString(),
-                      keyboardType: TextInputType.number,
-                      onValueChanged: (value) {
-                        provider.updateRepsAktion('value', value);
-                      },
-                    );
+              Expanded(
+                flex: 2,
+                child: _buildSelectableButton(
+                  context: context,
+                  currentValue: provider.repsAktion['operator'],
+                  title: 'Operation',
+                  options: [
+                    SelectionOption(
+                      value: 'add',
+                      label: '+',
+                      icon: Icons.add_rounded,
+                    ),
+                    SelectionOption(
+                      value: 'subtract',
+                      label: '-',
+                      icon: Icons.remove_rounded,
+                    ),
+                    SelectionOption(
+                      value: 'none',
+                      label: 'Gleich',
+                      icon: Icons.drag_handle_rounded,
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      provider.updateRepsAktion('operator', value);
+                    }
                   },
+                ),
+              ),
+              if (provider.repsAktion['operator'] != 'none') ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: _buildNumberInput(
+                    value: provider.repsAktion['value'].toString(),
+                    onChanged: (value) {
+                      provider.updateRepsAktion('value', value);
+                    },
+                  ),
                 ),
               ],
             ],
@@ -1147,50 +1264,30 @@ class RuleEditorContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRirAction(
-      BuildContext context, ProgressionManagerProvider provider) {
+  Widget _buildRirAction(ProgressionManagerProvider provider) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Basiswert
-        _buildEditorField(
-          context,
-          'Basiswert',
-          _buildSelectableButton(
+        _buildActionField(
+          title: 'Basis',
+          child: _buildSelectableButton(
             context: context,
             currentValue: provider.rirAktion['variable'],
-            title: 'Basiswert für RIR',
-            subtitle: 'Wähle den Basiswert für die Berechnung',
+            title: 'Basis-RIR',
             options: [
               SelectionOption(
                 value: 'lastRIR',
                 label: 'Letzter RIR',
-                icon: Icons.history,
-                description: 'RIR vom letzten Satz',
-              ),
-              SelectionOption(
-                value: 'previousRIR',
-                label: 'Vorheriger RIR',
-                icon: Icons.history_toggle_off,
-                description: 'RIR vom vorletzten Satz',
+                icon: Icons.history_rounded,
               ),
               SelectionOption(
                 value: 'targetRIRMin',
-                label: 'Min. RIR',
-                icon: Icons.arrow_downward,
-                description: 'Minimaler RIR-Wert aus der Konfiguration',
+                label: 'Min. Ziel',
+                icon: Icons.arrow_downward_rounded,
               ),
               SelectionOption(
                 value: 'targetRIRMax',
-                label: 'Max. RIR',
-                icon: Icons.arrow_upward,
-                description: 'Maximaler RIR-Wert aus der Konfiguration',
-              ),
-              SelectionOption(
-                value: 'constant',
-                label: 'Konstante',
-                icon: Icons.lock,
-                description: 'Ein fester RIR-Wert',
+                label: 'Max. Ziel',
+                icon: Icons.arrow_upward_rounded,
               ),
             ],
             onChanged: (value) {
@@ -1201,63 +1298,50 @@ class RuleEditorContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-
-        // Operator und Wert
-        _buildEditorField(
-          context,
-          'Berechnung',
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        _buildActionField(
+          title: 'Änderung',
+          child: Row(
             children: [
-              // Operator Dropdown
-              _buildSelectableButton(
-                context: context,
-                currentValue: provider.rirAktion['operator'],
-                title: 'Berechnungsoperation wählen',
-                subtitle: 'Wie soll der Basiswert verändert werden?',
-                options: [
-                  SelectionOption(
-                    value: 'none',
-                    label: 'Wie ist',
-                    icon: Icons.drag_handle,
-                    description: 'Wert unverändert übernehmen',
-                  ),
-                  SelectionOption(
-                    value: 'add',
-                    label: '+ Wert',
-                    icon: Icons.add_circle_outline,
-                    description: 'Wert zum Basiswert addieren',
-                  ),
-                  SelectionOption(
-                    value: 'subtract',
-                    label: '- Wert',
-                    icon: Icons.remove_circle_outline,
-                    description: 'Wert vom Basiswert subtrahieren',
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    provider.updateRirAktion('operator', value);
-                  }
-                },
-              ),
-
-              // Wert (nur wenn ein Operator gewählt ist)
-              if (provider.rirAktion['operator'] != 'none') ...[
-                const SizedBox(height: 12),
-                _buildNumberButton(
-                  value: provider.rirAktion['value'].toString(),
-                  onPressed: () {
-                    _showNumberInputDialog(
-                      context: context,
-                      title: 'RIR-Wert eingeben',
-                      initialValue: provider.rirAktion['value'].toString(),
-                      keyboardType: TextInputType.number,
-                      onValueChanged: (value) {
-                        provider.updateRirAktion('value', value);
-                      },
-                    );
+              Expanded(
+                flex: 2,
+                child: _buildSelectableButton(
+                  context: context,
+                  currentValue: provider.rirAktion['operator'],
+                  title: 'Operation',
+                  options: [
+                    SelectionOption(
+                      value: 'add',
+                      label: '+',
+                      icon: Icons.add_rounded,
+                    ),
+                    SelectionOption(
+                      value: 'subtract',
+                      label: '-',
+                      icon: Icons.remove_rounded,
+                    ),
+                    SelectionOption(
+                      value: 'none',
+                      label: 'Gleich',
+                      icon: Icons.drag_handle_rounded,
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      provider.updateRirAktion('operator', value);
+                    }
                   },
+                ),
+              ),
+              if (provider.rirAktion['operator'] != 'none') ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: _buildNumberInput(
+                    value: provider.rirAktion['value'].toString(),
+                    onChanged: (value) {
+                      provider.updateRirAktion('value', value);
+                    },
+                  ),
                 ),
               ],
             ],
@@ -1267,563 +1351,105 @@ class RuleEditorContent extends StatelessWidget {
     );
   }
 
-  // Hilfsmethode: Editierfeld mit Label
-  Widget _buildEditorField(BuildContext context, String label, Widget child) {
+  Widget _buildActionField({
+    required String title,
+    required Widget child,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label.toUpperCase(),
+          title.toUpperCase(),
           style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: _mercury,
             letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         child,
       ],
     );
   }
 
-  // Hilfsmethode: Selektierbarer Button mit Bottom Sheet
-  Widget _buildSelectableButton({
-    required BuildContext context,
-    required String currentValue,
-    required String title,
-    String? subtitle,
-    required List<SelectionOption> options,
-    required void Function(String?) onChanged,
-  }) {
-    // Finde die aktuell ausgewählte Option
-    final selectedOption = options.firstWhere(
-      (option) => option.value == currentValue,
-      orElse: () => options.first,
-    );
+  Widget _buildNavigationButtons(ProgressionManagerProvider provider) {
+    final canGoNext = _canProceedToNextStep(provider);
 
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        _showOptionsBottomSheet(
-          context: context,
-          title: title,
-          subtitle: subtitle,
-          currentValue: currentValue,
-          options: options,
-          onOptionSelected: onChanged,
-        );
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: _graphite,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _steel.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            if (selectedOption.icon != null) ...[
-              Icon(
-                selectedOption.icon,
-                size: 18,
-                color: _mercury,
-              ),
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: Text(
-                selectedOption.label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: _snow,
+    return Row(
+      children: [
+        // Previous button
+        if (_currentStep > 0)
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _previousStep,
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Zurück'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _mercury,
+                side: BorderSide(color: _steel),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-            ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 20,
-              color: _mercury,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Hilfsmethode: Bottom Sheet für Optionsauswahl
-  void _showOptionsBottomSheet({
-    required BuildContext context,
-    required String title,
-    String? subtitle,
-    required String currentValue,
-    required List<SelectionOption> options,
-    required void Function(String?) onOptionSelected,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.7),
-      builder: (context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.7,
-            ),
-            decoration: BoxDecoration(
-              color: _charcoal,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Ziehgriff
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: _steel,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
-                // Titel
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: _snow,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: _mercury,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                Divider(height: 16, color: _steel.withOpacity(0.3)),
-
-                // Optionen-Liste
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options[index];
-                      final isSelected = option.value == currentValue;
-
-                      return InkWell(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          onOptionSelected(option.value);
-                          Navigator.pop(context);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              if (option.icon != null) ...[
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? _emberCore
-                                        : _graphite,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    option.icon,
-                                    size: 20,
-                                    color: isSelected
-                                        ? _snow
-                                        : _mercury,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                              ],
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      option.label,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                        color: _snow,
-                                      ),
-                                    ),
-                                    if (option.description != null) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        option.description!,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: _mercury,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check_circle,
-                                  color: _emberCore,
-                                  size: 24,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
             ),
           ),
-        );
-      },
-    );
-  }
+        
+        if (_currentStep > 0) const SizedBox(width: 12),
 
-  // NEUE METHODE: Button für Zahleneingabe
-  Widget _buildNumberButton({
-    required String value,
-    required VoidCallback onPressed,
-    String suffix = '',
-  }) {
-    // Format-Überprüfung: Ist es eine Dezimalzahl?
-    final double? doubleValue = double.tryParse(value);
-    String displayValue = value;
-
-    // Wenn es eine ganze Zahl ist, entferne die Dezimalstellen für die Anzeige
-    if (doubleValue != null && doubleValue == doubleValue.toInt().toDouble()) {
-      displayValue = doubleValue.toInt().toString();
-    }
-
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: _graphite,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _steel.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              suffix.isNotEmpty ? '$displayValue $suffix' : displayValue,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: _snow,
+        // Next/Complete button
+        Expanded(
+          flex: _currentStep > 0 ? 1 : 1,
+          child: ElevatedButton.icon(
+            onPressed: canGoNext 
+                ? (_currentStep < _totalSteps - 1 
+                    ? _nextStep 
+                    : () async {
+                        // Save rule when on last step
+                        final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+                        HapticFeedback.mediumImpact();
+                        await provider.saveRule();
+                      }) 
+                : null,
+            icon: Icon(
+              _currentStep < _totalSteps - 1 
+                  ? Icons.arrow_forward_rounded 
+                  : Icons.check_rounded,
+              size: 18,
+            ),
+            label: Text(
+              _currentStep < _totalSteps - 1 ? 'Weiter' : 'Regel speichern',
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: canGoNext ? _emberCore : _graphite,
+              foregroundColor: canGoNext ? _snow : _mercury,
+              disabledBackgroundColor: _graphite,
+              disabledForegroundColor: _mercury,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            Icon(
-              Icons.edit_outlined,
-              size: 16,
-              color: _mercury,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // NEUE METHODE: Dialog für Zahleneingabe
-  void _showNumberInputDialog({
-    required BuildContext context,
-    required String title,
-    required String initialValue,
-    required TextInputType keyboardType,
-    String suffix = '',
-    required Function(String) onValueChanged,
-  }) {
-    final TextEditingController controller =
-        TextEditingController(text: initialValue);
-
-    HapticFeedback.mediumImpact();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: _charcoal,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Dialog Header
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _graphite,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.edit_outlined,
-                          size: 18,
-                          color: _mercury,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.3,
-                        color: _snow,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Input Field
-                TextField(
-                  controller: controller,
-                  keyboardType: keyboardType,
-                  autofocus: true,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: _snow,
-                  ),
-                  decoration: InputDecoration(
-                    suffixText: suffix,
-                    suffixStyle: TextStyle(color: _mercury),
-                    filled: true,
-                    fillColor: _graphite,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: _emberCore,
-                        width: 1.5,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.red[400]!,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  onSubmitted: (_) {
-                    _applyInputValue(
-                        dialogContext, controller.text, onValueChanged);
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    // Cancel button
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        style: TextButton.styleFrom(
-                          foregroundColor: _mercury,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Abbrechen',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Confirm button
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _applyInputValue(
-                              dialogContext, controller.text, onValueChanged);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _emberCore,
-                          foregroundColor: _snow,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Bestätigen',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
-  // NEUE METHODE: Wert aus Dialog anwenden
-  void _applyInputValue(BuildContext dialogContext, String text,
-      Function(String) onValueChanged) {
-    // Komma zu Punkt konvertieren für korrekte Verarbeitung
-    final String normalizedText = text.replaceAll(',', '.');
-
-    // Wert parsen je nach Typ (Integer oder Double)
-    bool isValid = false;
-
-    if (double.tryParse(normalizedText) != null) {
-      isValid = true;
+  bool _canProceedToNextStep(ProgressionManagerProvider provider) {
+    switch (_currentStep) {
+      case 0: // Rule type step
+        return provider.regelTyp.isNotEmpty;
+      case 1: // Conditions step
+        if (provider.regelTyp == 'assignment') return true;
+        return provider.regelBedingungen.isNotEmpty;
+      case 2: // Actions step
+        return true; // Always allow completing actions step
+      default:
+        return false;
     }
-
-    if (isValid) {
-      // Wert anwenden und Dialog schließen
-      onValueChanged(normalizedText);
-      Navigator.pop(dialogContext);
-
-      // Haptisches Feedback
-      HapticFeedback.selectionClick();
-    } else {
-      // Bei ungültiger Eingabe eine Benachrichtigung anzeigen
-      ScaffoldMessenger.of(dialogContext).showSnackBar(
-        SnackBar(
-          content: const Text('Bitte gib einen gültigen Wert ein'),
-          backgroundColor: _charcoal,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  // Hilfsmethode: Selektierbare Radio-Option
-  Widget _buildSelectableRadioOption({
-    required BuildContext context,
-    required String label,
-    required String value,
-    required String groupValue,
-    required void Function(String?) onChanged,
-  }) {
-    final isSelected = value == groupValue;
-
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onChanged(value);
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            // Moderner Radio Button
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected
-                      ? _emberCore
-                      : _steel,
-                  width: 2,
-                ),
-              ),
-              child: Center(
-                child: isSelected
-                    ? Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _emberCore,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 15,
-                color: _snow,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   // Dialog-Aktionen (nur im Dialog-Modus)
@@ -1845,7 +1471,7 @@ class RuleEditorContent extends StatelessWidget {
                 vertical: 12,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: const Text('Abbrechen'),
@@ -1867,7 +1493,7 @@ class RuleEditorContent extends StatelessWidget {
                 vertical: 12,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: Text(
@@ -1881,12 +1507,239 @@ class RuleEditorContent extends StatelessWidget {
     );
   }
 
-  // Hilfsmethode zum Finden verwandter Variablen
+  // Helper method for selectable buttons
+  Widget _buildSelectableButton({
+    required BuildContext context,
+    required String currentValue,
+    required String title,
+    required List<SelectionOption> options,
+    required void Function(String?) onChanged,
+  }) {
+    final selectedOption = options.firstWhere(
+      (option) => option.value == currentValue,
+      orElse: () => options.first,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showOptionsBottomSheet(
+          context: context,
+          title: title,
+          currentValue: currentValue,
+          options: options,
+          onOptionSelected: onChanged,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _graphite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _steel.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            if (selectedOption.icon != null) ...[
+              Icon(
+                selectedOption.icon,
+                size: 18,
+                color: _mercury,
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: Text(
+                selectedOption.label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: _snow,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: _mercury,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Bottom sheet for option selection
+  void _showOptionsBottomSheet({
+    required BuildContext context,
+    required String title,
+    required String currentValue,
+    required List<SelectionOption> options,
+    required void Function(String?) onOptionSelected,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            decoration: BoxDecoration(
+              color: _charcoal,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: _steel,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Title
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: _snow,
+                    ),
+                  ),
+                ),
+
+                // Options
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options[index];
+                      final isSelected = option.value == currentValue;
+
+                      return ListTile(
+                        leading: option.icon != null
+                            ? Icon(
+                                option.icon,
+                                color: isSelected ? _emberCore : _mercury,
+                              )
+                            : null,
+                        title: Text(
+                          option.label,
+                          style: TextStyle(
+                            color: isSelected ? _emberCore : _snow,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                        subtitle: option.description != null
+                            ? Text(
+                                option.description!,
+                                style: TextStyle(color: _mercury, fontSize: 12),
+                              )
+                            : null,
+                        trailing: isSelected
+                            ? Icon(Icons.check_circle, color: _emberCore)
+                            : null,
+                        onTap: () {
+                          onOptionSelected(option.value);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Number input dialog
+  void _showNumberInputDialog({
+    required BuildContext context,
+    required String title,
+    required String initialValue,
+    required Function(String) onValueChanged,
+  }) {
+    final controller = TextEditingController(text: initialValue);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _charcoal,
+        title: Text(title, style: const TextStyle(color: _snow)),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          style: const TextStyle(color: _snow),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: _graphite,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Abbrechen', style: TextStyle(color: _mercury)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              onValueChanged(controller.text);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: _emberCore),
+            child: const Text('OK', style: TextStyle(color: _snow)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper methods for icons
+  IconData _getVariableIcon(String variableId) {
+    if (variableId.contains('Reps')) return Icons.repeat_rounded;
+    if (variableId.contains('RIR')) return Icons.speed_rounded;
+    if (variableId.contains('Kg')) return Icons.fitness_center_rounded;
+    if (variableId.contains('RM')) return Icons.trending_up_rounded;
+    return Icons.data_object_rounded;
+  }
+
+  IconData _getOperatorIcon(String operatorId) {
+    switch (operatorId) {
+      case 'gt': return Icons.keyboard_double_arrow_up_rounded;
+      case 'lt': return Icons.keyboard_double_arrow_down_rounded;
+      case 'gte': return Icons.keyboard_arrow_up_rounded;
+      case 'lte': return Icons.keyboard_arrow_down_rounded;
+      case 'eq': return Icons.drag_handle_rounded;
+      default: return Icons.compare_arrows_rounded;
+    }
+  }
+
+  // Helper method to get related variables
   List<ProgressionVariableModel> _getRelatedVariables(
       ProgressionManagerProvider provider, String leftVariableId) {
     final relatedIds = <String>[];
 
-    // Variablen nach Typen gruppieren
+    // Variable groupings
     final repetitionVariables = [
       'lastReps',
       'previousReps',
@@ -1902,7 +1755,7 @@ class RuleEditorContent extends StatelessWidget {
     final weightVariables = ['lastKg', 'previousKg', 'increment'];
     final rmVariables = ['last1RM', 'previous1RM'];
 
-    // Logische Zuordnung basierend auf dem Variablentyp
+    // Logic for related variables
     if (repetitionVariables.contains(leftVariableId)) {
       relatedIds.addAll(repetitionVariables);
     } else if (rirVariables.contains(leftVariableId)) {
@@ -1913,22 +1766,12 @@ class RuleEditorContent extends StatelessWidget {
       relatedIds.addAll(rmVariables);
     }
 
-    // Die ausgewählte Variable selbst entfernen
+    // Remove the selected variable itself
     relatedIds.remove(leftVariableId);
 
-    // Falls keine passenden Variablen gefunden wurden, mindestens eine Standardvariable hinzufügen
+    // Default fallback
     if (relatedIds.isEmpty) {
-      if (leftVariableId.startsWith('last')) {
-        relatedIds.add('previous' + leftVariableId.substring(4));
-      } else if (leftVariableId.startsWith('previous')) {
-        relatedIds.add('last' + leftVariableId.substring(8));
-      } else if (leftVariableId.startsWith('targetReps')) {
-        relatedIds.addAll(['lastReps', 'previousReps']);
-      } else if (leftVariableId.startsWith('targetRIR')) {
-        relatedIds.addAll(['lastRIR', 'previousRIR']);
-      } else {
-        relatedIds.add('targetRepsMax');
-      }
+      relatedIds.add('targetRepsMax');
     }
 
     return provider.verfuegbareVariablen
@@ -1937,7 +1780,22 @@ class RuleEditorContent extends StatelessWidget {
   }
 }
 
-// Color constants matching profile_detail_screen.dart
+/// Option für Selektoren
+class SelectionOption {
+  final String value;
+  final String label;
+  final IconData? icon;
+  final String? description;
+
+  SelectionOption({
+    required this.value,
+    required this.label,
+    this.icon,
+    this.description,
+  });
+}
+
+// Color constants
 const Color _midnight = Color(0xFF000000);
 const Color _charcoal = Color(0xFF1C1C1E);
 const Color _graphite = Color(0xFF2C2C2E);

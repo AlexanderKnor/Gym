@@ -140,24 +140,7 @@ class _RuleEditorScreenState extends State<RuleEditorScreen> {
                 ),
               ),
               
-              // Fixed navigation buttons at bottom
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _midnight,
-                  border: Border(
-                    top: BorderSide(
-                      color: _steel.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Consumer<ProgressionManagerProvider>(
-                  builder: (context, provider, child) {
-                    return _contentKey.currentState?._buildNavigationButtons(provider) ?? const SizedBox.shrink();
-                  },
-                ),
-              ),
+              // Navigation buttons are now handled inside RuleEditorContent
             ],
           ),
         ),
@@ -225,6 +208,9 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   int _currentStep = 0;
   final int _totalSteps = 3;
   
+  // Getter to expose current step
+  int get currentStep => _currentStep;
+  
 
   @override
   void initState() {
@@ -254,6 +240,7 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
       }
       
       setState(() {});
+      print('_nextStep completed: currentStep=$_currentStep');
       
       // Use a slight delay to ensure setState completes first
       Future.delayed(const Duration(milliseconds: 50), () {
@@ -320,8 +307,8 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
           ),
         ),
 
-        // Dialog-Aktionen nur im Dialog-Modus
-        if (widget.isDialog) _buildDialogActions(context, provider),
+        // Navigation buttons for both dialog and fullscreen mode
+        _buildNavigationButtons(context, provider),
       ],
     );
   }
@@ -2963,61 +2950,74 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   }
 
 
-  Widget _buildNavigationButtons(ProgressionManagerProvider provider) {
+  Widget _buildNavigationButtons(BuildContext context, ProgressionManagerProvider provider) {
     final canGoNext = _canProceedToNextStep(provider);
+    print('_buildNavigationButtons: _currentStep=$_currentStep, canGoNext=$canGoNext');
 
-    return Row(
-      children: [
-        // Previous button
-        if (_currentStep > 0)
+    return Container(
+      padding: EdgeInsets.all(widget.isDialog ? 16 : 16),
+      decoration: widget.isDialog ? null : BoxDecoration(
+        color: _midnight,
+        border: Border(
+          top: BorderSide(
+            color: _steel.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Previous button
+          if (_currentStep > 0)
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _previousStep,
+                child: const Text('Zurück'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _mercury,
+                  side: BorderSide(color: _steel),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(widget.isDialog ? 8 : 12),
+                  ),
+                ),
+              ),
+            ),
+          
+          if (_currentStep > 0) const SizedBox(width: 12),
+
+          // Next/Complete button
           Expanded(
-            child: OutlinedButton(
-              onPressed: _previousStep,
-              child: const Text('Zurück'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _mercury,
-                side: BorderSide(color: _steel),
+            flex: _currentStep > 0 ? 1 : 1,
+            child: ElevatedButton(
+              onPressed: canGoNext 
+                  ? (_currentStep == 2 
+                      ? () async {
+                          // Save rule when on last step
+                          final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+                          HapticFeedback.mediumImpact();
+                          await provider.saveRule();
+                        }
+                      : _nextStep) 
+                  : null,
+              child: Text(
+                _currentStep == 2 ? 'Regel speichern' : 'Weiter',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: canGoNext ? _emberCore : _graphite,
+                foregroundColor: canGoNext ? _snow : _mercury,
+                disabledBackgroundColor: _graphite,
+                disabledForegroundColor: _mercury,
+                elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(widget.isDialog ? 8 : 12),
                 ),
               ),
             ),
           ),
-        
-        if (_currentStep > 0) const SizedBox(width: 12),
-
-        // Next/Complete button
-        Expanded(
-          flex: _currentStep > 0 ? 1 : 1,
-          child: ElevatedButton(
-            onPressed: canGoNext 
-                ? (_currentStep < _totalSteps - 1 
-                    ? _nextStep 
-                    : () async {
-                        // Save rule when on last step
-                        final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
-                        HapticFeedback.mediumImpact();
-                        await provider.saveRule();
-                      }) 
-                : null,
-            child: Text(
-              _currentStep < _totalSteps - 1 ? 'Weiter' : 'Regel speichern',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: canGoNext ? _emberCore : _graphite,
-              foregroundColor: canGoNext ? _snow : _mercury,
-              disabledBackgroundColor: _graphite,
-              disabledForegroundColor: _mercury,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -3035,60 +3035,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     }
   }
 
-  // Dialog-Aktionen (nur im Dialog-Modus)
-  Widget _buildDialogActions(
-      BuildContext context, ProgressionManagerProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // Abbrechen-Button
-          OutlinedButton(
-            onPressed: provider.closeRuleEditor,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _mercury,
-              side: BorderSide(color: _steel),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Abbrechen'),
-          ),
-          const SizedBox(width: 12),
-
-          // Speichern-Button
-          ElevatedButton(
-            onPressed: () async {
-              HapticFeedback.mediumImpact();
-              await provider.saveRule();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _emberCore,
-              foregroundColor: _snow,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              provider.bearbeiteteRegel != null
-                  ? 'Aktualisieren'
-                  : 'Hinzufügen',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // Helper method for selectable buttons
   Widget _buildSelectableButton({

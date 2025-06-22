@@ -419,7 +419,7 @@ class ProgressionRuleProvider with ChangeNotifier {
       case 'rightValue':
         if (updatedBedingungen[index].right['type'] == 'constant') {
           updatedBedingungen[index].right['value'] =
-              double.tryParse(wert.toString()) ?? 0;
+              int.tryParse(wert.toString()) ?? 0;
         } else {
           updatedBedingungen[index].right['value'] = wert;
         }

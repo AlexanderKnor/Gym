@@ -20,6 +20,7 @@ class RuleEditorScreen extends StatefulWidget {
 }
 
 class _RuleEditorScreenState extends State<RuleEditorScreen> {
+  final GlobalKey<_RuleEditorContentState> _contentKey = GlobalKey<_RuleEditorContentState>();
 
   @override
   Widget build(BuildContext context) {
@@ -129,16 +130,41 @@ class _RuleEditorScreenState extends State<RuleEditorScreen> {
           ),
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              child: RuleEditorContent(isDialog: false),
-            ),
+          child: Column(
+            children: [
+              // Content without scrolling - let individual steps handle their own scrolling
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: RuleEditorContent(key: _contentKey, isDialog: false),
+                ),
+              ),
+              
+              // Fixed navigation buttons at bottom
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _midnight,
+                  border: Border(
+                    top: BorderSide(
+                      color: _steel.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Consumer<ProgressionManagerProvider>(
+                  builder: (context, provider, child) {
+                    return _contentKey.currentState?._buildNavigationButtons(provider) ?? const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildDialogHeader(
       BuildContext context, ProgressionManagerProvider provider) {
@@ -281,9 +307,8 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
         _buildProgressIndicator(),
         const SizedBox(height: 24),
 
-        // Step Pages
-        SizedBox(
-          height: 500, // Fixed height for consistent layout
+        // Step Pages - flexible height
+        Expanded(
           child: PageView(
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(), // Disable swipe
@@ -294,11 +319,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
             ],
           ),
         ),
-
-        const SizedBox(height: 24),
-
-        // Navigation buttons
-        _buildNavigationButtons(provider),
 
         // Dialog-Aktionen nur im Dialog-Modus
         if (widget.isDialog) _buildDialogActions(context, provider),
@@ -1251,11 +1271,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Intuitive condition display
-        _buildConditionPreview(provider, index, bedingung),
-        
-        const SizedBox(height: 20),
-        
         // Interactive condition editor
         _buildConditionEditor(provider, index, bedingung),
       ],
@@ -1393,26 +1408,30 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                 color: _emberCore,
               ),
               const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: _emberCore,
-                      letterSpacing: 0.8,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _emberCore,
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                  ),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _mercury,
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _mercury,
+                      ),
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -1526,11 +1545,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                 ),
               ),
             ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 20,
-              color: _mercury,
-            ),
           ],
         ),
       ),
@@ -1580,11 +1594,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 20,
-              color: _mercury,
             ),
           ],
         ),
@@ -1747,11 +1756,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                 ),
               ),
             ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 20,
-              color: _mercury,
-            ),
           ],
         ),
       ),
@@ -1762,43 +1766,173 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     required String value,
     required Function(String) onChanged,
   }) {
-    return GestureDetector(
-      onTap: () {
-        _showNumberInputDialog(
-          context: context,
-          title: 'Wert eingeben',
-          initialValue: value,
-          onValueChanged: onChanged,
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _steel.withOpacity(0.4),
-            width: 1,
-          ),
+    final TextEditingController controller = TextEditingController(text: value);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _steel.withOpacity(0.4),
+          width: 1,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              value,
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: _snow,
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+          filled: true,
+          fillColor: Colors.transparent,
+        ),
+        onSubmitted: (newValue) {
+          final parsed = int.tryParse(newValue);
+          if (parsed != null) {
+            onChanged(parsed.toString());
+          } else if (newValue.isEmpty) {
+            onChanged('0');
+          }
+        },
+        onTapOutside: (event) {
+          final parsed = int.tryParse(controller.text);
+          if (parsed != null) {
+            onChanged(parsed.toString());
+          } else if (controller.text.isEmpty) {
+            onChanged('0');
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildDecimalInput({
+    required String value,
+    required Function(String) onChanged,
+  }) {
+    final TextEditingController controller = TextEditingController(text: value);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _steel.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: _snow,
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+          filled: true,
+          fillColor: Colors.transparent,
+        ),
+        onSubmitted: (newValue) {
+          final cleaned = newValue.replaceAll(',', '.');
+          final parsed = double.tryParse(cleaned);
+          if (parsed != null) {
+            onChanged(parsed.toString());
+          } else if (newValue.isEmpty) {
+            onChanged('0');
+          }
+        },
+        onTapOutside: (event) {
+          final cleaned = controller.text.replaceAll(',', '.');
+          final parsed = double.tryParse(cleaned);
+          if (parsed != null) {
+            onChanged(parsed.toString());
+          } else if (controller.text.isEmpty) {
+            onChanged('0');
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildPercentageInput({
+    required String value,
+    required Function(String) onChanged,
+  }) {
+    final TextEditingController controller = TextEditingController(text: value);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _steel.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: _snow,
               ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                filled: true,
+                fillColor: Colors.transparent,
+              ),
+              onSubmitted: (newValue) {
+                final parsed = int.tryParse(newValue);
+                if (parsed != null) {
+                  onChanged(parsed.toString());
+                } else if (newValue.isEmpty) {
+                  onChanged('0');
+                }
+              },
+              onTapOutside: (event) {
+                final parsed = int.tryParse(controller.text);
+                if (parsed != null) {
+                  onChanged(parsed.toString());
+                } else if (controller.text.isEmpty) {
+                  onChanged('0');
+                }
+              },
             ),
-            const Icon(
-              Icons.edit_rounded,
-              size: 16,
-              color: _mercury,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Text(
+              '%',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _emberCore,
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1988,9 +2122,23 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     if (provider.kgAktion['type'] == 'oneRM') {
       return 'Gewicht auf ${provider.kgAktion['rmPercentage']}% vom 1RM setzen';
     } else if (provider.kgAktion['operator'] == 'add') {
-      return 'Gewicht um ${provider.kgAktion['value']}kg erhöhen';
+      // Show the actual increment value based on valueType
+      String incrementValue;
+      if (provider.kgAktion['valueType'] == 'config' && provider.aktuellesProfil != null) {
+        incrementValue = '${provider.aktuellesProfil!.config['increment']}';
+      } else {
+        incrementValue = '${provider.kgAktion['value']}';
+      }
+      return 'Gewicht um ${incrementValue}kg erhöhen';
     } else if (provider.kgAktion['operator'] == 'subtract') {
-      return 'Gewicht um ${provider.kgAktion['value']}kg verringern';
+      // Show the actual increment value based on valueType
+      String incrementValue;
+      if (provider.kgAktion['valueType'] == 'config' && provider.aktuellesProfil != null) {
+        incrementValue = '${provider.aktuellesProfil!.config['increment']}';
+      } else {
+        incrementValue = '${provider.kgAktion['value']}';
+      }
+      return 'Gewicht um ${incrementValue}kg verringern';
     } else {
       return 'Gewicht beibehalten';
     }
@@ -2024,7 +2172,9 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   }) {
     final isExpanded = _getActionCardExpanded(title);
     
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOutCubic,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -2036,14 +2186,17 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _steel.withOpacity(0.2),
-          width: 1,
+          color: isExpanded ? _emberCore.withOpacity(0.3) : _steel.withOpacity(0.2),
+          width: isExpanded ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: isExpanded 
+                ? _emberCore.withOpacity(0.08)
+                : Colors.black.withOpacity(0.3),
+            blurRadius: isExpanded ? 20 : 12,
+            offset: Offset(0, isExpanded ? 6 : 4),
+            spreadRadius: isExpanded ? 1 : 0,
           ),
         ],
       ),
@@ -2107,18 +2260,18 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                     ),
                   ),
                   
-                  // Status indicator
-                  _buildActionStatus(title, provider),
-                  const SizedBox(width: 12),
-                  
-                  // Expand/collapse button
+                  // Expand/collapse button with smooth animation
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 300),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: _emberCore,
-                      size: 24,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOutCubic,
+                    child: Text(
+                      "⌄",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: _emberCore,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -2126,77 +2279,38 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
             ),
           ),
           
-          // Expandable content
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            height: isExpanded ? null : 0,
-            child: isExpanded
-                ? Container(
-                    padding: const EdgeInsets.all(20),
+          // Expandable content with smooth animation
+          ClipRect(
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOutCubic,
+              alignment: Alignment.topCenter,
+              heightFactor: isExpanded ? 1.0 : 0.0,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                child: AnimatedOpacity(
+                  opacity: isExpanded ? 1.0 : 0.0,
+                  duration: Duration(milliseconds: isExpanded ? 350 : 200),
+                  curve: isExpanded ? Curves.easeIn : Curves.easeOut,
+                  child: AnimatedSlide(
+                    offset: isExpanded ? Offset.zero : const Offset(0, -0.1),
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
                     child: builder(),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionStatus(String title, ProgressionManagerProvider provider) {
-    bool isConfigured = false;
-    
-    switch (title) {
-      case 'Gewicht':
-        isConfigured = provider.kgAktion['type'] != null && provider.kgAktion['type'].isNotEmpty;
-        break;
-      case 'Wiederholungen':
-        isConfigured = provider.repsAktion['operator'] != null && provider.repsAktion['operator'] != 'none';
-        break;
-      case 'RIR':
-        isConfigured = provider.rirAktion['operator'] != null && provider.rirAktion['operator'] != 'none';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isConfigured ? _emberCore.withOpacity(0.2) : _steel.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isConfigured ? _emberCore.withOpacity(0.5) : _steel.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: isConfigured ? _emberCore : _mercury,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            isConfigured ? 'Aktiv' : 'Inaktiv',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: isConfigured ? _emberCore : _mercury,
-              letterSpacing: 0.3,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
 
   // State management for expanded cards
   final Map<String, bool> _expandedCards = {
-    'Gewicht': true,
+    'Gewicht': false,
     'Wiederholungen': false,
     'RIR': false,
   };
@@ -2293,16 +2407,18 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   }
 
   Widget _buildKgAction(ProgressionManagerProvider provider) {
-    // Simplified weight action for better UX
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildActionField(
+        // Calculation type selection
+        _buildEditorField(
           title: 'Berechnungsart',
+          description: 'Wie soll das neue Gewicht bestimmt werden?',
+          icon: Icons.calculate_rounded,
           child: _buildSelectableButton(
             context: context,
             currentValue: provider.kgAktion['type'],
-            title: 'Berechnungsart',
+            title: 'Berechnungsart auswählen',
             options: [
               SelectionOption(
                 value: 'direct',
@@ -2326,10 +2442,10 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
         ),
         
         if (provider.kgAktion['type'] == 'direct') ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _buildDirectWeightAction(provider),
         ] else if (provider.kgAktion['type'] == 'oneRM') ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _buildOneRMWeightAction(provider),
         ],
       ],
@@ -2339,17 +2455,27 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   Widget _buildDirectWeightAction(ProgressionManagerProvider provider) {
     return Column(
       children: [
-        _buildActionField(
-          title: 'Basis',
+        // Base weight selection
+        _buildEditorField(
+          title: 'Basis-Gewicht',
+          description: 'Ausgangsgewicht für die Berechnung',
+          icon: Icons.fitness_center_rounded,
           child: _buildSelectableButton(
             context: context,
             currentValue: provider.kgAktion['variable'],
-            title: 'Basis-Gewicht',
+            title: 'Basis-Gewicht auswählen',
             options: [
               SelectionOption(
                 value: 'lastKg',
                 label: 'Letztes Gewicht',
                 icon: Icons.history_rounded,
+                description: 'Gewicht vom gleichen Satz der letzten Trainingseinheit',
+              ),
+              SelectionOption(
+                value: 'previousKg',
+                label: 'Vorheriges Gewicht',
+                icon: Icons.skip_previous_rounded,
+                description: 'Gewicht vom vorhergehenden Satz der aktuellen Trainingseinheit',
               ),
             ],
             onChanged: (value) {
@@ -2359,50 +2485,140 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
             },
           ),
         ),
-        const SizedBox(height: 16),
-        _buildActionField(
-          title: 'Änderung',
-          child: Row(
+        
+        const SizedBox(height: 20),
+        
+        // Weight modification
+        _buildEditorField(
+          title: 'Gewichts-Änderung',
+          description: 'Wie soll das Gewicht angepasst werden?',
+          icon: Icons.tune_rounded,
+          child: Column(
             children: [
-              Expanded(
-                flex: 2,
-                child: _buildSelectableButton(
-                  context: context,
-                  currentValue: provider.kgAktion['operator'],
-                  title: 'Operation',
-                  options: [
-                    SelectionOption(
-                      value: 'add',
-                      label: '+ kg',
-                      icon: Icons.add_rounded,
-                    ),
-                    SelectionOption(
-                      value: 'subtract',
-                      label: '- kg',
-                      icon: Icons.remove_rounded,
-                    ),
-                    SelectionOption(
-                      value: 'none',
-                      label: 'Gleich',
-                      icon: Icons.drag_handle_rounded,
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      provider.updateKgAktion('operator', value);
-                    }
-                  },
-                ),
+              // Operation selector
+              _buildSelectableButton(
+                context: context,
+                currentValue: provider.kgAktion['operator'],
+                title: 'Operation auswählen',
+                options: [
+                  SelectionOption(
+                    value: 'add',
+                    label: 'Gewicht erhöhen (+)',
+                    icon: Icons.add_circle_outline_rounded,
+                    description: 'Gewicht um einen festen Betrag erhöhen',
+                  ),
+                  SelectionOption(
+                    value: 'subtract',
+                    label: 'Gewicht verringern (-)',
+                    icon: Icons.remove_circle_outline_rounded,
+                    description: 'Gewicht um einen festen Betrag verringern',
+                  ),
+                  SelectionOption(
+                    value: 'none',
+                    label: 'Gewicht beibehalten',
+                    icon: Icons.drag_handle_rounded,
+                    description: 'Gewicht unverändert lassen',
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    provider.updateKgAktion('operator', value);
+                  }
+                },
               ),
+              
+              // Value input (only if operation is not 'none')
               if (provider.kgAktion['operator'] != 'none') ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 3,
-                  child: _buildNumberInput(
-                    value: provider.kgAktion['value'].toString(),
-                    onChanged: (value) {
-                      provider.updateKgAktion('value', value);
-                    },
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'BETRAG (KG)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _emberCore,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      // Value type selection
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildValueTypeButton(
+                              label: 'Manueller Wert',
+                              icon: Icons.edit_rounded,
+                              isSelected: provider.kgAktion['valueType'] == 'constant',
+                              onTap: () {
+                                provider.updateKgAktion('valueType', 'constant');
+                                HapticFeedback.selectionClick();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildValueTypeButton(
+                              label: 'Auto-Wert',
+                              icon: Icons.trending_up_rounded,
+                              isSelected: provider.kgAktion['valueType'] == 'config',
+                              onTap: () {
+                                provider.updateKgAktion('valueType', 'config');
+                                HapticFeedback.selectionClick();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Input field based on selection
+                      Container(
+                        width: double.infinity,
+                        child: provider.kgAktion['valueType'] == 'constant'
+                            ? _buildDecimalInput(
+                                value: provider.kgAktion['value'].toString(),
+                                onChanged: (value) {
+                                  provider.updateKgAktion('value', value);
+                                },
+                              )
+                            : Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: _charcoal.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _emberCore.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.auto_graph_rounded,
+                                      color: _emberCore,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Verwendet automatisch den Wert aus den Übungseinstellungen',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _snow.withOpacity(0.8),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2416,16 +2632,76 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   Widget _buildOneRMWeightAction(ProgressionManagerProvider provider) {
     return Column(
       children: [
-        _buildActionField(
-          title: 'Prozentsatz vom 1RM',
-          child: _buildNumberInput(
-            value: '${provider.kgAktion['rmPercentage']}%',
-            onChanged: (value) {
-              final numValue = double.tryParse(value.replaceAll('%', ''));
-              if (numValue != null) {
-                provider.updateKgAktion('rmPercentage', numValue);
-              }
-            },
+        // Clean explanation
+        Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(bottom: 24),
+          decoration: BoxDecoration(
+            color: _charcoal.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _steel.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Automatische 1RM-Progression',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _snow,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Das System berechnet das optimale Arbeitsgewicht basierend auf deinem 1RM und erhöht es progressiv.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _mercury,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        _buildEditorField(
+          title: 'Progression',
+          description: 'Um wie viel Prozent soll das 1RM für die Progression erhöht werden?',
+          icon: Icons.trending_up_rounded,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPercentageInput(
+                value: provider.kgAktion['rmPercentage'].toString(),
+                onChanged: (value) {
+                  final numValue = double.tryParse(value);
+                  if (numValue != null) {
+                    provider.updateKgAktion('rmPercentage', numValue);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _emberCore.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Empfehlung: 2-5% für nachhaltige Progression',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _emberCore.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -2435,27 +2711,42 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   Widget _buildRepsAction(ProgressionManagerProvider provider) {
     return Column(
       children: [
-        _buildActionField(
-          title: 'Basis',
+        // Base repetitions selection
+        _buildEditorField(
+          title: 'Basis-Wiederholungen',
+          description: 'Ausgangswert für die Wiederholungsberechnung',
+          icon: Icons.repeat_rounded,
           child: _buildSelectableButton(
             context: context,
             currentValue: provider.repsAktion['variable'],
-            title: 'Basis-Wiederholungen',
+            title: 'Basis-Wiederholungen auswählen',
             options: [
+              // Letzte Werte
               SelectionOption(
                 value: 'lastReps',
-                label: 'Letzte Wiederh.',
+                label: 'Letzte Wiederholungen',
                 icon: Icons.history_rounded,
+                description: 'Wiederholungen vom gleichen Satz der letzten Trainingseinheit',
               ),
+              // Vorherige Werte
+              SelectionOption(
+                value: 'previousReps',
+                label: 'Vorherige Wiederholungen',
+                icon: Icons.skip_previous_rounded,
+                description: 'Wiederholungen vom vorhergehenden Satz der aktuellen Trainingseinheit',
+              ),
+              // Zielbereich
               SelectionOption(
                 value: 'targetRepsMin',
-                label: 'Min. Ziel',
+                label: 'Minimales Ziel',
                 icon: Icons.arrow_downward_rounded,
+                description: 'Untere Grenze des Wiederholungs-Zielbereichs',
               ),
               SelectionOption(
                 value: 'targetRepsMax',
-                label: 'Max. Ziel',
+                label: 'Maximales Ziel',
                 icon: Icons.arrow_upward_rounded,
+                description: 'Obere Grenze des Wiederholungs-Zielbereichs',
               ),
             ],
             onChanged: (value) {
@@ -2465,50 +2756,75 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
             },
           ),
         ),
-        const SizedBox(height: 16),
-        _buildActionField(
-          title: 'Änderung',
-          child: Row(
+        
+        const SizedBox(height: 20),
+        
+        // Repetitions modification
+        _buildEditorField(
+          title: 'Wiederholungs-Änderung',
+          description: 'Wie sollen die Wiederholungen angepasst werden?',
+          icon: Icons.tune_rounded,
+          child: Column(
             children: [
-              Expanded(
-                flex: 2,
-                child: _buildSelectableButton(
-                  context: context,
-                  currentValue: provider.repsAktion['operator'],
-                  title: 'Operation',
-                  options: [
-                    SelectionOption(
-                      value: 'add',
-                      label: '+',
-                      icon: Icons.add_rounded,
-                    ),
-                    SelectionOption(
-                      value: 'subtract',
-                      label: '-',
-                      icon: Icons.remove_rounded,
-                    ),
-                    SelectionOption(
-                      value: 'none',
-                      label: 'Gleich',
-                      icon: Icons.drag_handle_rounded,
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      provider.updateRepsAktion('operator', value);
-                    }
-                  },
-                ),
+              // Operation selector
+              _buildSelectableButton(
+                context: context,
+                currentValue: provider.repsAktion['operator'],
+                title: 'Operation auswählen',
+                options: [
+                  SelectionOption(
+                    value: 'add',
+                    label: 'Wiederholungen erhöhen (+)',
+                    icon: Icons.add_circle_outline_rounded,
+                    description: 'Wiederholungen um eine feste Anzahl erhöhen',
+                  ),
+                  SelectionOption(
+                    value: 'subtract',
+                    label: 'Wiederholungen verringern (-)',
+                    icon: Icons.remove_circle_outline_rounded,
+                    description: 'Wiederholungen um eine feste Anzahl verringern',
+                  ),
+                  SelectionOption(
+                    value: 'none',
+                    label: 'Wiederholungen beibehalten',
+                    icon: Icons.drag_handle_rounded,
+                    description: 'Wiederholungen unverändert lassen',
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    provider.updateRepsAktion('operator', value);
+                  }
+                },
               ),
+              
+              // Value input (only if operation is not 'none')
               if (provider.repsAktion['operator'] != 'none') ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 3,
-                  child: _buildNumberInput(
-                    value: provider.repsAktion['value'].toString(),
-                    onChanged: (value) {
-                      provider.updateRepsAktion('value', value);
-                    },
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'ANZAHL',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _emberCore,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      _buildNumberInput(
+                        value: provider.repsAktion['value'].toString(),
+                        onChanged: (value) {
+                          provider.updateRepsAktion('value', value);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2522,27 +2838,42 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   Widget _buildRirAction(ProgressionManagerProvider provider) {
     return Column(
       children: [
-        _buildActionField(
-          title: 'Basis',
+        // Base RIR selection
+        _buildEditorField(
+          title: 'Basis-RIR',
+          description: 'Ausgangswert für die RIR-Berechnung',
+          icon: Icons.battery_3_bar_rounded,
           child: _buildSelectableButton(
             context: context,
             currentValue: provider.rirAktion['variable'],
-            title: 'Basis-RIR',
+            title: 'Basis-RIR auswählen',
             options: [
+              // Letzte Werte
               SelectionOption(
                 value: 'lastRIR',
                 label: 'Letzter RIR',
                 icon: Icons.history_rounded,
+                description: 'RIR vom gleichen Satz der letzten Trainingseinheit',
               ),
+              // Vorherige Werte
+              SelectionOption(
+                value: 'previousRIR',
+                label: 'Vorheriger RIR',
+                icon: Icons.skip_previous_rounded,
+                description: 'RIR vom vorhergehenden Satz der aktuellen Trainingseinheit',
+              ),
+              // Zielbereich
               SelectionOption(
                 value: 'targetRIRMin',
-                label: 'Min. Ziel',
+                label: 'Minimales Ziel',
                 icon: Icons.arrow_downward_rounded,
+                description: 'Untere Grenze des RIR-Zielbereichs verwenden',
               ),
               SelectionOption(
                 value: 'targetRIRMax',
-                label: 'Max. Ziel',
+                label: 'Maximales Ziel',
                 icon: Icons.arrow_upward_rounded,
+                description: 'Obere Grenze des RIR-Zielbereichs verwenden',
               ),
             ],
             onChanged: (value) {
@@ -2552,50 +2883,75 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
             },
           ),
         ),
-        const SizedBox(height: 16),
-        _buildActionField(
-          title: 'Änderung',
-          child: Row(
+        
+        const SizedBox(height: 20),
+        
+        // RIR modification
+        _buildEditorField(
+          title: 'RIR-Änderung',
+          description: 'Wie soll der RIR angepasst werden?',
+          icon: Icons.tune_rounded,
+          child: Column(
             children: [
-              Expanded(
-                flex: 2,
-                child: _buildSelectableButton(
-                  context: context,
-                  currentValue: provider.rirAktion['operator'],
-                  title: 'Operation',
-                  options: [
-                    SelectionOption(
-                      value: 'add',
-                      label: '+',
-                      icon: Icons.add_rounded,
-                    ),
-                    SelectionOption(
-                      value: 'subtract',
-                      label: '-',
-                      icon: Icons.remove_rounded,
-                    ),
-                    SelectionOption(
-                      value: 'none',
-                      label: 'Gleich',
-                      icon: Icons.drag_handle_rounded,
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      provider.updateRirAktion('operator', value);
-                    }
-                  },
-                ),
+              // Operation selector
+              _buildSelectableButton(
+                context: context,
+                currentValue: provider.rirAktion['operator'],
+                title: 'Operation auswählen',
+                options: [
+                  SelectionOption(
+                    value: 'add',
+                    label: 'RIR erhöhen (+)',
+                    icon: Icons.add_circle_outline_rounded,
+                    description: 'RIR um eine feste Anzahl erhöhen',
+                  ),
+                  SelectionOption(
+                    value: 'subtract',
+                    label: 'RIR verringern (-)',
+                    icon: Icons.remove_circle_outline_rounded,
+                    description: 'RIR um eine feste Anzahl verringern',
+                  ),
+                  SelectionOption(
+                    value: 'none',
+                    label: 'RIR beibehalten',
+                    icon: Icons.drag_handle_rounded,
+                    description: 'RIR unverändert lassen',
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    provider.updateRirAktion('operator', value);
+                  }
+                },
               ),
+              
+              // Value input (only if operation is not 'none')
               if (provider.rirAktion['operator'] != 'none') ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 3,
-                  child: _buildNumberInput(
-                    value: provider.rirAktion['value'].toString(),
-                    onChanged: (value) {
-                      provider.updateRirAktion('value', value);
-                    },
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'ANZAHL',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _emberCore,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      _buildNumberInput(
+                        value: provider.rirAktion['value'].toString(),
+                        onChanged: (value) {
+                          provider.updateRirAktion('value', value);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2606,27 +2962,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     );
   }
 
-  Widget _buildActionField({
-    required String title,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title.toUpperCase(),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: _mercury,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        child,
-      ],
-    );
-  }
 
   Widget _buildNavigationButtons(ProgressionManagerProvider provider) {
     final canGoNext = _canProceedToNextStep(provider);
@@ -2636,10 +2971,9 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
         // Previous button
         if (_currentStep > 0)
           Expanded(
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed: _previousStep,
-              icon: const Icon(Icons.arrow_back_rounded, size: 18),
-              label: const Text('Zurück'),
+              child: const Text('Zurück'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _mercury,
                 side: BorderSide(color: _steel),
@@ -2656,7 +2990,7 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
         // Next/Complete button
         Expanded(
           flex: _currentStep > 0 ? 1 : 1,
-          child: ElevatedButton.icon(
+          child: ElevatedButton(
             onPressed: canGoNext 
                 ? (_currentStep < _totalSteps - 1 
                     ? _nextStep 
@@ -2667,13 +3001,7 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                         await provider.saveRule();
                       }) 
                 : null,
-            icon: Icon(
-              _currentStep < _totalSteps - 1 
-                  ? Icons.arrow_forward_rounded 
-                  : Icons.check_rounded,
-              size: 18,
-            ),
-            label: Text(
+            child: Text(
               _currentStep < _totalSteps - 1 ? 'Weiter' : 'Regel speichern',
             ),
             style: ElevatedButton.styleFrom(
@@ -2815,11 +3143,6 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 20,
-              color: _mercury,
             ),
           ],
         ),
@@ -3229,7 +3552,7 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
 
     final availableVariables = variableFilter != null
         ? provider.verfuegbareVariablen.where((v) => variableFilter.contains(v.id)).toList()
-        : provider.verfuegbareVariablen;
+        : provider.verfuegbareVariablen.where((v) => v.id != 'increment').toList();
 
     for (final variable in availableVariables) {
       final variableData = {
@@ -3424,21 +3747,21 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
   String _getVariableDescription(String variableId) {
     switch (variableId) {
       case 'lastKg':
-        return 'Gewicht vom unmittelbar vorhergehenden Satz dieser Einheit';
+        return 'Gewicht vom gleichen Satz der letzten Trainingseinheit';
       case 'lastReps':
-        return 'Wdhl vom unmittelbar vorhergehenden Satz dieser Einheit';
+        return 'Wdhl vom gleichen Satz der letzten Trainingseinheit';
       case 'lastRIR':
-        return 'RIR vom unmittelbar vorhergehenden Satz dieser Einheit';
+        return 'RIR vom gleichen Satz der letzten Trainingseinheit';
       case 'last1RM':
-        return '1RM basierend auf dem unmittelbar vorhergehenden Satz';
+        return '1RM vom gleichen Satz der letzten Trainingseinheit';
       case 'previousKg':
-        return 'Gewicht vom gleichen Satz der letzten Einheit';
+        return 'Gewicht vom vorhergehenden Satz der aktuellen Trainingseinheit';
       case 'previousReps':
-        return 'Wdhl vom gleichen Satz der letzten Einheit';
+        return 'Wdhl vom vorhergehenden Satz der aktuellen Trainingseinheit';
       case 'previousRIR':
-        return 'RIR vom gleichen Satz der letzten Einheit';
+        return 'RIR vom vorhergehenden Satz der aktuellen Trainingseinheit';
       case 'previous1RM':
-        return '1RM vom gleichen Satz der letzten Einheit';
+        return '1RM vom vorhergehenden Satz der aktuellen Trainingseinheit';
       case 'targetRepsMin':
         return 'Mindestanzahl der geplanten Wdhl';
       case 'targetRepsMax':
@@ -3472,7 +3795,7 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
       'targetRIRMin',
       'targetRIRMax'
     ];
-    final weightVariables = ['lastKg', 'previousKg', 'increment'];
+    final weightVariables = ['lastKg', 'previousKg'];
     final rmVariables = ['last1RM', 'previous1RM'];
 
     // Logic for related variables
@@ -3545,7 +3868,10 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     } else if (provider.kgAktion['operator'] != 'none') {
       final variable = provider.getVariableLabel(provider.kgAktion['variable']);
       final operator = provider.getOperatorLabel(provider.kgAktion['operator']);
-      final value = provider.kgAktion['value'];
+      // Use the correct value based on valueType
+      final value = provider.kgAktion['valueType'] == 'config' && provider.aktuellesProfil != null
+          ? provider.aktuellesProfil!.config['increment']
+          : provider.kgAktion['value'];
       actionTexts.add('$variable $operator ${value}kg');
     } else {
       final variable = provider.getVariableLabel(provider.kgAktion['variable']);

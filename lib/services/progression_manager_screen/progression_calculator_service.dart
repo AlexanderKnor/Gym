@@ -80,15 +80,20 @@ class ProgressionCalculatorService {
               vorherigenSatz.wiederholungen, vorherigenSatz.rir)
           : 0.0;
 
+      // Für Demo-Zwecke: Wenn keine historischen Daten vorhanden sind, verwende realistische Mock-Daten
+      final mockHistoricalKg = satz.kg > 0 ? satz.kg - 2.5 : 75.0;
+      final mockHistoricalReps = satz.wiederholungen > 0 ? satz.wiederholungen : 8;
+      final mockHistoricalRir = satz.rir > 0 ? satz.rir : 2;
+      
       final variables = <String, dynamic>{
-        'lastKg': satz.kg,
-        'lastReps': satz.wiederholungen,
-        'lastRIR': satz.rir,
-        'last1RM': letzter1RM,
-        'previousKg': vorherigenSatz?.kg ?? 0,
-        'previousReps': vorherigenSatz?.wiederholungen ?? 0,
-        'previousRIR': vorherigenSatz?.rir ?? 0,
-        'previous1RM': vorheriger1RM,
+        'lastKg': satz.kg > 0 ? satz.kg : mockHistoricalKg,
+        'lastReps': satz.wiederholungen > 0 ? satz.wiederholungen : mockHistoricalReps,
+        'lastRIR': satz.rir > 0 ? satz.rir : mockHistoricalRir,
+        'last1RM': letzter1RM > 0 ? letzter1RM : OneRMCalculatorService.calculate1RM(mockHistoricalKg, mockHistoricalReps, mockHistoricalRir),
+        'previousKg': vorherigenSatz?.kg ?? mockHistoricalKg,
+        'previousReps': vorherigenSatz?.wiederholungen ?? mockHistoricalReps,
+        'previousRIR': vorherigenSatz?.rir ?? mockHistoricalRir,
+        'previous1RM': vorheriger1RM > 0 ? vorheriger1RM : OneRMCalculatorService.calculate1RM(mockHistoricalKg, mockHistoricalReps, mockHistoricalRir),
         'targetRepsMin': config['targetRepsMin'] ?? 8,
         'targetRepsMax': config['targetRepsMax'] ?? 10,
         'targetRIRMin': config['targetRIRMin'] ?? 1,

@@ -409,19 +409,19 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
                         children: [
                           _buildConfigDetailItem(
                             'Wiederholungsbereich',
-                            '${profile.config['targetRepsMin'] ?? 0} - ${profile.config['targetRepsMax'] ?? 0} Wdh.',
+                            '${_formatInteger(profile.config['targetRepsMin'] ?? 0)} - ${_formatInteger(profile.config['targetRepsMax'] ?? 0)} Wdh.',
                             Icons.repeat,
                           ),
                           const SizedBox(height: 12),
                           _buildConfigDetailItem(
                             'RIR-Bereich',
-                            '${profile.config['targetRIRMin'] ?? 0} - ${profile.config['targetRIRMax'] ?? 0} RIR',
+                            '${_formatInteger(profile.config['targetRIRMin'] ?? 0)} - ${_formatInteger(profile.config['targetRIRMax'] ?? 0)} RIR',
                             Icons.battery_5_bar,
                           ),
                           const SizedBox(height: 12),
                           _buildConfigDetailItem(
                             'Gewichtssteigerung',
-                            '${profile.config['increment'] ?? 0} kg',
+                            '${_formatNumber(profile.config['increment'] ?? 0)} kg',
                             Icons.fitness_center,
                           ),
                         ],
@@ -744,4 +744,24 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
         return 'Unbekannter Wert';
     }
   }
+}
+
+// Helper functions for number formatting
+String _formatInteger(dynamic value) {
+  if (value == null) return '0';
+  if (value is int) return value.toString();
+  if (value is double) return value.toInt().toString();
+  return value.toString();
+}
+
+String _formatNumber(dynamic value) {
+  if (value == null) return '0';
+  if (value is int) return value.toString();
+  if (value is double) {
+    if (value == value.toInt()) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
+  return value.toString();
 }

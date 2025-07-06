@@ -225,6 +225,15 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     );
   }
 
+  // Helper method to get current profile data (fresh from provider if available)
+  dynamic _getCurrentProfile() {
+    final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+    // Check if there's a fresh version in the provider's profile list
+    final freshProfile = provider.profileProvider.getProfileById(widget.profile.id);
+    // Return fresh profile if available, otherwise fallback to widget.profile
+    return freshProfile ?? widget.profile;
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
@@ -430,17 +439,17 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             child: Row(
               children: [
                 _buildMinimalStatItem(
-                  '${widget.profile.config['targetRepsMin']}-${widget.profile.config['targetRepsMax']}',
+                  '${_formatInteger(_getCurrentProfile().config['targetRepsMin'])}-${_formatInteger(_getCurrentProfile().config['targetRepsMax'])}',
                   'Wdhl',
                 ),
                 _buildMinimalDivider(),
                 _buildMinimalStatItem(
-                  '${widget.profile.config['targetRIRMin']}-${widget.profile.config['targetRIRMax']}',
+                  '${_formatInteger(_getCurrentProfile().config['targetRIRMin'])}-${_formatInteger(_getCurrentProfile().config['targetRIRMax'])}',
                   'RIR',
                 ),
                 _buildMinimalDivider(),
                 _buildMinimalStatItem(
-                  '${widget.profile.config['increment']} kg',
+                  '${_formatNumber(_getCurrentProfile().config['increment'])} kg',
                   'Steigerung',
                 ),
               ],
@@ -1821,19 +1830,19 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
               children: [
                 _buildModernConfigValue(
                   'Wiederholungen',
-                  '${widget.profile.config['targetRepsMin']} - ${widget.profile.config['targetRepsMax']}',
+                  '${_formatInteger(_getCurrentProfile().config['targetRepsMin'])} - ${_formatInteger(_getCurrentProfile().config['targetRepsMax'])}',
                   Icons.repeat_rounded,
                 ),
                 _buildVerticalDivider(),
                 _buildModernConfigValue(
                   'RIR-Bereich',
-                  '${widget.profile.config['targetRIRMin']} - ${widget.profile.config['targetRIRMax']}',
+                  '${_formatInteger(_getCurrentProfile().config['targetRIRMin'])} - ${_formatInteger(_getCurrentProfile().config['targetRIRMax'])}',
                   Icons.trending_down_rounded,
                 ),
                 _buildVerticalDivider(),
                 _buildModernConfigValue(
                   'Steigerung',
-                  '${widget.profile.config['increment']} kg',
+                  '${_formatNumber(_getCurrentProfile().config['increment'])} kg',
                   Icons.trending_up_rounded,
                 ),
               ],
@@ -3619,3 +3628,26 @@ class FlowArrowsPainter extends CustomPainter {
     return oldDelegate.animationValue != animationValue;
   }
 }
+
+// Helper functions for number formatting
+String _formatInteger(dynamic value) {
+  if (value == null) return '0';
+  if (value is int) return value.toString();
+  if (value is double) return value.toInt().toString();
+  return value.toString();
+}
+
+String _formatNumber(dynamic value) {
+  if (value == null) return '0';
+  if (value is int) return value.toString();
+  if (value is double) {
+    // If it's a whole number, show without decimals
+    if (value == value.toInt()) {
+      return value.toInt().toString();
+    }
+    // Otherwise show with necessary decimals
+    return value.toString();
+  }
+  return value.toString();
+}
+

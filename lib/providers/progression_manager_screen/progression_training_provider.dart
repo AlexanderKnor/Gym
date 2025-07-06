@@ -11,10 +11,10 @@ class ProgressionTrainingProvider with ChangeNotifier {
   // ===== STATE DECLARATIONS =====
 
   List<TrainingSetModel> _saetze = [
-    TrainingSetModel(id: 1, kg: 80, wiederholungen: 8, rir: 2),
-    TrainingSetModel(id: 2, kg: 85, wiederholungen: 6, rir: 1),
-    TrainingSetModel(id: 3, kg: 87.5, wiederholungen: 5, rir: 1),
-    TrainingSetModel(id: 4, kg: 75, wiederholungen: 8, rir: 3),
+    TrainingSetModel(id: 1, kg: 80, wiederholungen: 10, rir: 1),
+    TrainingSetModel(id: 2, kg: 85, wiederholungen: 8, rir: 2),
+    TrainingSetModel(id: 3, kg: 87.5, wiederholungen: 6, rir: 1),
+    TrainingSetModel(id: 4, kg: 75, wiederholungen: 12, rir: 3),
   ];
   int _aktiverSatz = 1;
   bool _trainingAbgeschlossen = false;

@@ -3810,7 +3810,8 @@ class _RuleEditorContentState extends State<RuleEditorContent> {
     if (provider.kgAktion['type'] == 'oneRM') {
       final source = provider.kgAktion['source'] ?? 'last';
       final sourceText = source == 'previous' ? 'vorherigen' : 'aktuellen';
-      actionTexts.add('1RM vom $sourceText Satz +${provider.kgAktion['rmPercentage']}%');
+      final rmPercentage = provider.kgAktion['rmPercentage'] ?? 2.5;
+      actionTexts.add('1RM vom $sourceText Satz +${rmPercentage}%');
     } else if (provider.kgAktion['operator'] != 'none') {
       final variable = provider.getVariableLabel(provider.kgAktion['variable']);
       final operator = provider.getOperatorLabel(provider.kgAktion['operator']);

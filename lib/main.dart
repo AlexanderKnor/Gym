@@ -53,10 +53,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     // Add global back button interceptor
     BackButtonInterceptor.add(myInterceptor);
-    
+
     // System UI Observer hinzufügen
     WidgetsBinding.instance.addObserver(this);
-    
+
     // Kontinuierliche System UI Unterdrückung
     _startSystemUIHiding();
   }
@@ -82,7 +82,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   // Startet kontinuierliche System UI Überwachung
   void _startSystemUIHiding() {
     _hideSystemUI();
-    
+
     // Timer für periodische Überprüfung (alle 2 Sekunden)
     _systemUITimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       _hideSystemUI();
@@ -142,7 +142,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
       ],
       child: Container(
-        color: const Color(0xFF000000), // Prevent any white background at root level
+        color: const Color(
+            0xFF000000), // Prevent any white background at root level
         child: MaterialApp(
           title: 'Prover',
           theme: ThemeData(
@@ -162,127 +163,130 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             scaffoldBackgroundColor: const Color(0xFF000000), // Midnight
             canvasColor: const Color(0xFF000000), // Midnight
             cardColor: const Color(0xFF1C1C1E), // Dark card background
-            dialogBackgroundColor: const Color(0xFF1C1C1E), // Dark dialog background
+            dialogBackgroundColor:
+                const Color(0xFF1C1C1E), // Dark dialog background
 
-          // Dark typography
-          textTheme: const TextTheme(
-            titleLarge: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-              color: Color(0xFFFFFFFF), // Snow
-            ),
-            titleMedium: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-              color: Color(0xFFFFFFFF), // Snow
-            ),
-            titleSmall: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFFFFFFF), // Snow
-            ),
-            bodyLarge: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFFAEAEB2), // Silver
-            ),
-            bodyMedium: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFFAEAEB2), // Silver
-            ),
-            bodySmall: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF8E8E93), // Mercury
-            ),
-          ),
-
-          // Dark app bar style
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF000000), // Midnight background
-            foregroundColor: Color(0xFFFFFFFF), // Snow foreground
-            elevation: 0,
-            centerTitle: true,
-            titleTextStyle: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-              color: Color(0xFFFFFFFF), // Snow
-            ),
-            iconTheme: IconThemeData(
-              color: Color(0xFFFFFFFF), // Snow
-              size: 22,
-            ),
-          ),
-
-          // Dark button style
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF4500), // Orange
-              foregroundColor: const Color(0xFFFFFFFF), // Snow
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
+            // Dark typography
+            textTheme: const TextTheme(
+              titleLarge: TextStyle(
+                fontSize: 20,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
+                letterSpacing: -0.5,
+                color: Color(0xFFFFFFFF), // Snow
               ),
-            ),
-          ),
-
-          // Dark text button style
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFAEAEB2), // Silver
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              titleMedium: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
+                color: Color(0xFFFFFFFF), // Snow
               ),
-              textStyle: const TextStyle(
+              titleSmall: TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFFFFFFF), // Snow
+              ),
+              bodyLarge: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
                 color: Color(0xFFAEAEB2), // Silver
               ),
+              bodyMedium: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFFAEAEB2), // Silver
+              ),
+              bodySmall: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF8E8E93), // Mercury
+              ),
             ),
-          ),
 
-          // Dark card style
-          cardTheme: const CardTheme(
-            color: Color(0xFF1C1C1E), // Charcoal
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
+            // Dark app bar style
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF000000), // Midnight background
+              foregroundColor: Color(0xFFFFFFFF), // Snow foreground
+              elevation: 0,
+              centerTitle: true,
+              titleTextStyle: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
+                color: Color(0xFFFFFFFF), // Snow
+              ),
+              iconTheme: IconThemeData(
+                color: Color(0xFFFFFFFF), // Snow
+                size: 22,
+              ),
             ),
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
 
-          // Dark input decoration
-          inputDecorationTheme: const InputDecorationTheme(
-            filled: true,
-            fillColor: Color(0xFF2C2C2E), // Graphite
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-              borderSide: BorderSide.none,
+            // Dark button style
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF4500), // Orange
+                foregroundColor: const Color(0xFFFFFFFF), // Snow
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.3,
+                ),
+              ),
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            hintStyle: TextStyle(
-              color: Color(0xFF8E8E93), // Mercury
-              fontSize: 15,
-            ),
-          ),
 
-          // Visual density
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
+            // Dark text button style
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFAEAEB2), // Silver
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFAEAEB2), // Silver
+                ),
+              ),
+            ),
+
+            // Dark card style
+            cardTheme: const CardTheme(
+              color: Color(0xFF1C1C1E), // Charcoal
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+
+            // Dark input decoration
+            inputDecorationTheme: const InputDecorationTheme(
+              filled: true,
+              fillColor: Color(0xFF2C2C2E), // Graphite
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              hintStyle: TextStyle(
+                color: Color(0xFF8E8E93), // Mercury
+                fontSize: 15,
+              ),
+            ),
+
+            // Visual density
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
           home: const AuthCheckerScreen(),
           debugShowCheckedModeBanner: false,
         ),

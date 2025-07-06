@@ -139,19 +139,19 @@ class ProfileCardWidget extends StatelessWidget {
                   _buildConfigItem(
                     context,
                     'Wiederholungen',
-                    '${profile.config['targetRepsMin']}-${profile.config['targetRepsMax']}',
+                    '${_formatInteger(profile.config['targetRepsMin'])}-${_formatInteger(profile.config['targetRepsMax'])}',
                     Icons.repeat,
                   ),
                   _buildConfigItem(
                     context,
                     'RIR',
-                    '${profile.config['targetRIRMin']}-${profile.config['targetRIRMax']}',
+                    '${_formatInteger(profile.config['targetRIRMin'])}-${_formatInteger(profile.config['targetRIRMax'])}',
                     Icons.battery_5_bar,
                   ),
                   _buildConfigItem(
                     context,
                     'Steigerung',
-                    '${profile.config['increment']}kg',
+                    '${_formatNumber(profile.config['increment'])}kg',
                     Icons.fitness_center,
                   ),
                   // Regelanzahl
@@ -262,4 +262,24 @@ class ProfileCardWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+// Helper functions for number formatting
+String _formatInteger(dynamic value) {
+  if (value == null) return '0';
+  if (value is int) return value.toString();
+  if (value is double) return value.toInt().toString();
+  return value.toString();
+}
+
+String _formatNumber(dynamic value) {
+  if (value == null) return '0';
+  if (value is int) return value.toString();
+  if (value is double) {
+    if (value == value.toInt()) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
+  return value.toString();
 }

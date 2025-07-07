@@ -57,6 +57,22 @@ class _CreateTrainingPlanFormWidgetState
         .setPlanName(_planNameController.text);
   }
 
+  // PROVER color system - consistent with other screens
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CreateTrainingPlanProvider>(context);
@@ -65,36 +81,61 @@ class _CreateTrainingPlanFormWidgetState
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _void,
         body: Form(
           key: _formKey,
-          child: ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
             children: [
-              // Header mit Illustration
-              _buildHeader(),
-              const SizedBox(height: 32),
+              // Scrollable Content
+              Expanded(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // Content mit Padding für Fixed Button und App Bar
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(24, 120, 24, 24),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          // Trainingsplan Name
+                          _buildPlanNameSection(provider),
+                          const SizedBox(height: 32),
 
-              // Trainingsplan Name
-              _buildPlanNameSection(provider),
-              const SizedBox(height: 32),
+                          // Trainingsfrequenz
+                          _buildFrequencySection(provider, theme),
+                          const SizedBox(height: 32),
 
-              // Trainingsfrequenz
-              _buildFrequencySection(provider, theme),
-              const SizedBox(height: 32),
+                          // Periodisierung
+                          _buildPeriodizationSection(provider, theme),
+                          const SizedBox(height: 32),
 
-              // Periodisierung
-              _buildPeriodizationSection(provider, theme),
-              const SizedBox(height: 32),
-
-              // Trainingstage
-              _buildTrainingDaysSection(provider, theme),
-              const SizedBox(height: 40),
-
-              // Weiter-Button
-              _buildNextButton(provider, theme),
-              const SizedBox(height: 40),
+                          // Trainingstage
+                          _buildTrainingDaysSection(provider, theme),
+                          const SizedBox(height: 24),
+                        ]),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Fixed Bottom Button
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      _void.withOpacity(0.0),
+                      _void.withOpacity(0.8),
+                      _void,
+                    ],
+                    stops: const [0.0, 0.3, 1.0],
+                  ),
+                ),
+                child: _buildNextButton(provider, theme),
+              ),
             ],
           ),
         ),
@@ -102,151 +143,167 @@ class _CreateTrainingPlanFormWidgetState
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Illustration
-        Center(
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.fitness_center,
-              size: 48,
-              color: Colors.grey[800],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Titel
-        const Center(
-          child: Text(
-            'Erstelle deinen Trainingsplan',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Untertitel
-        Center(
-          child: Text(
-            'Passe deinen Plan an deine Ziele und deinen Zeitplan an',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              letterSpacing: -0.3,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildPlanNameSection(CreateTrainingPlanProvider provider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Sektions-Label
-        _buildSectionLabel(
-          'Name deines Trainingsplans',
-          Icons.edit_outlined,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
         ),
-        const SizedBox(height: 16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Sektions-Label
+          _buildSectionLabel(
+            'Plan Name',
+            Icons.edit_outlined,
+          ),
+          const SizedBox(height: 16),
 
-        // Textfeld für Planname
-        TextFormField(
-          controller: _planNameController,
-          decoration: InputDecoration(
-            hintText: 'z.B. Ganzkörperplan, Push/Pull/Legs, ...',
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+          // Textfeld für Planname
+          TextFormField(
+            controller: _planNameController,
+            decoration: InputDecoration(
+              hintText: 'z.B. Ganzkörperplan, Push/Pull/Legs, ...',
+              filled: true,
+              fillColor: _lunar.withOpacity(0.6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _asteroid.withOpacity(0.5)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _asteroid.withOpacity(0.5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _proverCore, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.notes_rounded,
+                color: _stardust,
+              ),
+              hintStyle: TextStyle(
+                color: _comet,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: _nova,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Colors.black, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
-            ),
-            prefixIcon: Icon(
-              Icons.notes_rounded,
-              color: Colors.grey[600],
-            ),
+            textCapitalization: TextCapitalization.words,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Bitte gib einen Namen ein';
+              }
+              return null;
+            },
+            onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
           ),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-          textCapitalization: TextCapitalization.words,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Bitte gib einen Namen ein';
-            }
-            return null;
-          },
-          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildFrequencySection(
       CreateTrainingPlanProvider provider, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Sektions-Label
-        _buildSectionLabel(
-          'Trainingsfrequenz',
-          Icons.calendar_today_rounded,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
         ),
-        const SizedBox(height: 8),
-
-        // Hinweistext
-        Text(
-          'An wie vielen Tagen pro Woche möchtest du trainieren?',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            letterSpacing: -0.3,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-        ),
-        const SizedBox(height: 16),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Sektions-Label
+          _buildSectionLabel(
+            'Trainingsfrequenz',
+            Icons.calendar_today_rounded,
+          ),
+          const SizedBox(height: 12),
 
-        // Elegante Frequenzauswahl
-        _buildFrequencySelector(provider, theme),
-      ],
+          // Hinweistext
+          Text(
+            'Wie oft pro Woche möchtest du trainieren?',
+            style: TextStyle(
+              fontSize: 14,
+              color: _stardust,
+              letterSpacing: 0.3,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Elegante Frequenzauswahl
+          _buildFrequencySelector(provider, theme),
+        ],
+      ),
     );
   }
 
   Widget _buildFrequencySelector(
       CreateTrainingPlanProvider provider, ThemeData theme) {
     return Container(
-      height: 56,
+      height: 64,
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _lunar.withOpacity(0.4),
+            _asteroid.withOpacity(0.2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _asteroid.withOpacity(0.5),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -260,22 +317,36 @@ class _CreateTrainingPlanFormWidgetState
               provider.setFrequency(day);
             },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.black : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [_proverCore, _proverGlow],
+                        )
+                      : null,
+                  color: isSelected ? null : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: _proverCore.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     '$day',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? Colors.white : Colors.grey[800],
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? _nova : _stardust,
                     ),
                   ),
                 ),
@@ -289,247 +360,333 @@ class _CreateTrainingPlanFormWidgetState
 
   Widget _buildPeriodizationSection(
       CreateTrainingPlanProvider provider, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Sektions-Label
-        _buildSectionLabel(
-          'Periodisierung',
-          Icons.cyclone_rounded,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
         ),
-        const SizedBox(height: 8),
-
-        // Hinweistext
-        Text(
-          'Teile deinen Plan in Wochen (Mikrozyklen) für fortgeschrittenes Training',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            letterSpacing: -0.3,
-          ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
         ),
-        const SizedBox(height: 16),
-
-        // Tab-Auswahl für Periodisierung (Aktiviert/Deaktiviert)
-        Container(
-          height: 56,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          child: Row(
-            children: [
-              // Standard-Tab
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _activePeriodizationTab = 0;
-                      provider.setIsPeriodized(false);
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _activePeriodizationTab == 0
-                          ? Colors.black
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Standard',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: _activePeriodizationTab == 0
-                              ? Colors.white
-                              : Colors.grey[800],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Sektions-Label
+          _buildSectionLabel(
+            'Periodisierung',
+            Icons.cyclone_rounded,
+          ),
+          const SizedBox(height: 12),
+
+          // Hinweistext
+          Text(
+            'Verwende Mikrozyklen für fortgeschrittenes Training',
+            style: TextStyle(
+              fontSize: 14,
+              color: _stardust,
+              letterSpacing: 0.3,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Tab-Auswahl für Periodisierung (Aktiviert/Deaktiviert)
+          Container(
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _lunar.withOpacity(0.4),
+                  _asteroid.withOpacity(0.2),
+                ],
               ),
-
-              // Periodisiert-Tab
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _activePeriodizationTab = 1;
-                      provider.setIsPeriodized(true);
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _activePeriodizationTab == 1
-                          ? Colors.black
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Periodisiert',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: _activePeriodizationTab == 1
-                              ? Colors.white
-                              : Colors.grey[800],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _asteroid.withOpacity(0.5),
+                width: 1,
               ),
-            ],
-          ),
-        ),
-
-        // Wenn periodisiert, zeige Wochen-Auswahl
-        if (provider.isPeriodized)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: provider.isPeriodized ? null : 0,
-            padding: EdgeInsets.only(top: provider.isPeriodized ? 20 : 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            child: Row(
               children: [
-                // Mikrozyklus-Label
-                const Text(
-                  'Mesozyklus-Länge',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.3,
+                // Standard-Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _activePeriodizationTab = 0;
+                        provider.setIsPeriodized(false);
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        gradient: _activePeriodizationTab == 0
+                            ? LinearGradient(
+                                colors: [_proverCore, _proverGlow],
+                              )
+                            : null,
+                        color: _activePeriodizationTab == 0 ? null : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: _activePeriodizationTab == 0
+                            ? [
+                                BoxShadow(
+                                  color: _proverCore.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Standard',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: _activePeriodizationTab == 0
+                                ? _nova
+                                : _stardust,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
 
-                // Kurzer Hinweistext
-                Text(
-                  'Wähle die Anzahl der Wochen für deinen Mesozyklus',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Wochen-Auswahl als eleganter Stepper
-                Container(
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      // "-" Button
-                      Material(
-                        color: Colors.transparent,
+                // Periodisiert-Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _activePeriodizationTab = 1;
+                        provider.setIsPeriodized(true);
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        gradient: _activePeriodizationTab == 1
+                            ? LinearGradient(
+                                colors: [_proverCore, _proverGlow],
+                              )
+                            : null,
+                        color: _activePeriodizationTab == 1 ? null : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: provider.numberOfWeeks > 1
-                              ? () {
-                                  HapticFeedback.mediumImpact();
-                                  provider.setNumberOfWeeks(
-                                      provider.numberOfWeeks - 1);
-                                }
-                              : null,
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            child: Center(
-                              child: Icon(
-                                Icons.remove,
-                                color: provider.numberOfWeeks > 1
-                                    ? Colors.black
-                                    : Colors.grey[400],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Zentrierter Wert mit schwarzem Hintergrund
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${provider.numberOfWeeks}',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                        boxShadow: _activePeriodizationTab == 1
+                            ? [
+                                BoxShadow(
+                                  color: _proverCore.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  provider.numberOfWeeks == 1
-                                      ? 'Woche'
-                                      : 'Wochen',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Periodisiert',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: _activePeriodizationTab == 1
+                                ? _nova
+                                : _stardust,
                           ),
                         ),
                       ),
-
-                      // "+" Button
-                      Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: provider.numberOfWeeks < 16
-                              ? () {
-                                  HapticFeedback.mediumImpact();
-                                  provider.setNumberOfWeeks(
-                                      provider.numberOfWeeks + 1);
-                                }
-                              : null,
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            child: Center(
-                              child: Icon(
-                                Icons.add,
-                                color: provider.numberOfWeeks < 16
-                                    ? Colors.black
-                                    : Colors.grey[400],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-      ],
+
+          // Wenn periodisiert, zeige Wochen-Auswahl
+          if (provider.isPeriodized)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              height: provider.isPeriodized ? null : 0,
+              padding: EdgeInsets.only(top: provider.isPeriodized ? 24 : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Mikrozyklus-Label
+                  Text(
+                    'Anzahl Mikrozyklen',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: _nova,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Kurzer Hinweistext
+                  Text(
+                    'Aus wie vielen Mikrozyklen soll dein Mesozyklus bestehen?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _stardust,
+                      letterSpacing: 0.3,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Wochen-Auswahl als eleganter Stepper
+                  Container(
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          _lunar.withOpacity(0.6),
+                          _asteroid.withOpacity(0.3),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _asteroid.withOpacity(0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // "-" Button
+                        Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: provider.numberOfWeeks > 1
+                                ? () {
+                                    HapticFeedback.mediumImpact();
+                                    provider.setNumberOfWeeks(
+                                        provider.numberOfWeeks - 1);
+                                  }
+                                : null,
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              child: Center(
+                                child: Icon(
+                                  Icons.remove_rounded,
+                                  color: provider.numberOfWeeks > 1
+                                      ? _nova
+                                      : _comet,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Zentrierter Wert mit gradient Hintergrund
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [_proverCore, _proverGlow],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _proverCore.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${provider.numberOfWeeks}',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      color: _nova,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    provider.numberOfWeeks == 1
+                                        ? 'Mikrozyklus'
+                                        : 'Mikrozyklen',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: _nova,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // "+" Button
+                        Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: provider.numberOfWeeks < 16
+                                ? () {
+                                    HapticFeedback.mediumImpact();
+                                    provider.setNumberOfWeeks(
+                                        provider.numberOfWeeks + 1);
+                                  }
+                                : null,
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              child: Center(
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  color: provider.numberOfWeeks < 16
+                                      ? _nova
+                                      : _comet,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -537,108 +694,177 @@ class _CreateTrainingPlanFormWidgetState
       CreateTrainingPlanProvider provider, ThemeData theme) {
     return FadeTransition(
       opacity: _dayListAnimation,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sektions-Label
-          _buildSectionLabel(
-            'Trainingstage',
-            Icons.event_rounded,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _stellar.withOpacity(0.6),
+              _nebula.withOpacity(0.4),
+            ],
           ),
-          const SizedBox(height: 8),
-
-          // Hinweistext
-          Text(
-            'Du kannst die Namen der Trainingstage anpassen',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              letterSpacing: -0.3,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _lunar.withOpacity(0.4),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _void.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-          ),
-          const SizedBox(height: 16),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Sektions-Label
+            _buildSectionLabel(
+              'Trainingstage',
+              Icons.event_rounded,
+            ),
+            const SizedBox(height: 12),
 
-          // Liste der Trainingstage
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: provider.frequency,
-            itemBuilder: (context, index) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      // Tag-Nummer
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${index + 1}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
+            // Hinweistext
+            Text(
+              'Benenne deine Trainingstage nach deinen Vorlieben',
+              style: TextStyle(
+                fontSize: 14,
+                color: _stardust,
+                letterSpacing: 0.3,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 14),
 
-                      // Name-Eingabefeld
-                      Expanded(
-                        child: TextFormField(
-                          initialValue: provider.dayNames.length > index
-                              ? provider.dayNames[index]
-                              : 'Tag ${index + 1}',
-                          decoration: InputDecoration(
-                            hintText: 'z.B. Oberkörper, Beine, ...',
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                  color: Colors.black, width: 1.5),
-                            ),
-                          ),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          textCapitalization: TextCapitalization.words,
-                          onChanged: (value) =>
-                              provider.setDayName(index, value),
-                        ),
+            // Liste der Trainingstage
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: provider.frequency,
+              itemBuilder: (context, index) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: EdgeInsets.only(
+                    bottom: index == provider.frequency - 1 ? 0 : 16,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _lunar.withOpacity(0.6),
+                        _asteroid.withOpacity(0.3),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _asteroid.withOpacity(0.5),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _void.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        // Tag-Nummer
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [_proverCore, _proverGlow],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _proverCore.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                                color: _nova,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+
+                        // Name-Eingabefeld
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: provider.dayNames.length > index
+                                ? provider.dayNames[index]
+                                : 'Tag ${index + 1}',
+                            decoration: InputDecoration(
+                              hintText: 'z.B. Oberkörper, Beine, ...',
+                              filled: true,
+                              fillColor: _lunar.withOpacity(0.8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: _asteroid.withOpacity(0.5),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: _asteroid.withOpacity(0.5),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: _proverCore,
+                                  width: 2,
+                                ),
+                              ),
+                              hintStyle: TextStyle(
+                                color: _comet,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: _nova,
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                            onChanged: (value) =>
+                                provider.setDayName(index, value),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -646,18 +872,28 @@ class _CreateTrainingPlanFormWidgetState
   Widget _buildSectionLabel(String text, IconData icon) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: Colors.grey[800],
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_proverCore, _proverGlow],
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: _nova,
+          ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
+            fontWeight: FontWeight.w700,
+            color: _nova,
+            letterSpacing: 0.3,
           ),
         ),
       ],
@@ -666,78 +902,87 @@ class _CreateTrainingPlanFormWidgetState
 
   Widget _buildNextButton(
       CreateTrainingPlanProvider provider, ThemeData theme) {
-    return ElevatedButton(
-      key: const Key('next_to_exercises_button'),
-      onPressed: () {
-        if (_formKey.currentState!.validate()) {
-          print("Formular validiert");
-          // Entwurfsplan erstellen
-          provider.createDraftPlan();
-          print("Entwurfsplan erstellt: ${provider.draftPlan != null}");
-
-          // Haptisches Feedback
-          HapticFeedback.mediumImpact();
-
-          // Zum Tag-Editor navigieren, dabei den Provider-Wert weitergeben
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ChangeNotifierProvider.value(
-                value: provider,
-                child: const TrainingDayEditorScreen(),
-              ),
-            ),
-          );
-        } else {
-          print("Validierung fehlgeschlagen");
-          // Kurzes Haptisches Feedback für Fehler
-          HapticFeedback.vibrate();
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+    return Container(
+      width: double.infinity,
+      height: 64,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [_proverCore, _proverGlow],
         ),
-        elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.3),
-        minimumSize: const Size(double.infinity, 56),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Text
-          Text(
-            provider.isPeriodized
-                ? 'Weiter zum Mesozyklus-Editor'
-                : 'Weiter zu den Übungen',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.3,
-            ),
-          ),
-
-          // Icon rechts
-          Positioned(
-            right: 0,
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward,
-                size: 18,
-                color: Colors.white,
-              ),
-            ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _proverCore.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const Key('next_to_exercises_button'),
+          onTap: () {
+            if (_formKey.currentState!.validate()) {
+              print("Formular validiert");
+              // Entwurfsplan erstellen
+              provider.createDraftPlan();
+              print("Entwurfsplan erstellt: ${provider.draftPlan != null}");
+
+              // Haptisches Feedback
+              HapticFeedback.mediumImpact();
+
+              // Zum Tag-Editor navigieren, dabei den Provider-Wert weitergeben
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChangeNotifierProvider.value(
+                    value: provider,
+                    child: const TrainingDayEditorScreen(),
+                  ),
+                ),
+              );
+            } else {
+              print("Validierung fehlgeschlagen");
+              // Kurzes Haptisches Feedback für Fehler
+              HapticFeedback.vibrate();
+            }
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Text
+              Text(
+                'WEITER ZU DEN ÜBUNGEN',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: _nova,
+                  letterSpacing: 1,
+                ),
+              ),
+
+              // Icon rechts
+              Positioned(
+                right: 20,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: _nova.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 20,
+                    color: _nova,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

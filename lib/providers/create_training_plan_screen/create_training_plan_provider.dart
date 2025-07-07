@@ -635,4 +635,40 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     // UI aktualisieren
     notifyListeners();
   }
+
+  // Implementierung der Methode zum Umordnen der Übungen innerhalb eines Trainingstages
+  void reorderExercises(int dayIndex, int oldIndex, int newIndex) {
+    if (_draftPlan == null) return;
+
+    // Sicherstellen, dass der Tagesindex gültig ist
+    if (dayIndex < 0 || dayIndex >= _draftPlan!.days.length) return;
+
+    final day = _draftPlan!.days[dayIndex];
+    
+    // Sicherstellen, dass die Übungsindizes gültig sind
+    if (oldIndex < 0 ||
+        oldIndex >= day.exercises.length ||
+        newIndex < 0 ||
+        newIndex >= day.exercises.length) return;
+
+    // Erstelle eine Kopie der Übungsliste
+    final updatedExercises = List<ExerciseModel>.from(day.exercises);
+
+    // Verschiebe die Übung (Element entfernen und an neuer Position einfügen)
+    final movedExercise = updatedExercises.removeAt(oldIndex);
+    updatedExercises.insert(newIndex, movedExercise);
+
+    // Trainingstag mit den neu geordneten Übungen aktualisieren
+    final updatedDay = day.copyWith(exercises: updatedExercises);
+    
+    // Tage-Liste aktualisieren
+    final updatedDays = List<TrainingDayModel>.from(_draftPlan!.days);
+    updatedDays[dayIndex] = updatedDay;
+
+    // Plan aktualisieren mit den neu geordneten Übungen
+    _draftPlan = _draftPlan!.copyWith(days: updatedDays);
+
+    // UI aktualisieren
+    notifyListeners();
+  }
 }

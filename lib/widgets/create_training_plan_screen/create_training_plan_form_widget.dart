@@ -92,26 +92,28 @@ class _CreateTrainingPlanFormWidgetState
                   controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // Content mit Padding für Fixed Button und App Bar
+                    // Space for fixed header
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: 80),
+                    ),
+
+                    // Content with modern spacing and layout
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(24, 120, 24, 24),
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           // Trainingsplan Name
                           _buildPlanNameSection(provider),
-                          const SizedBox(height: 32),
 
                           // Trainingsfrequenz
                           _buildFrequencySection(provider, theme),
-                          const SizedBox(height: 32),
 
                           // Periodisierung
                           _buildPeriodizationSection(provider, theme),
-                          const SizedBox(height: 32),
 
                           // Trainingstage
                           _buildTrainingDaysSection(provider, theme),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 120),
                         ]),
                       ),
                     ),
@@ -146,7 +148,7 @@ class _CreateTrainingPlanFormWidgetState
 
   Widget _buildPlanNameSection(CreateTrainingPlanProvider provider) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -156,7 +158,7 @@ class _CreateTrainingPlanFormWidgetState
             _nebula.withOpacity(0.4),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: _lunar.withOpacity(0.4),
           width: 1,
@@ -169,64 +171,119 @@ class _CreateTrainingPlanFormWidgetState
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sektions-Label
-          _buildSectionLabel(
-            'Plan Name',
-            Icons.edit_outlined,
-          ),
-          const SizedBox(height: 16),
-
-          // Textfeld für Planname
-          TextFormField(
-            controller: _planNameController,
-            decoration: InputDecoration(
-              hintText: 'z.B. Ganzkörperplan, Push/Pull/Legs, ...',
-              filled: true,
-              fillColor: _lunar.withOpacity(0.6),
-              border: OutlineInputBorder(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            // Icon wie im Training Screen
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _stellar.withOpacity(0.8),
+                    _stellar.withOpacity(0.4),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _asteroid.withOpacity(0.5)),
+                border: Border.all(
+                  color: _proverCore.withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _void.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: _proverCore.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _asteroid.withOpacity(0.5)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _proverCore, width: 2),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
-              prefixIcon: Icon(
-                Icons.notes_rounded,
-                color: _stardust,
-              ),
-              hintStyle: TextStyle(
-                color: _comet,
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
+              child: Center(
+                child: Icon(
+                  Icons.edit_outlined,
+                  size: 16,
+                  color: _stardust,
+                ),
               ),
             ),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: _nova,
+            
+            const SizedBox(width: 16),
+            
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PLAN NAME',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: _nova,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Eingabefeld
+                  TextFormField(
+                    controller: _planNameController,
+                    decoration: InputDecoration(
+                      hintText: 'z.B. Ganzkörperplan, Push/Pull/Legs',
+                      filled: true,
+                      fillColor: _stellar.withOpacity(0.4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: _proverCore.withOpacity(0.6),
+                          width: 1,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      hintStyle: TextStyle(
+                        color: _comet,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: _stardust,
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Bitte gib einen Namen ein';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                  ),
+                ],
+              ),
             ),
-            textCapitalization: TextCapitalization.words,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Bitte gib einen Namen ein';
-              }
-              return null;
-            },
-            onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -234,7 +291,7 @@ class _CreateTrainingPlanFormWidgetState
   Widget _buildFrequencySection(
       CreateTrainingPlanProvider provider, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -244,7 +301,7 @@ class _CreateTrainingPlanFormWidgetState
             _nebula.withOpacity(0.4),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: _lunar.withOpacity(0.4),
           width: 1,
@@ -257,57 +314,108 @@ class _CreateTrainingPlanFormWidgetState
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sektions-Label
-          _buildSectionLabel(
-            'Trainingsfrequenz',
-            Icons.calendar_today_rounded,
-          ),
-          const SizedBox(height: 12),
-
-          // Hinweistext
-          Text(
-            'Wie oft pro Woche möchtest du trainieren?',
-            style: TextStyle(
-              fontSize: 14,
-              color: _stardust,
-              letterSpacing: 0.3,
-              fontWeight: FontWeight.w400,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            // Icon wie im Training Screen
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _stellar.withOpacity(0.8),
+                    _stellar.withOpacity(0.4),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _proverCore.withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _void.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: _proverCore.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.calendar_today_rounded,
+                  size: 16,
+                  color: _stardust,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-
-          // Elegante Frequenzauswahl
-          _buildFrequencySelector(provider, theme),
-        ],
+            
+            const SizedBox(width: 16),
+            
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TRAININGSFREQUENZ',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: _nova,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  
+                  Row(
+                    children: [
+                      Text(
+                        '${provider.frequency}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _stardust,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Trainingstage',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _comet,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  _buildFrequencySelector(provider, theme),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFrequencySelector(
       CreateTrainingPlanProvider provider, ThemeData theme) {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _lunar.withOpacity(0.4),
-            _asteroid.withOpacity(0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _asteroid.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(7, (index) {
+    return SizedBox(
+      height: 36,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 7,
+        itemBuilder: (context, index) {
           final day = index + 1;
           final isSelected = provider.frequency == day;
 
@@ -317,43 +425,64 @@ class _CreateTrainingPlanFormWidgetState
               provider.setFrequency(day);
             },
             child: Container(
-              width: 44,
-              height: 44,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [_proverCore, _proverGlow],
-                        )
-                      : null,
-                  color: isSelected ? null : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: isSelected
+              width: 36,
+              height: 36,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isSelected
                       ? [
-                          BoxShadow(
-                            color: _proverCore.withOpacity(0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
+                          _stellar.withOpacity(0.8),
+                          _stellar.withOpacity(0.4),
                         ]
-                      : null,
+                      : [
+                          _stellar.withOpacity(0.3),
+                          _stellar.withOpacity(0.1),
+                        ],
                 ),
-                child: Center(
-                  child: Text(
-                    '$day',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? _nova : _stardust,
-                    ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? _proverCore.withOpacity(0.6)
+                      : _lunar.withOpacity(0.3),
+                  width: isSelected ? 2 : 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: _void.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                        BoxShadow(
+                          color: _proverCore.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 0),
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: _void.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+              ),
+              child: Center(
+                child: Text(
+                  '$day',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected ? _stardust : _comet,
                   ),
                 ),
               ),
             ),
           );
-        }),
+        },
       ),
     );
   }
@@ -361,7 +490,7 @@ class _CreateTrainingPlanFormWidgetState
   Widget _buildPeriodizationSection(
       CreateTrainingPlanProvider provider, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -371,7 +500,7 @@ class _CreateTrainingPlanFormWidgetState
             _nebula.withOpacity(0.4),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: _lunar.withOpacity(0.4),
           width: 1,
@@ -384,308 +513,358 @@ class _CreateTrainingPlanFormWidgetState
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sektions-Label
-          _buildSectionLabel(
-            'Periodisierung',
-            Icons.cyclone_rounded,
-          ),
-          const SizedBox(height: 12),
-
-          // Hinweistext
-          Text(
-            'Verwende Mikrozyklen für fortgeschrittenes Training',
-            style: TextStyle(
-              fontSize: 14,
-              color: _stardust,
-              letterSpacing: 0.3,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Tab-Auswahl für Periodisierung (Aktiviert/Deaktiviert)
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _lunar.withOpacity(0.4),
-                  _asteroid.withOpacity(0.2),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            // Icon wie im Training Screen
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _stellar.withOpacity(0.8),
+                    _stellar.withOpacity(0.4),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _proverCore.withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _void.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: _proverCore.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 0),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _asteroid.withOpacity(0.5),
-                width: 1,
+              child: Center(
+                child: Icon(
+                  Icons.timeline_rounded,
+                  size: 16,
+                  color: _stardust,
+                ),
               ),
             ),
-            child: Row(
-              children: [
-                // Standard-Tab
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() {
-                        _activePeriodizationTab = 0;
-                        provider.setIsPeriodized(false);
-                      });
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        gradient: _activePeriodizationTab == 0
-                            ? LinearGradient(
-                                colors: [_proverCore, _proverGlow],
-                              )
-                            : null,
-                        color: _activePeriodizationTab == 0 ? null : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: _activePeriodizationTab == 0
-                            ? [
-                                BoxShadow(
-                                  color: _proverCore.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Standard',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: _activePeriodizationTab == 0
-                                ? _nova
-                                : _stardust,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Periodisiert-Tab
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() {
-                        _activePeriodizationTab = 1;
-                        provider.setIsPeriodized(true);
-                      });
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        gradient: _activePeriodizationTab == 1
-                            ? LinearGradient(
-                                colors: [_proverCore, _proverGlow],
-                              )
-                            : null,
-                        color: _activePeriodizationTab == 1 ? null : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: _activePeriodizationTab == 1
-                            ? [
-                                BoxShadow(
-                                  color: _proverCore.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Periodisiert',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: _activePeriodizationTab == 1
-                                ? _nova
-                                : _stardust,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Wenn periodisiert, zeige Wochen-Auswahl
-          if (provider.isPeriodized)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOutCubic,
-              height: provider.isPeriodized ? null : 0,
-              padding: EdgeInsets.only(top: provider.isPeriodized ? 24 : 0),
+            
+            const SizedBox(width: 16),
+            
+            // Content
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Mikrozyklus-Label
                   Text(
-                    'Anzahl Mikrozyklen',
+                    'PERIODISIERUNG',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
                       color: _nova,
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  // Kurzer Hinweistext
-                  Text(
-                    'Aus wie vielen Mikrozyklen soll dein Mesozyklus bestehen?',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _stardust,
-                      letterSpacing: 0.3,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Wochen-Auswahl als eleganter Stepper
-                  Container(
-                    height: 72,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          _lunar.withOpacity(0.6),
-                          _asteroid.withOpacity(0.3),
-                        ],
+                  const SizedBox(height: 6),
+                  
+                  Row(
+                    children: [
+                      Text(
+                        provider.isPeriodized ? 'Periodisiert' : 'Standard',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _stardust,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _asteroid.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        // "-" Button
-                        Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: provider.numberOfWeeks > 1
-                                ? () {
-                                    HapticFeedback.mediumImpact();
-                                    provider.setNumberOfWeeks(
-                                        provider.numberOfWeeks - 1);
-                                  }
-                                : null,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              child: Center(
-                                child: Icon(
-                                  Icons.remove_rounded,
-                                  color: provider.numberOfWeeks > 1
-                                      ? _nova
-                                      : _comet,
-                                  size: 24,
-                                ),
-                              ),
-                            ),
+                      if (provider.isPeriodized) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          '• ${provider.numberOfWeeks} Mikrozyklen',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _comet,
                           ),
                         ),
-
-                        // Zentrierter Wert mit gradient Hintergrund
-                        Expanded(
+                      ],
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Training Screen Style Button Row
+                  Row(
+                    children: [
+                      // Standard Button
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _activePeriodizationTab = 0;
+                              provider.setIsPeriodized(false);
+                            });
+                          },
                           child: Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                            height: 36,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [_proverCore, _proverGlow],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: _activePeriodizationTab == 0
+                                    ? [
+                                        _stellar.withOpacity(0.8),
+                                        _stellar.withOpacity(0.4),
+                                      ]
+                                    : [
+                                        _stellar.withOpacity(0.3),
+                                        _stellar.withOpacity(0.1),
+                                      ],
                               ),
                               borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _proverCore.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                              border: Border.all(
+                                color: _activePeriodizationTab == 0
+                                    ? _proverCore.withOpacity(0.6)
+                                    : _lunar.withOpacity(0.3),
+                                width: _activePeriodizationTab == 0 ? 2 : 1,
+                              ),
+                              boxShadow: _activePeriodizationTab == 0
+                                  ? [
+                                      BoxShadow(
+                                        color: _void.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                      BoxShadow(
+                                        color: _proverCore.withOpacity(0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ]
+                                  : [
+                                      BoxShadow(
+                                        color: _void.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                             ),
                             child: Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '${provider.numberOfWeeks}',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w800,
-                                      color: _nova,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    provider.numberOfWeeks == 1
-                                        ? 'Mikrozyklus'
-                                        : 'Mikrozyklen',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: _nova,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                'STANDARD',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: _activePeriodizationTab == 0 ? _stardust : _comet,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
                           ),
                         ),
-
-                        // "+" Button
-                        Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: provider.numberOfWeeks < 16
-                                ? () {
-                                    HapticFeedback.mediumImpact();
-                                    provider.setNumberOfWeeks(
-                                        provider.numberOfWeeks + 1);
-                                  }
-                                : null,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              child: Center(
-                                child: Icon(
-                                  Icons.add_rounded,
-                                  color: provider.numberOfWeeks < 16
-                                      ? _nova
-                                      : _comet,
-                                  size: 24,
+                      ),
+                      
+                      const SizedBox(width: 8),
+                      
+                      // Periodisiert Button
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _activePeriodizationTab = 1;
+                              provider.setIsPeriodized(true);
+                            });
+                          },
+                          child: Container(
+                            height: 36,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: _activePeriodizationTab == 1
+                                    ? [
+                                        _stellar.withOpacity(0.8),
+                                        _stellar.withOpacity(0.4),
+                                      ]
+                                    : [
+                                        _stellar.withOpacity(0.3),
+                                        _stellar.withOpacity(0.1),
+                                      ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _activePeriodizationTab == 1
+                                    ? _proverCore.withOpacity(0.6)
+                                    : _lunar.withOpacity(0.3),
+                                width: _activePeriodizationTab == 1 ? 2 : 1,
+                              ),
+                              boxShadow: _activePeriodizationTab == 1
+                                  ? [
+                                      BoxShadow(
+                                        color: _void.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                      BoxShadow(
+                                        color: _proverCore.withOpacity(0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ]
+                                  : [
+                                      BoxShadow(
+                                        color: _void.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                'PERIODISIERT',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: _activePeriodizationTab == 1 ? _stardust : _comet,
+                                  letterSpacing: 1,
                                 ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Mikrozyklus Stepper wenn periodisiert
+                  if (provider.isPeriodized) ...[
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        // Minus Button
+                        GestureDetector(
+                          onTap: provider.numberOfWeeks > 1
+                              ? () {
+                                  HapticFeedback.selectionClick();
+                                  provider.setNumberOfWeeks(provider.numberOfWeeks - 1);
+                                }
+                              : null,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  _stellar.withOpacity(0.6),
+                                  _stellar.withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _lunar.withOpacity(0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.remove_rounded,
+                                size: 16,
+                                color: provider.numberOfWeeks > 1 ? _stardust : _comet,
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(width: 12),
+                        
+                        // Display
+                        Expanded(
+                          child: Container(
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  _stellar.withOpacity(0.8),
+                                  _stellar.withOpacity(0.4),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _proverCore.withOpacity(0.6),
+                                width: 1,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${provider.numberOfWeeks} ${provider.numberOfWeeks == 1 ? 'Mikrozyklus' : 'Mikrozyklen'}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: _stardust,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(width: 12),
+                        
+                        // Plus Button
+                        GestureDetector(
+                          onTap: provider.numberOfWeeks < 16
+                              ? () {
+                                  HapticFeedback.selectionClick();
+                                  provider.setNumberOfWeeks(provider.numberOfWeeks + 1);
+                                }
+                              : null,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  _stellar.withOpacity(0.6),
+                                  _stellar.withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _lunar.withOpacity(0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.add_rounded,
+                                size: 16,
+                                color: provider.numberOfWeeks < 16 ? _stardust : _comet,
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -694,209 +873,174 @@ class _CreateTrainingPlanFormWidgetState
       CreateTrainingPlanProvider provider, ThemeData theme) {
     return FadeTransition(
       opacity: _dayListAnimation,
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _stellar.withOpacity(0.6),
-              _nebula.withOpacity(0.4),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _lunar.withOpacity(0.4),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _void.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Sektions-Label
-            _buildSectionLabel(
-              'Trainingstage',
-              Icons.event_rounded,
-            ),
-            const SizedBox(height: 12),
-
-            // Hinweistext
-            Text(
-              'Benenne deine Trainingstage nach deinen Vorlieben',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header wie im Training Screen
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+            child: Text(
+              'TRAININGSTAGE',
               style: TextStyle(
-                fontSize: 14,
-                color: _stardust,
-                letterSpacing: 0.3,
-                fontWeight: FontWeight.w400,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _comet,
+                letterSpacing: 1.2,
               ),
             ),
-            const SizedBox(height: 14),
-
-            // Liste der Trainingstage
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              itemCount: provider.frequency,
-              itemBuilder: (context, index) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: EdgeInsets.only(
-                    bottom: index == provider.frequency - 1 ? 0 : 16,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        _lunar.withOpacity(0.6),
-                        _asteroid.withOpacity(0.3),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _asteroid.withOpacity(0.5),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _void.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        // Tag-Nummer
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [_proverCore, _proverGlow],
+          ),
+          
+          // Liste der Trainingstage im Training Screen Stil
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: provider.frequency,
+            itemBuilder: (context, index) {
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: Duration(milliseconds: 600 + (index * 100)),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 20 * (1 - value)),
+                    child: Opacity(
+                      opacity: value,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              _stellar.withOpacity(0.6),
+                              _nebula.withOpacity(0.4),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _lunar.withOpacity(0.4),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _void.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
                             ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _proverCore.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              // Tag-Nummer im Training Screen Stil
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      _stellar.withOpacity(0.8),
+                                      _stellar.withOpacity(0.4),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _proverCore.withOpacity(0.6),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _void.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                    BoxShadow(
+                                      color: _proverCore.withOpacity(0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 0),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: _stardust,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 16),
+
+                              // Content
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    TextFormField(
+                                      initialValue: provider.dayNames.length > index
+                                          ? provider.dayNames[index]
+                                          : 'Tag ${index + 1}',
+                                      decoration: InputDecoration(
+                                        hintText: 'z.B. Oberkörper, Beine, ...',
+                                        filled: true,
+                                        fillColor: _stellar.withOpacity(0.4),
+                                        contentPadding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                            color: _proverCore.withOpacity(0.6),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        hintStyle: TextStyle(
+                                          color: _comet,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                        color: _nova,
+                                        letterSpacing: 0.5,
+                                      ),
+                                      textCapitalization: TextCapitalization.words,
+                                      onChanged: (value) => provider.setDayName(index, value),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 18,
-                                color: _nova,
-                              ),
-                            ),
-                          ),
                         ),
-                        const SizedBox(width: 20),
-
-                        // Name-Eingabefeld
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: provider.dayNames.length > index
-                                ? provider.dayNames[index]
-                                : 'Tag ${index + 1}',
-                            decoration: InputDecoration(
-                              hintText: 'z.B. Oberkörper, Beine, ...',
-                              filled: true,
-                              fillColor: _lunar.withOpacity(0.8),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: _asteroid.withOpacity(0.5),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: _asteroid.withOpacity(0.5),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: _proverCore,
-                                  width: 2,
-                                ),
-                              ),
-                              hintStyle: TextStyle(
-                                color: _comet,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: _nova,
-                            ),
-                            textCapitalization: TextCapitalization.words,
-                            onChanged: (value) =>
-                                provider.setDayName(index, value),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildSectionLabel(String text, IconData icon) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [_proverCore, _proverGlow],
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: _nova,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: _nova,
-            letterSpacing: 0.3,
-          ),
-        ),
-      ],
     );
   }
 
@@ -913,7 +1057,7 @@ class _CreateTrainingPlanFormWidgetState
         boxShadow: [
           BoxShadow(
             color: _proverCore.withOpacity(0.4),
-            blurRadius: 20,
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
@@ -924,15 +1068,8 @@ class _CreateTrainingPlanFormWidgetState
           key: const Key('next_to_exercises_button'),
           onTap: () {
             if (_formKey.currentState!.validate()) {
-              print("Formular validiert");
-              // Entwurfsplan erstellen
               provider.createDraftPlan();
-              print("Entwurfsplan erstellt: ${provider.draftPlan != null}");
-
-              // Haptisches Feedback
-              HapticFeedback.mediumImpact();
-
-              // Zum Tag-Editor navigieren, dabei den Provider-Wert weitergeben
+              HapticFeedback.lightImpact();
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -943,8 +1080,6 @@ class _CreateTrainingPlanFormWidgetState
                 ),
               );
             } else {
-              print("Validierung fehlgeschlagen");
-              // Kurzes Haptisches Feedback für Fehler
               HapticFeedback.vibrate();
             }
           },
@@ -952,7 +1087,7 @@ class _CreateTrainingPlanFormWidgetState
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Text
+              // Haupttext
               Text(
                 'WEITER ZU DEN ÜBUNGEN',
                 style: TextStyle(
@@ -963,7 +1098,7 @@ class _CreateTrainingPlanFormWidgetState
                 ),
               ),
 
-              // Icon rechts
+              // Modernes Pfeil-Icon rechts
               Positioned(
                 right: 20,
                 child: Container(
@@ -971,7 +1106,7 @@ class _CreateTrainingPlanFormWidgetState
                   height: 36,
                   decoration: BoxDecoration(
                     color: _nova.withOpacity(0.2),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.arrow_forward_rounded,

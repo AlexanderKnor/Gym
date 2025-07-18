@@ -256,16 +256,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               ),
             ),
 
-            // Dark card style
-            cardTheme: const CardTheme(
-              color: Color(0xFF1C1C1E), // Charcoal
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-              ),
-              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-
             // Dark input decoration
             inputDecorationTheme: const InputDecorationTheme(
               filled: true,

@@ -27,7 +27,14 @@ class TrainingDayTabWidget extends StatelessWidget {
 
     if (plan == null || dayIndex >= plan.days.length) {
       return const Center(
-        child: Text("Ungültiger Tag oder kein Plan verfügbar"),
+        child: Text(
+          "Ungültiger Tag oder kein Plan verfügbar",
+          style: TextStyle(
+            color: Color(0xFFFFFFFF), // Snow
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       );
     }
 
@@ -42,17 +49,17 @@ class TrainingDayTabWidget extends StatelessWidget {
             margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFF1C1C1E), // Charcoal
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  offset: const Offset(0, 1),
+                  color: const Color(0xFF000000).withOpacity(0.3),
+                  offset: const Offset(0, 2),
                   blurRadius: 8,
                 ),
               ],
               border: Border.all(
-                color: Colors.grey[200]!,
+                color: const Color(0xFF48484A).withOpacity(0.3), // Steel
                 width: 1,
               ),
             ),
@@ -61,29 +68,29 @@ class TrainingDayTabWidget extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.calendar_today_rounded,
                       size: 18,
-                      color: Colors.purple[700],
+                      color: Color(0xFFFF4500), // Orange
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Mikrozyklus ${activeWeekIndex + 1} von ${plan.numberOfWeeks}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.purple[700],
+                        color: Color(0xFFFF4500), // Orange
                         letterSpacing: -0.3,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Wähle die Woche für die Konfiguration:',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: Color(0xFFAEAEB2), // Silver
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -109,15 +116,15 @@ class TrainingDayTabWidget extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isActive
-                                ? Colors.purple[600]
-                                : Colors.grey[100],
+                                ? const Color(0xFFFF4500) // Orange
+                                : const Color(0xFF48484A), // Steel
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: isActive
                                 ? [
                                     BoxShadow(
-                                      color: Colors.purple.withOpacity(0.3),
-                                      offset: const Offset(0, 1),
-                                      blurRadius: 2,
+                                      color: const Color(0xFFFF4500).withOpacity(0.3),
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
                                     ),
                                   ]
                                 : null,
@@ -127,8 +134,9 @@ class TrainingDayTabWidget extends StatelessWidget {
                               Icon(
                                 Icons.calendar_today_rounded,
                                 size: 14,
-                                color:
-                                    isActive ? Colors.white : Colors.grey[700],
+                                color: isActive 
+                                    ? const Color(0xFFFFFFFF) // Snow
+                                    : const Color(0xFFAEAEB2), // Silver
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -139,8 +147,8 @@ class TrainingDayTabWidget extends StatelessWidget {
                                       ? FontWeight.w600
                                       : FontWeight.w500,
                                   color: isActive
-                                      ? Colors.white
-                                      : Colors.grey[800],
+                                      ? const Color(0xFFFFFFFF) // Snow
+                                      : const Color(0xFFAEAEB2), // Silver
                                 ),
                               ),
                             ],
@@ -153,33 +161,47 @@ class TrainingDayTabWidget extends StatelessWidget {
                 if (activeWeekIndex > 0) ...[
                   const SizedBox(height: 16),
                   // Verbesserte Kopier-Funktionalität
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      _showCopyWeekDialog(
-                          context, createProvider, activeWeekIndex);
-                    },
-                    icon: Icon(
-                      Icons.copy_rounded,
-                      size: 18,
-                      color: Colors.purple[700],
-                    ),
-                    label: Text(
-                      'Woche kopieren',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.purple[700],
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color(0xFFFF4500).withOpacity(0.3),
+                        width: 1,
                       ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.purple[700],
-                      side: BorderSide(color: Colors.purple[300]!),
-                      shape: RoundedRectangleBorder(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          _showCopyWeekDialog(
+                              context, createProvider, activeWeekIndex);
+                        },
                         borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.copy_rounded,
+                                size: 18,
+                                color: Color(0xFFFF4500), // Orange
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Woche kopieren',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFFFF4500), // Orange
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -207,31 +229,56 @@ class TrainingDayTabWidget extends StatelessWidget {
         Container(
           margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _showAddExerciseDialog(
-                context, isPeriodized, createProvider, progressionProvider),
-            icon: const Icon(Icons.add_rounded, size: 20),
-            label: const Text(
-              'Übung hinzufügen',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-              ),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFFFF4500), // Orange
+                Color(0xFFFF6B3D), // Orange glow
+              ],
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF4500).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _showAddExerciseDialog(
+                  context, isPeriodized, createProvider, progressionProvider),
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_rounded, 
+                      size: 20,
+                      color: Color(0xFFFFFFFF), // Snow
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Übung hinzufügen',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                        color: Color(0xFFFFFFFF), // Snow
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ],
-    );
+        ],
+      );
   }
 
   // Dialog zum Kopieren einer Woche mit verbessertem Design
@@ -248,8 +295,13 @@ class TrainingDayTabWidget extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(builder: (context, setState) {
         return Dialog(
+          backgroundColor: const Color(0xFF1C1C1E), // Charcoal
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+              width: 1,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -262,32 +314,43 @@ class TrainingDayTabWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFFFFFFFF), // Snow
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Wähle die Quell-Woche, deren Konfiguration du in Woche ${currentWeekIndex + 1} kopieren möchtest:',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
-                    color: Colors.grey[700],
+                    color: Color(0xFFAEAEB2), // Silver
                   ),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: selectedSourceWeek,
-                  hint: const Text('Quell-Woche auswählen'),
+                  hint: const Text(
+                    'Quell-Woche auswählen',
+                    style: TextStyle(
+                      color: Color(0xFF8E8E93), // Mercury
+                    ),
+                  ),
                   items: availableWeeks
                       .map((weekIndex) => DropdownMenuItem<int>(
                             value: weekIndex,
                             child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.calendar_today_rounded,
                                   size: 16,
-                                  color: Colors.purple[700],
+                                  color: Color(0xFFFF4500), // Orange
                                 ),
                                 const SizedBox(width: 8),
-                                Text('Woche ${weekIndex + 1}'),
+                                Text(
+                                  'Woche ${weekIndex + 1}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFFFFF), // Snow
+                                  ),
+                                ),
                               ],
                             ),
                           ))
@@ -298,8 +361,11 @@ class TrainingDayTabWidget extends StatelessWidget {
                     });
                   },
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFF2C2C2E), // Graphite
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -307,18 +373,20 @@ class TrainingDayTabWidget extends StatelessWidget {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.purple[700]!,
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFF4500), // Orange
                         width: 2,
                       ),
                     ),
                   ),
-                  icon: Icon(
-                    Icons.arrow_drop_down_rounded,
-                    color: Colors.purple[700],
+                  style: const TextStyle(
+                    color: Color(0xFFFFFFFF), // Snow
                   ),
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  dropdownColor: const Color(0xFF1C1C1E), // Charcoal
+                  icon: const Icon(
+                    Icons.arrow_drop_down_rounded,
+                    color: Color(0xFFFF4500), // Orange
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -329,53 +397,75 @@ class TrainingDayTabWidget extends StatelessWidget {
                       child: const Text(
                         'Abbrechen',
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: Color(0xFF8E8E93), // Mercury
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: selectedSourceWeek == null
-                          ? null
-                          : () {
-                              // Kopiere die Einstellungen
-                              provider.copyMicrocycleSettings(
-                                  selectedSourceWeek!, currentWeekIndex);
-                              Navigator.pop(context);
-                              HapticFeedback.mediumImpact();
-
-                              // Erfolgs-Snackbar
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Einstellungen aus Woche ${selectedSourceWeek! + 1} wurden kopiert',
-                                  ),
-                                  backgroundColor: Colors.green[600],
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple[700],
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.grey[300],
-                        disabledForegroundColor: Colors.grey[600],
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFFF4500), // Orange
+                            Color(0xFFFF6B3D), // Orange glow
+                          ],
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF4500).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'Kopieren',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: selectedSourceWeek == null
+                              ? null
+                              : () {
+                                  // Kopiere die Einstellungen
+                                  provider.copyMicrocycleSettings(
+                                      selectedSourceWeek!, currentWeekIndex);
+                                  Navigator.pop(context);
+                                  HapticFeedback.mediumImpact();
+
+                                  // Erfolgs-Snackbar
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Einstellungen aus Woche ${selectedSourceWeek! + 1} wurden kopiert',
+                                        style: const TextStyle(
+                                          color: Color(0xFFFFFFFF), // Snow
+                                        ),
+                                      ),
+                                      backgroundColor: const Color(0xFF34C759), // Success green
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ),
+                                  );
+                                },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            child: Text(
+                              'Kopieren',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: selectedSourceWeek == null
+                                    ? const Color(0xFF8E8E93) // Mercury
+                                    : const Color(0xFFFFFFFF), // Snow
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -398,62 +488,33 @@ class TrainingDayTabWidget extends StatelessWidget {
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
+            decoration: const BoxDecoration(
+              color: Color(0xFF1C1C1E), // Charcoal
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.fitness_center,
               size: 40,
-              color: Colors.grey[400],
+              color: Color(0xFF8E8E93), // Mercury
             ),
           ),
           const SizedBox(height: 20),
-          Text(
+          const Text(
             'Keine Übungen vorhanden',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              color: Color(0xFFFFFFFF), // Snow
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Füge deine erste Übung hinzu',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Color(0xFFAEAEB2), // Silver
               fontSize: 15,
               letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => _showAddExerciseDialog(
-              context,
-              Provider.of<CreateTrainingPlanProvider>(context, listen: false)
-                  .isPeriodized,
-              Provider.of<CreateTrainingPlanProvider>(context, listen: false),
-              Provider.of<ProgressionManagerProvider>(context, listen: false),
-            ),
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text(
-              'Übung hinzufügen',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 12,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
             ),
           ),
         ],
@@ -482,10 +543,11 @@ class TrainingDayTabWidget extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 0,
+          color: const Color(0xFF1C1C1E), // Charcoal
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: Colors.grey[200]!,
+              color: const Color(0xFF48484A).withOpacity(0.3), // Steel
               width: 1,
             ),
           ),
@@ -494,7 +556,7 @@ class TrainingDayTabWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFF1C1C1E), // Charcoal
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -507,14 +569,14 @@ class TrainingDayTabWidget extends StatelessWidget {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: const Color(0xFF2C2C2E), // Graphite
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Center(
+                          child: const Center(
                             child: Icon(
                               Icons.fitness_center,
                               size: 20,
-                              color: Colors.grey[700],
+                              color: Color(0xFFFF4500), // Orange
                             ),
                           ),
                         ),
@@ -531,14 +593,15 @@ class TrainingDayTabWidget extends StatelessWidget {
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: -0.3,
+                                  color: Color(0xFFFFFFFF), // Snow
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' / ${exercise.secondaryMuscleGroup}' : ''}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 13,
-                                  color: Colors.grey[600],
+                                  color: Color(0xFFAEAEB2), // Silver
                                   letterSpacing: -0.3,
                                 ),
                               ),
@@ -548,14 +611,15 @@ class TrainingDayTabWidget extends StatelessWidget {
 
                         // Optionen-Menü
                         PopupMenuButton<String>(
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.more_vert,
-                            color: Colors.grey[700],
+                            color: Color(0xFFAEAEB2), // Silver
                           ),
+                          color: const Color(0xFF1C1C1E), // Charcoal
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 4,
+                          elevation: 8,
                           onSelected: (value) {
                             if (value == 'edit') {
                               _showEditExerciseDialog(
@@ -575,32 +639,37 @@ class TrainingDayTabWidget extends StatelessWidget {
                           itemBuilder: (context) => [
                             PopupMenuItem<String>(
                               value: 'edit',
-                              child: Row(
+                              child: const Row(
                                 children: [
                                   Icon(
                                     Icons.edit_outlined,
                                     size: 20,
-                                    color: Colors.grey[800],
+                                    color: Color(0xFFAEAEB2), // Silver
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Text('Bearbeiten'),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Bearbeiten',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFFFFF), // Snow
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             PopupMenuItem<String>(
                               value: 'delete',
-                              child: Row(
+                              child: const Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.delete_outline,
                                     size: 20,
-                                    color: Colors.red,
+                                    color: Color(0xFFFF453A), // Error red
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Text(
+                                  SizedBox(width: 12),
+                                  Text(
                                     'Löschen',
                                     style: TextStyle(
-                                      color: Colors.red,
+                                      color: Color(0xFFFF453A), // Error red
                                     ),
                                   ),
                                 ],
@@ -616,10 +685,10 @@ class TrainingDayTabWidget extends StatelessWidget {
                       margin: const EdgeInsets.only(top: 16),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
+                        color: const Color(0xFF2C2C2E), // Graphite
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.grey[200]!,
+                          color: const Color(0xFF48484A).withOpacity(0.3), // Steel
                           width: 1,
                         ),
                       ),
@@ -637,7 +706,7 @@ class TrainingDayTabWidget extends StatelessWidget {
                           Container(
                             height: 28,
                             width: 1,
-                            color: Colors.grey[300],
+                            color: const Color(0xFF48484A), // Steel
                           ),
 
                           // Wiederholungen
@@ -651,7 +720,7 @@ class TrainingDayTabWidget extends StatelessWidget {
                           Container(
                             height: 28,
                             width: 1,
-                            color: Colors.grey[300],
+                            color: const Color(0xFF48484A), // Steel
                           ),
 
                           // RIR
@@ -676,29 +745,35 @@ class TrainingDayTabWidget extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.purple[50],
+                    color: const Color(0xFF2C2C2E), // Graphite
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(16),
                       bottomRight: Radius.circular(16),
                     ),
+                    border: Border(
+                      top: BorderSide(
+                        color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+                        width: 1,
+                      ),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.trending_up_rounded,
                         size: 18,
-                        color: Colors.purple[700],
+                        color: Color(0xFFFF4500), // Orange
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text.rich(
                           TextSpan(
                             children: [
-                              TextSpan(
+                              const TextSpan(
                                 text: 'Progressionsprofil: ',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.purple[800],
+                                  color: Color(0xFFFF4500), // Orange
                                   fontSize: 13,
                                 ),
                               ),
@@ -707,17 +782,17 @@ class TrainingDayTabWidget extends StatelessWidget {
                                     .firstWhere((p) =>
                                         p.id == exercise.progressionProfileId)
                                     .name,
-                                style: TextStyle(
-                                  color: Colors.purple[700],
+                                style: const TextStyle(
+                                  color: Color(0xFFFFFFFF), // Snow
                                   fontSize: 13,
                                 ),
                               ),
                               if (isPeriodized)
                                 TextSpan(
                                   text: ' (Woche ${activeWeekIndex + 1})',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontStyle: FontStyle.italic,
-                                    color: Colors.purple[600],
+                                    color: Color(0xFFAEAEB2), // Silver
                                     fontSize: 13,
                                   ),
                                 ),
@@ -746,14 +821,14 @@ class TrainingDayTabWidget extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: Colors.grey[700],
+              color: const Color(0xFFAEAEB2), // Silver
             ),
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                color: Colors.grey[700],
+                color: Color(0xFFAEAEB2), // Silver
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -766,6 +841,7 @@ class TrainingDayTabWidget extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.3,
+            color: Color(0xFFFFFFFF), // Snow
           ),
         ),
       ],
@@ -781,8 +857,13 @@ class TrainingDayTabWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+            width: 1,
+          ),
         ),
         child: isPeriodized
             ? MicrocycleExerciseFormWidget(
@@ -817,8 +898,13 @@ class TrainingDayTabWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+            width: 1,
+          ),
         ),
         child: isPeriodized
             ? MicrocycleExerciseFormWidget(
@@ -858,8 +944,13 @@ class TrainingDayTabWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+            width: 1,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -872,14 +963,15 @@ class TrainingDayTabWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFFFFFFFF), // Snow
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Möchtest du diese Übung wirklich löschen?',
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.grey[700],
+                  color: Color(0xFFAEAEB2), // Silver
                 ),
               ),
               const SizedBox(height: 24),
@@ -891,33 +983,46 @@ class TrainingDayTabWidget extends StatelessWidget {
                     child: const Text(
                       'Abbrechen',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Color(0xFF8E8E93), // Mercury
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      createProvider.removeExercise(index);
-                      Navigator.pop(context);
-                      HapticFeedback.mediumImpact();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF453A), // Error red
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF453A).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Löschen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          createProvider.removeExercise(index);
+                          Navigator.pop(context);
+                          HapticFeedback.mediumImpact();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            'Löschen',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFFFFFF), // Snow
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

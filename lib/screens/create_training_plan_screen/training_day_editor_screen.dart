@@ -63,10 +63,13 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
 
       // TabController-Listener für Updates der selectedDayIndex
       _tabController.addListener(() {
-        if (!_tabController.indexIsChanging) {
-          if (provider.selectedDayIndex != _tabController.index) {
-            provider.setSelectedDayIndex(_tabController.index);
-          }
+        // Sofortige Synchronisation sowohl bei Swipe als auch bei Tap
+        if (_tabController.index != provider.selectedDayIndex) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              provider.setSelectedDayIndex(_tabController.index);
+            }
+          });
         }
       });
     }
@@ -131,8 +134,13 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+            width: 1,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -145,14 +153,15 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFFFFFFFF), // Snow
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Möchtest du einen neuen Trainingstag hinzufügen?',
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.grey[700],
+                  color: Color(0xFFAEAEB2), // Silver
                 ),
               ),
               const SizedBox(height: 24),
@@ -164,32 +173,50 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                     child: const Text(
                       'Abbrechen',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Color(0xFF8E8E93), // Mercury
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _addTrainingDayWithoutNameDialog();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFF4500), // Orange
+                          Color(0xFFFF6B3D), // Orange glow
+                        ],
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF4500).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Hinzufügen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _addTrainingDayWithoutNameDialog();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            'Hinzufügen',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFFFFFF), // Snow
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -229,15 +256,57 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
 
     if (plan == null) {
       return Scaffold(
+        backgroundColor: const Color(0xFF000000), // Midnight
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Kein Trainingsplan verfügbar"),
+              const Text(
+                "Kein Trainingsplan verfügbar",
+                style: TextStyle(
+                  color: Color(0xFFFFFFFF), // Snow
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text("Zurück"),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFF4500), // Orange
+                      Color(0xFFFF6B3D), // Orange glow
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF4500).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(12),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Text(
+                        "Zurück",
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF), // Snow
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -247,47 +316,167 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
 
     // TabController aktualisieren wenn selectedDayIndex geändert wurde
     if (_tabController.index != createProvider.selectedDayIndex) {
-      _tabController.animateTo(createProvider.selectedDayIndex);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _tabController.index != createProvider.selectedDayIndex) {
+          _tabController.animateTo(createProvider.selectedDayIndex);
+        }
+      });
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF000000), // Midnight background
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          isEditMode ? '${plan.name} bearbeiten' : 'Plan erstellen',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFF000000), // Midnight
+                const Color(0xFF000000).withOpacity(0.95),
+                const Color(0xFF000000).withOpacity(0.8),
+                const Color(0xFF000000).withOpacity(0.4),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.3, 0.6, 0.85, 1.0],
+            ),
+          ),
+        ),
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+        ),
+        leading: Container(
+          margin: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E).withOpacity(0.8), // Charcoal
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF48484A).withOpacity(0.5), // Steel
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF000000).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _showExitConfirmation(context),
+              borderRadius: BorderRadius.circular(12),
+              child: const Center(
+                child: Icon(
+                  Icons.arrow_back_ios_rounded,
+                  color: Color(0xFFFFFFFF), // Snow
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ),
+        title: Container(
+          constraints: const BoxConstraints(minWidth: 200, maxWidth: 300),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF1C1C1E), // Charcoal
+                Color(0xFF000000), // Midnight
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFFF4500).withOpacity(0.3), // Orange
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF4500).withOpacity(0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)], // Orange gradient
+              ).createShader(bounds),
+              child: Text(
+                isEditMode ? '${plan.name.toUpperCase()} BEARBEITEN' : plan.name.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFFFFFFF), // Snow
+                  letterSpacing: 1.2,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ),
         centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 22),
-          onPressed: () => _showExitConfirmation(context),
-          splashRadius: 24,
-        ),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
+          preferredSize: const Size.fromHeight(80),
           child: Container(
             decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF000000).withOpacity(0.4),
+                  const Color(0xFF1C1C1E).withOpacity(0.8),
+                ],
+              ),
               border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+                bottom: BorderSide(
+                  color: const Color(0xFF48484A).withOpacity(0.3),
+                  width: 1,
+                ),
               ),
             ),
-            // Benutzerdefinierte, draggable TabBar-Implementierung
             child: _buildDraggableTabBar(plan),
           ),
         ),
         actions: [
           // Trainingstag hinzufügen Button
-          IconButton(
-            icon: const Icon(Icons.add_rounded, size: 24),
-            tooltip: 'Trainingstag hinzufügen',
-            onPressed: () => _showAddTrainingDayConfirmation(context),
-            splashRadius: 24,
+          Container(
+            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1E).withOpacity(0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF48484A).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showAddTrainingDayConfirmation(context),
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: Color(0xFFFF4500), // Orange
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
           ),
           // Status-Indikator für den Speichervorgang
           _isSaving
@@ -297,17 +486,44 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                   height: 20,
                   child: const CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.black,
+                    color: Color(0xFFFF4500), // Orange
                   ),
                 )
-              : TextButton(
-                  onPressed: () => _saveTrainingPlan(context),
-                  child: Text(
-                    'Speichern',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
+              : Container(
+                  margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFFF4500), // Orange
+                        Color(0xFFFF6B3D), // Orange glow
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF4500).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _saveTrainingPlan(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text(
+                          'SPEICHERN',
+                          style: TextStyle(
+                            color: Color(0xFFFFFFFF), // Snow
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -330,7 +546,10 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                   : const AlwaysScrollableScrollPhysics(),
               children: List.generate(
                 plan.days.length,
-                (index) => TrainingDayTabWidget(dayIndex: index),
+                (index) => Container(
+                  margin: const EdgeInsets.only(top: 150), // Account for app bar + tab bar
+                  child: TrainingDayTabWidget(dayIndex: index),
+                ),
               ),
             ),
 
@@ -345,7 +564,7 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
                   child: Container(
-                    color: Colors.black.withOpacity(0.1),
+                    color: const Color(0xFF000000).withOpacity(0.5),
                   ),
                 ),
               ),
@@ -358,28 +577,25 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
   // Benutzerdefinierte, draggable TabBar-Implementierung
   Widget _buildDraggableTabBar(TrainingPlanModel plan) {
     return Container(
-      height: 48,
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: ReorderableListView.builder(
         scrollDirection: Axis.horizontal,
         // Anpassen des Aussehens des gezogenen Elements
         proxyDecorator: (child, index, animation) {
           return Material(
-            elevation: 4.0,
-            color: Colors.white,
-            shadowColor: Colors.black.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(12),
-            // Animation für das Hochheben und Vergrößern während des Ziehens
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
+            elevation: 8.0,
+            color: const Color(0xFF1C1C1E), // Charcoal
+            shadowColor: const Color(0xFFFF4500).withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.black.withOpacity(0.2),
-                  width: 1.5,
+                  color: const Color(0xFFFF4500).withOpacity(0.6),
+                  width: 2,
                 ),
               ),
-              transformAlignment: Alignment.center,
               transform: Matrix4.identity()..scale(1.05),
               child: child,
             ),
@@ -387,20 +603,12 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
         },
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         onReorder: (oldIndex, newIndex) {
-          // Korrektur des newIndex, wie in der Dokumentation empfohlen
           if (oldIndex < newIndex) {
             newIndex -= 1;
           }
-
-          // Haptisches Feedback
           HapticFeedback.mediumImpact();
-
-          // Wirkliche Umordnung im Provider ausführen
           Provider.of<CreateTrainingPlanProvider>(context, listen: false)
               .reorderTrainingDays(oldIndex, newIndex);
-
-          // Zusätzliches setState für den Fall, dass der Provider nicht neu rendert
-          setState(() {});
         },
         itemCount: plan.days.length,
         itemBuilder: (context, index) {
@@ -414,18 +622,26 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               margin: const EdgeInsets.symmetric(horizontal: 4),
               width: 150,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E), // Charcoal
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFFF4500).withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
               child: TextField(
                 controller: _renameController,
                 focusNode: _renameFocusNode,
                 decoration: const InputDecoration(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   isDense: true,
                   border: InputBorder.none,
                 ),
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
+                  color: Color(0xFFFFFFFF), // Snow
                 ),
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
@@ -438,23 +654,19 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
           return GestureDetector(
             key: ValueKey('tab_${day.id}'),
             onTap: () {
-              // Wenn im Bearbeitungsmodus, erst beenden
               if (_editingIndex != null) {
                 _finishRenaming();
               }
-
+              // Sofortige Synchronisation
+              _tabController.animateTo(index);
               Provider.of<CreateTrainingPlanProvider>(context, listen: false)
                   .setSelectedDayIndex(index);
-              _tabController.animateTo(index);
             },
             onDoubleTap: () {
-              // Bearbeitungsmodus starten
               setState(() {
                 _editingIndex = index;
                 _renameController.text = day.name;
               });
-
-              // Kurze Verzögerung für den Fokus
               Future.delayed(const Duration(milliseconds: 50),
                   () => _renameFocusNode.requestFocus());
             },
@@ -462,12 +674,32 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
+                gradient: isSelected
+                    ? const LinearGradient(
+                        colors: [
+                          Color(0xFFFF4500), // Orange
+                          Color(0xFFFF6B3D), // Orange glow
+                        ],
+                      )
+                    : null,
                 color: isSelected
-                    ? Colors.black.withOpacity(0.05)
-                    : Colors.transparent,
+                    ? null
+                    : const Color(0xFF1C1C1E).withOpacity(0.6), // Charcoal
                 borderRadius: BorderRadius.circular(12),
-                border: isSelected
-                    ? Border.all(color: Colors.black.withOpacity(0.1))
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFFFF4500).withOpacity(0.8)
+                      : const Color(0xFF48484A).withOpacity(0.3), // Steel
+                  width: 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFFFF4500).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
                     : null,
               ),
               child: Row(
@@ -477,7 +709,9 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                   Icon(
                     Icons.drag_indicator,
                     size: 16,
-                    color: isSelected ? Colors.black : Colors.grey[500],
+                    color: isSelected
+                        ? const Color(0xFFFFFFFF) // Snow
+                        : const Color(0xFF8E8E93), // Mercury
                   ),
                   const SizedBox(width: 8),
 
@@ -485,10 +719,12 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                   Text(
                     day.name,
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? Colors.black : Colors.grey[600],
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFFFFFFFF) // Snow
+                          : const Color(0xFFAEAEB2), // Silver
+                      letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -499,20 +735,20 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                     icon: Icon(
                       Icons.more_vert,
                       size: 16,
-                      color: isSelected ? Colors.black : Colors.grey[600],
+                      color: isSelected
+                          ? const Color(0xFFFFFFFF) // Snow
+                          : const Color(0xFF8E8E93), // Mercury
                     ),
+                    color: const Color(0xFF1C1C1E), // Charcoal
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     onSelected: (value) {
                       if (value == 'rename') {
-                        // Bearbeitungsmodus starten
                         setState(() {
                           _editingIndex = index;
                           _renameController.text = day.name;
                         });
-
-                        // Kurze Verzögerung für den Fokus
                         Future.delayed(const Duration(milliseconds: 50),
                             () => _renameFocusNode.requestFocus());
                       } else if (value == 'delete') {
@@ -520,22 +756,25 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                       }
                     },
                     itemBuilder: (context) => [
-                      // Option zum Umbenennen
                       PopupMenuItem<String>(
                         value: 'rename',
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.edit_outlined,
                               size: 20,
-                              color: Colors.grey[800],
+                              color: Color(0xFFAEAEB2), // Silver
                             ),
                             const SizedBox(width: 12),
-                            const Text('Umbenennen'),
+                            const Text(
+                              'Umbenennen',
+                              style: TextStyle(
+                                color: Color(0xFFFFFFFF), // Snow
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      // Option zum Löschen (nur wenn mehr als ein Tag vorhanden)
                       if (plan.days.length > 1)
                         PopupMenuItem<String>(
                           value: 'delete',
@@ -544,13 +783,13 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                               const Icon(
                                 Icons.delete_outline,
                                 size: 20,
-                                color: Colors.red,
+                                color: Color(0xFFFF453A), // Error red
                               ),
                               const SizedBox(width: 12),
                               const Text(
                                 'Löschen',
                                 style: TextStyle(
-                                  color: Colors.red,
+                                  color: Color(0xFFFF453A), // Error red
                                 ),
                               ),
                             ],
@@ -661,8 +900,13 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+            width: 1,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -675,14 +919,15 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFFFFFFFF), // Snow
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Möchtest du den Trainingstag "$dayName" wirklich löschen? Alle Übungen dieses Tages werden ebenfalls gelöscht.',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 15,
-                  color: Colors.grey[700],
+                  color: Color(0xFFAEAEB2), // Silver
                 ),
               ),
               const SizedBox(height: 24),
@@ -694,33 +939,46 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                     child: const Text(
                       'Abbrechen',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Color(0xFF8E8E93), // Mercury
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      createProvider.removeTrainingDay(dayIndex);
-                      HapticFeedback.mediumImpact();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF453A), // Error red
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF453A).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Löschen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          createProvider.removeTrainingDay(dayIndex);
+                          HapticFeedback.mediumImpact();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            'Löschen',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFFFFFF), // Snow
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -738,8 +996,13 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+            width: 1,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -752,14 +1015,15 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFFFFFFFF), // Snow
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Möchtest du die Bearbeitung wirklich abbrechen? Alle nicht gespeicherten Änderungen gehen verloren.',
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.grey[700],
+                  color: Color(0xFFAEAEB2), // Silver
                 ),
               ),
               const SizedBox(height: 24),
@@ -771,32 +1035,45 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                     child: const Text(
                       'Weiter bearbeiten',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Color(0xFF8E8E93), // Mercury
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Dialog schließen
-                      Navigator.pop(context); // Screen verlassen
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF453A), // Error red
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF453A).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Abbrechen',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context); // Dialog schließen
+                          Navigator.pop(context); // Screen verlassen
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            'Abbrechen',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFFFFFF), // Snow
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -825,8 +1102,13 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
       showDialog(
         context: context,
         builder: (context) => Dialog(
+          backgroundColor: const Color(0xFF1C1C1E), // Charcoal
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFF48484A).withOpacity(0.3), // Steel
+              width: 1,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -839,14 +1121,15 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFFFFFFFF), // Snow
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'Möchtest du den Trainingsplan aktivieren?',
                   style: TextStyle(
                     fontSize: 15,
-                    color: Colors.grey[700],
+                    color: Color(0xFFAEAEB2), // Silver
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -861,32 +1144,50 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                       child: const Text(
                         'Nur speichern',
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: Color(0xFF8E8E93), // Mercury
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _processSave(context, true);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFFF4500), // Orange
+                            Color(0xFFFF6B3D), // Orange glow
+                          ],
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF4500).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'Aktivieren',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            _processSave(context, true);
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            child: Text(
+                              'Aktivieren',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFFFFFF), // Snow
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -947,12 +1248,19 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
         // Fehler-Feedback
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Speichern: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Fehler beim Speichern: $e',
+              style: const TextStyle(
+                color: Color(0xFFFFFFFF), // Snow
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            backgroundColor: const Color(0xFFFF453A), // Error red
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }

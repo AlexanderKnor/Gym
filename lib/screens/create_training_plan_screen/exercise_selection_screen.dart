@@ -9,10 +9,14 @@ import '../../providers/create_training_plan_screen/create_training_plan_provide
 
 class ExerciseSelectionScreen extends StatefulWidget {
   final ExerciseModel? initialExercise;
+  final int? exerciseIndex; // For training session context
+  final Function(ExerciseModel)? onExerciseUpdated; // Callback for UI updates
 
   const ExerciseSelectionScreen({
     Key? key,
     this.initialExercise,
+    this.exerciseIndex,
+    this.onExerciseUpdated,
   }) : super(key: key);
 
   @override
@@ -69,7 +73,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
     super.dispose();
   }
 
-  void _saveExercise() {
+  void _saveExercise() async {
     if (_formKey.currentState!.validate() && !_isSaving) {
       setState(() {
         _isSaving = true;
@@ -90,17 +94,52 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
         progressionProfileId: _selectedProfileId,
       );
 
-      // Check if we're in training plan creation context or training session context
+      // Check if we have a callback for training session context (dialog mode)
+      if (widget.onExerciseUpdated != null) {
+        // Training session context - use callback (this runs setState in the right widget)
+        widget.onExerciseUpdated!(exercise);
+        return; // Don't continue with navigation logic
+      }
+
+      // Training plan creation context or fallback logic
       try {
         final createProvider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-        createProvider.addExercise(exercise);
+        if (widget.initialExercise != null) {
+          // We're editing an existing exercise in training plan creation
+          final exercises = createProvider.draftPlan?.days[createProvider.selectedDayIndex].exercises ?? [];
+          final exerciseIndex = exercises.indexWhere((e) => e.id == widget.initialExercise!.id);
+          if (exerciseIndex != -1) {
+            createProvider.updateExercise(exerciseIndex, exercise);
+          } else {
+            createProvider.addExercise(exercise);
+          }
+        } else {
+          // We're adding a new exercise in training plan creation
+          createProvider.addExercise(exercise);
+        }
       } catch (e) {
         // If CreateTrainingPlanProvider is not available, fall back to training session logic
         final sessionProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
-        sessionProvider.addNewExerciseToSession(exercise);
+        
+        if (widget.initialExercise != null) {
+          // Fallback: search by ID
+          final exerciseIndex = sessionProvider.exercises.indexWhere((e) => e.id == widget.initialExercise!.id);
+          if (exerciseIndex != -1) {
+            sessionProvider.updateExerciseFullDetails(exerciseIndex, exercise);
+          } else {
+            sessionProvider.addNewExerciseToSession(exercise);
+          }
+        } else {
+          // We're adding a new exercise in training session
+          sessionProvider.addNewExerciseToSession(exercise);
+        }
       }
       
       HapticFeedback.mediumImpact();
+      
+      // Small delay to ensure provider updates are processed
+      await Future.delayed(const Duration(milliseconds: 100));
+      
       Navigator.pop(context);
     }
   }
@@ -161,19 +200,24 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
             ),
           ),
         ),
-        title: Text(
-          widget.initialExercise != null ? 'Übung bearbeiten' : 'Neue Übung',
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-            color: Color(0xFFFFFFFF),
+        title: Container(
+          constraints: const BoxConstraints(maxWidth: 200),
+          child: Text(
+            widget.initialExercise != null ? 'Übung bearbeiten' : 'Neue Übung',
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+              color: Color(0xFFFFFFFF),
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         centerTitle: true,
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+            margin: const EdgeInsets.only(right: 24, top: 8, bottom: 8),
             child: _isSaving
                 ? const SizedBox(
                     width: 20,

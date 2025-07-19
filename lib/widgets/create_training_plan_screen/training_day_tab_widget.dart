@@ -872,46 +872,12 @@ class TrainingDayTabWidget extends StatelessWidget {
     CreateTrainingPlanProvider createProvider,
     ProgressionManagerProvider progressionProvider,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
-            width: 1,
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExerciseSelectionScreen(
+          initialExercise: exercise,
         ),
-        child: isPeriodized
-            ? MicrocycleExerciseFormWidget(
-                initialExercise: exercise,
-                weekIndex: activeWeekIndex,
-                weekCount: createProvider.numberOfWeeks,
-                onSave: (updatedExercise) {
-                  // Werte für die aktuelle Woche aktualisieren
-                  createProvider.updateMicrocycle(
-                    index,
-                    activeWeekIndex,
-                    updatedExercise.numberOfSets,
-                    updatedExercise.repRangeMin,
-                    updatedExercise.repRangeMax,
-                    updatedExercise.rirRangeMin,
-                    updatedExercise.rirRangeMax,
-                    updatedExercise.progressionProfileId,
-                  );
-                  Navigator.pop(context);
-                  HapticFeedback.mediumImpact();
-                },
-              )
-            : ExerciseFormWidget(
-                initialExercise: exercise,
-                onSave: (updatedExercise) {
-                  createProvider.updateExercise(index, updatedExercise);
-                  Navigator.pop(context);
-                  HapticFeedback.mediumImpact();
-                },
-              ),
       ),
     );
   }

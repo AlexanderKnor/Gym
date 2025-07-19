@@ -13,6 +13,7 @@ import 'strength_calculator_dialog.dart';
 import '../../widgets/shared/standard_increment_wheel_widget.dart';
 import '../../widgets/shared/rest_period_wheel_widget.dart';
 import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
+import '../../screens/create_training_plan_screen/exercise_selection_screen.dart';
 
 class ExerciseTabWidget extends StatefulWidget {
   final int exerciseIndex;
@@ -128,6 +129,75 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
         }
       }
     }
+  }
+
+  void _navigateToExerciseSelection(BuildContext context, ExerciseModel exercise) {
+    final sessionProvider =
+        Provider.of<TrainingSessionProvider>(context, listen: false);
+    final progressionProvider =
+        Provider.of<ProgressionManagerProvider>(context, listen: false);
+    final adaptedExercise =
+        sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
+
+    // Store original values for change detection
+    final String? originalProfileId = adaptedExercise.progressionProfileId;
+    final int originalRepRangeMin = adaptedExercise.repRangeMin;
+    final int originalRepRangeMax = adaptedExercise.repRangeMax;
+    final int originalRirRangeMin = adaptedExercise.rirRangeMin;
+    final int originalRirRangeMax = adaptedExercise.rirRangeMax;
+
+    // Use Dialog for Training Sessions (like the old implementation)
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF000000), // Match app background
+        child: ExerciseSelectionScreen(
+          initialExercise: adaptedExercise,
+          exerciseIndex: widget.exerciseIndex,
+          onExerciseUpdated: (updatedExercise) async {
+            // This runs in the dialog context - like the old implementation
+            
+            // Update the exercise in the session
+            await sessionProvider.updateExerciseFullDetails(widget.exerciseIndex, updatedExercise);
+            
+            // Close the dialog
+            Navigator.pop(dialogContext);
+            
+            // Check if relevant settings changed
+            bool settingsChanged = originalProfileId != updatedExercise.progressionProfileId ||
+                originalRepRangeMin != updatedExercise.repRangeMin ||
+                originalRepRangeMax != updatedExercise.repRangeMax ||
+                originalRirRangeMin != updatedExercise.rirRangeMin ||
+                originalRirRangeMax != updatedExercise.rirRangeMax;
+
+            // Update UI immediately - like the old implementation
+            if (settingsChanged) {
+              setState(() {
+                _exerciseProfileId = updatedExercise.progressionProfileId;
+              });
+
+              // Recalculate progression if needed
+              if (widget.exerciseIndex == sessionProvider.currentExerciseIndex &&
+                  updatedExercise.progressionProfileId != null) {
+                
+                final activeSetId = sessionProvider.getActiveSetIdForCurrentExercise();
+                
+                sessionProvider.resetProgressionRecommendations(widget.exerciseIndex, activeSetId);
+                
+                sessionProvider.calculateProgressionForSet(
+                  widget.exerciseIndex,
+                  activeSetId,
+                  updatedExercise.progressionProfileId!,
+                  progressionProvider,
+                );
+              }
+            }
+          },
+        ),
+      ),
+    );
   }
 
   void _showExerciseEditor(BuildContext context, ExerciseModel exercise) {
@@ -923,7 +993,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () => _showExerciseEditor(context, exercise),
+                          onTap: () => _navigateToExerciseSelection(context, exercise),
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
                             height: 38,

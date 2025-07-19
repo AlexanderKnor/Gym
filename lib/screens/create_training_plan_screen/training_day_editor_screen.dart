@@ -254,62 +254,12 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     final plan = createProvider.draftPlan;
     final isEditMode = createProvider.isEditMode;
 
+    // Fallback wenn kein Plan vorhanden ist
     if (plan == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF000000), // Midnight
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Kein Trainingsplan verfügbar",
-                style: TextStyle(
-                  color: Color(0xFFFFFFFF), // Snow
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFF4500), // Orange
-                      Color(0xFFFF6B3D), // Orange glow
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF4500).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(12),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      child: Text(
-                        "Zurück",
-                        style: TextStyle(
-                          color: Color(0xFFFFFFFF), // Snow
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        backgroundColor: const Color(0xFF000000),
+        body: const Center(
+          child: CircularProgressIndicator(),
         ),
       );
     }
@@ -811,7 +761,7 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     final createProvider =
         Provider.of<CreateTrainingPlanProvider>(context, listen: false);
     final plan = createProvider.draftPlan;
-    if (plan == null || dayIndex >= plan.days.length) return;
+    if (plan == null || dayIndex >= (plan.days.length)) return;
 
     final dayName = plan.days[dayIndex].name;
     final canDelete = plan.days.length > 1;
@@ -1208,18 +1158,17 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
       _isSaving = true;
     });
 
-    try {
-      final createProvider =
-          Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-      final plansProvider =
-          Provider.of<TrainingPlansProvider>(context, listen: false);
-      final navigationProvider =
-          Provider.of<NavigationProvider>(context, listen: false);
-      final planToSave = createProvider.draftPlan!;
-      final wasAlreadyActive = planToSave.isActive;
+    // Context-abhängige Objekte VOR async-Aufrufen holen
+    final createProvider =
+        Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    final plansProvider =
+        Provider.of<TrainingPlansProvider>(context, listen: false);
+    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-      // Setze Navigation Index
-      navigationProvider.setCurrentIndex(wasAlreadyActive || activate ? 0 : 2);
+    try {
+      final planToSave = createProvider.draftPlan!;
 
       // Speichere Plan
       await plansProvider.saveTrainingPlan(planToSave, activate);
@@ -1227,17 +1176,26 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
       // Gelöschte Übungen und Trainingstage bereinigen
       await createProvider.cleanupDeletedItems();
 
-      // Provider zurücksetzen
-      createProvider.reset();
-
       // Visuelles Feedback
       HapticFeedback.mediumImpact();
 
       // Navigation
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-        (route) => false,
-      );
+      if (mounted) {
+        final targetIndex = activate ? 0 : 2;
+        
+        // Index sofort setzen
+        navigationProvider.setCurrentIndex(targetIndex);
+        
+        // Navigation mit kurzer Verzögerung
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted) {
+            navigator.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainScreen()),
+              (route) => false,
+            );
+          }
+        });
+      }
     } catch (e) {
       print('Fehler beim Speichern: $e');
       if (mounted) {
@@ -1245,8 +1203,8 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
           _isSaving = false;
         });
 
-        // Fehler-Feedback
-        ScaffoldMessenger.of(context).showSnackBar(
+        // Fehler-Feedback mit vorher geholtem ScaffoldMessenger
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(
               'Fehler beim Speichern: $e',

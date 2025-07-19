@@ -7,6 +7,7 @@ import '../../providers/progression_manager_screen/progression_manager_provider.
 import '../../models/training_plan_screen/exercise_model.dart';
 import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
 import '../../widgets/create_training_plan_screen/microcycle_exercise_form_widget.dart';
+import '../../screens/create_training_plan_screen/exercise_selection_screen.dart';
 
 class TrainingDayTabWidget extends StatelessWidget {
   final int dayIndex;
@@ -854,34 +855,10 @@ class TrainingDayTabWidget extends StatelessWidget {
     CreateTrainingPlanProvider createProvider,
     ProgressionManagerProvider progressionProvider,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
-            width: 1,
-          ),
-        ),
-        child: isPeriodized
-            ? MicrocycleExerciseFormWidget(
-                weekIndex: createProvider.activeWeekIndex,
-                weekCount: createProvider.numberOfWeeks,
-                onSave: (exercise) {
-                  createProvider.addExercise(exercise);
-                  Navigator.pop(context);
-                  HapticFeedback.mediumImpact();
-                },
-              )
-            : ExerciseFormWidget(
-                onSave: (exercise) {
-                  createProvider.addExercise(exercise);
-                  Navigator.pop(context);
-                  HapticFeedback.mediumImpact();
-                },
-              ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ExerciseSelectionScreen(),
       ),
     );
   }

@@ -218,9 +218,9 @@ class TrainingPlansScreen extends StatelessWidget {
                             plan: plan,
                             onEdit: () => _navigateToEditPlan(context, plan),
                             onDelete: () => _confirmDeletePlan(context, plansProvider, plan),
-                            onActivate: plan.isActive ? null : () async {
+                            onActivate: plan.isActive ? null : () {
                               HapticFeedback.lightImpact();
-                              await plansProvider.activateTrainingPlan(plan.id);
+                              plansProvider.activateTrainingPlan(plan.id);
                             },
                           ),
                         ),

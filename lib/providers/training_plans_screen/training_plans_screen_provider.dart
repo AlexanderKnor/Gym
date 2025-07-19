@@ -123,8 +123,12 @@ class TrainingPlansProvider extends ChangeNotifier {
 
   // Bestimmten Plan aktivieren
   Future<bool> activateTrainingPlan(String planId) async {
+    // Backup der aktuellen Liste für Rollback bei Fehlern
+    final backupPlans = List<TrainingPlanModel>.from(_trainingPlans);
+    final backupWeekIndex = _currentWeekIndex;
+
     try {
-      // Alle Pläne deaktivieren und nur den mit der angegebenen ID aktivieren
+      // Optimistische UI-Aktualisierung - sofort anwenden
       _trainingPlans = _trainingPlans
           .map((p) => p.copyWith(isActive: p.id == planId))
           .toList();
@@ -132,14 +136,22 @@ class TrainingPlansProvider extends ChangeNotifier {
       // Setze aktive Woche auf 0 (erste Woche)
       _currentWeekIndex = 0;
 
-      // Im Speicher sichern
+      // UI sofort aktualisieren für bessere UX
+      notifyListeners();
+
+      // Im Hintergrund speichern
       await _trainingPlanService.saveTrainingPlans(_trainingPlans);
       print('Trainingsplan (ID: $planId) erfolgreich aktiviert');
 
-      notifyListeners();
       return true;
     } catch (e) {
       print('Fehler beim Aktivieren des Trainingsplans: $e');
+      
+      // Bei Fehler: Rollback zur vorherigen UI
+      _trainingPlans = backupPlans;
+      _currentWeekIndex = backupWeekIndex;
+      notifyListeners();
+      
       return false;
     }
   }

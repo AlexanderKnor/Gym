@@ -297,7 +297,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'TRAININGSWOCHE',
+                    'MIKROZYKLUS',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

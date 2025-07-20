@@ -44,31 +44,31 @@
     },
     {
       "id": 7,
-      "name": "Dips",
+      "name": "Brustpresse",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Körpergewicht"
+      "equipment": "Maschine"
     },
     {
       "id": 8,
-      "name": "Liegestütze",
+      "name": "Schräge Brustpresse",
       "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter", "Rumpf"],
-      "equipment": "Körpergewicht"
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
+      "equipment": "Maschine"
     },
     {
       "id": 9,
-      "name": "Diamant Liegestütze",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": ["Brust", "Vordere Schulter"],
-      "equipment": "Körpergewicht"
+      "name": "Negative Brustpresse",
+      "primaryMuscleGroup": "Brust",
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
+      "equipment": "Maschine"
     },
     {
       "id": 10,
-      "name": "Breite Liegestütze",
+      "name": "Kurzhantel Flyes",
       "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Körpergewicht"
+      "secondaryMuscleGroups": ["Vordere Schulter"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 11,
@@ -79,10 +79,10 @@
     },
     {
       "id": 12,
-      "name": "Kurzhantel Flyes",
+      "name": "Cable Crossover",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Vordere Schulter"],
-      "equipment": "Kurzhantel"
+      "equipment": "Kabelzug"
     },
     {
       "id": 13,
@@ -93,37 +93,37 @@
     },
     {
       "id": 14,
-      "name": "Brustpresse Maschine",
+      "name": "Dips",
+      "primaryMuscleGroup": "Brust",
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 15,
+      "name": "Dips Maschine",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
       "equipment": "Maschine"
     },
     {
-      "id": 15,
-      "name": "Klimmzüge",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Körpergewicht"
-    },
-    {
       "id": 16,
-      "name": "Klimmzüge breit",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "name": "Liegestütze",
+      "primaryMuscleGroup": "Brust",
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter", "Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
       "id": 17,
-      "name": "Klimmzüge eng",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps"],
+      "name": "Diamant Liegestütze",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": ["Brust", "Vordere Schulter"],
       "equipment": "Körpergewicht"
     },
     {
       "id": 18,
-      "name": "Chin-Ups",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Rücken"],
+      "name": "Breite Liegestütze",
+      "primaryMuscleGroup": "Brust",
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
       "equipment": "Körpergewicht"
     },
     {
@@ -156,24 +156,24 @@
     },
     {
       "id": 23,
+      "name": "Kurzhantel Kreuzheben",
+      "primaryMuscleGroup": "Beinbeuger",
+      "secondaryMuscleGroups": ["Gesäß", "Rücken"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 24,
       "name": "Hex Bar Kreuzheben",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Gesäß", "Beinbeuger", "Nacken"],
       "equipment": "Hex-Stange"
     },
     {
-      "id": 24,
+      "id": 25,
       "name": "Langhantelrudern",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
       "equipment": "Langhantel"
-    },
-    {
-      "id": 25,
-      "name": "T-Bar Rudern",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
     },
     {
       "id": 26,
@@ -191,1213 +191,1213 @@
     },
     {
       "id": 28,
-      "name": "Latzug",
+      "name": "T-Bar Rudern",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kabelzug"
+      "equipment": "Maschine"
     },
     {
       "id": 29,
-      "name": "Latzug breit",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 30,
-      "name": "Latzug eng",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 31,
-      "name": "Cable Rudern",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 32,
-      "name": "Cable Rudern eng",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 33,
       "name": "Rudermaschine",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
       "equipment": "Maschine"
     },
     {
+      "id": 30,
+      "name": "Cable Rudern",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 31,
+      "name": "Cable Rudern eng",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 32,
+      "name": "High Row",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 33,
+      "name": "Low Row",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Maschine"
+    },
+    {
       "id": 34,
+      "name": "Latzug",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 35,
+      "name": "Latzug breit",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 36,
+      "name": "Latzug eng",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 37,
+      "name": "Latzug Maschine",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 38,
+      "name": "Klimmzüge",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 39,
+      "name": "Klimmzüge breit",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 40,
+      "name": "Klimmzüge eng",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 41,
+      "name": "Chin-Ups",
+      "primaryMuscleGroup": "Bizeps",
+      "secondaryMuscleGroups": ["Rücken"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 42,
+      "name": "Assisted Pull-Up Maschine",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 43,
       "name": "Hyperextensions",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Gesäß"],
       "equipment": "Maschine"
     },
     {
-      "id": 35,
-      "name": "Reverse Flyes",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": ["Nacken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 36,
-      "name": "Face Pulls",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": ["Nacken"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 37,
-      "name": "Kniebeugen",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 38,
-      "name": "Frontkniebeugen",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 39,
-      "name": "Overhead Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf", "Schultern"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 40,
-      "name": "Goblet Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 41,
-      "name": "Sumo Squats",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Quadrizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 42,
-      "name": "Jump Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 43,
-      "name": "Pistol Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
       "id": 44,
-      "name": "Beinpresse",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 45,
-      "name": "Hackenschmidt Kniebeugen",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 46,
-      "name": "Ausfallschritte",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 47,
-      "name": "Ausfallschritte vorwärts",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 48,
-      "name": "Ausfallschritte rückwärts",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 49,
-      "name": "Seitliche Ausfallschritte",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Quadrizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 50,
-      "name": "Walking Lunges",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 51,
-      "name": "Bulgarian Split Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 52,
-      "name": "Step-Ups",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 53,
-      "name": "Beinstrecker",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 54,
-      "name": "Sissy Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 55,
-      "name": "Wall Sits",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 56,
-      "name": "Beinbeuger liegend",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 57,
-      "name": "Beinbeuger sitzend",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 58,
-      "name": "Beinbeuger stehend",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 59,
       "name": "Good Mornings",
       "primaryMuscleGroup": "Beinbeuger",
       "secondaryMuscleGroups": ["Gesäß", "Rücken"],
       "equipment": "Langhantel"
     },
     {
-      "id": 60,
-      "name": "Kurzhantel Kreuzheben",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Gesäß", "Rücken"],
+      "id": 45,
+      "name": "Kniebeugen",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
+      "equipment": "Langhantel"
+    },
+    {
+      "id": 46,
+      "name": "Frontkniebeugen",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
+      "equipment": "Langhantel"
+    },
+    {
+      "id": 47,
+      "name": "Goblet Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
       "equipment": "Kurzhantel"
     },
     {
+      "id": 48,
+      "name": "Sumo Squats",
+      "primaryMuscleGroup": "Gesäß",
+      "secondaryMuscleGroups": ["Quadrizeps"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 49,
+      "name": "Hack Squat",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 50,
+      "name": "Beinpresse",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 51,
+      "name": "Beinpresse 45°",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 52,
+      "name": "Beinstrecker",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 53,
+      "name": "Ausfallschritte",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 54,
+      "name": "Ausfallschritte vorwärts",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Langhantel"
+    },
+    {
+      "id": 55,
+      "name": "Ausfallschritte rückwärts",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 56,
+      "name": "Seitliche Ausfallschritte",
+      "primaryMuscleGroup": "Gesäß",
+      "secondaryMuscleGroups": ["Quadrizeps"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 57,
+      "name": "Walking Lunges",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 58,
+      "name": "Bulgarian Split Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 59,
+      "name": "Step-Ups",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 60,
+      "name": "Jump Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Waden"],
+      "equipment": "Körpergewicht"
+    },
+    {
       "id": 61,
+      "name": "Pistol Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 62,
+      "name": "Sissy Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 63,
+      "name": "Wall Sits",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 64,
+      "name": "Beinbeuger liegend",
+      "primaryMuscleGroup": "Beinbeuger",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 65,
+      "name": "Beinbeuger sitzend",
+      "primaryMuscleGroup": "Beinbeuger",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 66,
+      "name": "Beinbeuger stehend",
+      "primaryMuscleGroup": "Beinbeuger",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 67,
       "name": "Single Leg Deadlifts",
       "primaryMuscleGroup": "Beinbeuger",
       "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 62,
+      "id": 68,
       "name": "Nordic Curls",
       "primaryMuscleGroup": "Beinbeuger",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 63,
+      "id": 69,
       "name": "Hip Thrusts",
       "primaryMuscleGroup": "Gesäß",
       "secondaryMuscleGroups": ["Beinbeuger"],
       "equipment": "Langhantel"
     },
     {
-      "id": 64,
+      "id": 70,
       "name": "Glute Bridges",
       "primaryMuscleGroup": "Gesäß",
       "secondaryMuscleGroups": ["Beinbeuger"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 65,
+      "id": 71,
       "name": "Single Leg Glute Bridges",
       "primaryMuscleGroup": "Gesäß",
       "secondaryMuscleGroups": ["Beinbeuger", "Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 66,
-      "name": "Clamshells",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 67,
-      "name": "Fire Hydrants",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 68,
+      "id": 72,
       "name": "Cable Kickbacks",
       "primaryMuscleGroup": "Gesäß",
       "secondaryMuscleGroups": [],
       "equipment": "Kabelzug"
     },
     {
-      "id": 69,
+      "id": 73,
       "name": "Abduktor Maschine",
       "primaryMuscleGroup": "Gesäß",
       "secondaryMuscleGroups": [],
       "equipment": "Maschine"
     },
     {
-      "id": 70,
+      "id": 74,
       "name": "Adduktor Maschine",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": [],
       "equipment": "Maschine"
     },
     {
-      "id": 71,
+      "id": 75,
+      "name": "Clamshells",
+      "primaryMuscleGroup": "Gesäß",
+      "secondaryMuscleGroups": [],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 76,
+      "name": "Fire Hydrants",
+      "primaryMuscleGroup": "Gesäß",
+      "secondaryMuscleGroups": ["Rumpf"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 77,
       "name": "Wadenheben stehend",
       "primaryMuscleGroup": "Waden",
       "secondaryMuscleGroups": [],
       "equipment": "Maschine"
     },
     {
-      "id": 72,
+      "id": 78,
       "name": "Wadenheben sitzend",
       "primaryMuscleGroup": "Waden",
       "secondaryMuscleGroups": [],
       "equipment": "Maschine"
     },
     {
-      "id": 73,
-      "name": "Donkey Calf Raises",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 74,
+      "id": 79,
       "name": "Wadenheben mit Kurzhanteln",
       "primaryMuscleGroup": "Waden",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 75,
+      "id": 80,
       "name": "Single Leg Calf Raises",
       "primaryMuscleGroup": "Waden",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 76,
+      "id": 81,
+      "name": "Donkey Calf Raises",
+      "primaryMuscleGroup": "Waden",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 82,
       "name": "Schulterdrücken",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 77,
+      "id": 83,
       "name": "Schulterdrücken vor dem Kopf",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 78,
+      "id": 84,
       "name": "Schulterdrücken hinter dem Kopf",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 79,
+      "id": 85,
       "name": "Kurzhantel Schulterdrücken",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 80,
+      "id": 86,
       "name": "Arnold Press",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 81,
-      "name": "Pike Push-Ups",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 82,
-      "name": "Handstand Push-Ups",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 83,
+      "id": 87,
       "name": "Schulterdrücken Maschine",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Maschine"
     },
     {
-      "id": 84,
+      "id": 88,
+      "name": "Pike Push-Ups",
+      "primaryMuscleGroup": "Schultern",
+      "secondaryMuscleGroups": ["Trizeps"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 89,
+      "name": "Handstand Push-Ups",
+      "primaryMuscleGroup": "Schultern",
+      "secondaryMuscleGroups": ["Trizeps", "Rumpf"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 90,
       "name": "Seitheben",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 85,
+      "id": 91,
       "name": "Seitheben am Kabel",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": [],
       "equipment": "Kabelzug"
     },
     {
-      "id": 86,
+      "id": 92,
+      "name": "Seitheben Maschine",
+      "primaryMuscleGroup": "Schultern",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 93,
       "name": "Frontheben",
       "primaryMuscleGroup": "Vordere Schulter",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 87,
+      "id": 94,
       "name": "Frontheben am Kabel",
       "primaryMuscleGroup": "Vordere Schulter",
       "secondaryMuscleGroups": [],
       "equipment": "Kabelzug"
     },
     {
-      "id": 88,
+      "id": 95,
       "name": "Frontheben mit Langhantel",
       "primaryMuscleGroup": "Vordere Schulter",
       "secondaryMuscleGroups": [],
       "equipment": "Langhantel"
     },
     {
-      "id": 89,
+      "id": 96,
       "name": "Vorgebeugtes Seitheben",
       "primaryMuscleGroup": "Hintere Schulter",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 90,
+      "id": 97,
+      "name": "Reverse Flyes",
+      "primaryMuscleGroup": "Hintere Schulter",
+      "secondaryMuscleGroups": ["Nacken"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 98,
       "name": "Reverse Pec Deck",
       "primaryMuscleGroup": "Hintere Schulter",
       "secondaryMuscleGroups": ["Nacken"],
       "equipment": "Maschine"
     },
     {
-      "id": 91,
+      "id": 99,
       "name": "Cable Reverse Flyes",
       "primaryMuscleGroup": "Hintere Schulter",
       "secondaryMuscleGroups": ["Nacken"],
       "equipment": "Kabelzug"
     },
     {
-      "id": 92,
-      "name": "High Pulls",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": ["Hintere Schulter"],
-      "equipment": "Langhantel"
+      "id": 100,
+      "name": "Face Pulls",
+      "primaryMuscleGroup": "Hintere Schulter",
+      "secondaryMuscleGroups": ["Nacken"],
+      "equipment": "Kabelzug"
     },
     {
-      "id": 93,
+      "id": 101,
       "name": "Upright Rows",
       "primaryMuscleGroup": "Nacken",
       "secondaryMuscleGroups": ["Schultern"],
       "equipment": "Langhantel"
     },
     {
-      "id": 94,
+      "id": 102,
       "name": "Kurzhantel Upright Rows",
       "primaryMuscleGroup": "Nacken",
       "secondaryMuscleGroups": ["Schultern"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 95,
+      "id": 103,
+      "name": "Cable Upright Rows",
+      "primaryMuscleGroup": "Nacken",
+      "secondaryMuscleGroups": ["Schultern"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 104,
       "name": "Shrugs",
       "primaryMuscleGroup": "Nacken",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 96,
+      "id": 105,
       "name": "Langhantel Shrugs",
       "primaryMuscleGroup": "Nacken",
       "secondaryMuscleGroups": [],
       "equipment": "Langhantel"
     },
     {
-      "id": 97,
+      "id": 106,
       "name": "Cable Shrugs",
       "primaryMuscleGroup": "Nacken",
       "secondaryMuscleGroups": [],
       "equipment": "Kabelzug"
     },
     {
-      "id": 98,
+      "id": 107,
       "name": "Bizeps Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 99,
+      "id": 108,
       "name": "Langhantel Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Langhantel"
     },
     {
-      "id": 100,
+      "id": 109,
       "name": "SZ-Stange Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "SZ-Stange"
     },
     {
-      "id": 101,
+      "id": 110,
       "name": "Hammer Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 102,
+      "id": 111,
       "name": "Konzentrations Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 103,
+      "id": 112,
       "name": "Preacher Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "SZ-Stange"
     },
     {
-      "id": 104,
+      "id": 113,
+      "name": "Preacher Curls Maschine",
+      "primaryMuscleGroup": "Bizeps",
+      "secondaryMuscleGroups": ["Unterarme"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 114,
       "name": "Cable Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kabelzug"
     },
     {
-      "id": 105,
+      "id": 115,
       "name": "Cable Hammer Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kabelzug"
     },
     {
-      "id": 106,
+      "id": 116,
       "name": "21s Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Langhantel"
     },
     {
-      "id": 107,
+      "id": 117,
       "name": "Zottman Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 108,
+      "id": 118,
       "name": "Incline Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 109,
+      "id": 119,
       "name": "Spider Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 110,
+      "id": 120,
       "name": "Drag Curls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Langhantel"
     },
     {
-      "id": 111,
-      "name": "Trizeps Drücken",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
+      "id": 121,
+      "name": "Bizeps Curl Maschine",
+      "primaryMuscleGroup": "Bizeps",
+      "secondaryMuscleGroups": ["Unterarme"],
+      "equipment": "Maschine"
     },
     {
-      "id": 112,
-      "name": "Trizeps Dips",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 113,
-      "name": "French Press",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "SZ-Stange"
-    },
-    {
-      "id": 114,
-      "name": "Skull Crushers",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 115,
-      "name": "Trizepsdrücken am Kabel",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 116,
-      "name": "Overhead Cable Extension",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 117,
+      "id": 122,
       "name": "Close Grip Bench Press",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": ["Brust"],
       "equipment": "Langhantel"
     },
     {
-      "id": 118,
-      "name": "Trizeps Kickbacks",
+      "id": 123,
+      "name": "Trizeps Drücken",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 119,
+      "id": 124,
       "name": "Overhead Extension",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 120,
+      "id": 125,
+      "name": "French Press",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "SZ-Stange"
+    },
+    {
+      "id": 126,
+      "name": "Skull Crushers",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Langhantel"
+    },
+    {
+      "id": 127,
+      "name": "Trizeps Kickbacks",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 128,
+      "name": "Trizepsdrücken am Kabel",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 129,
+      "name": "Cable Tricep Pushdown V-Bar",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 130,
+      "name": "Cable Tricep Pushdown Rope",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 131,
+      "name": "Overhead Cable Extension",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 132,
+      "name": "Trizeps Dips",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 133,
+      "name": "Trizeps Extension Maschine",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 134,
       "name": "Tate Press",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 121,
+      "id": 135,
       "name": "JM Press",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": [],
       "equipment": "Langhantel"
     },
     {
-      "id": 122,
-      "name": "Plank",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 123,
-      "name": "Side Plank",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 124,
-      "name": "Plank Up-Downs",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch", "Trizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 125,
-      "name": "Plank Jacks",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 126,
-      "name": "Dead Bug",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 127,
-      "name": "Bird Dog",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 128,
-      "name": "Pallof Press",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 129,
-      "name": "Wood Chops",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 130,
-      "name": "Farmers Walk",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": ["Nacken", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 131,
-      "name": "Suitcase Carry",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 132,
-      "name": "Turkish Get-Ups",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Rücken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 133,
+      "id": 136,
       "name": "Crunches",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 134,
+      "id": 137,
       "name": "Sit-Ups",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 135,
+      "id": 138,
       "name": "Bicycle Crunches",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 136,
+      "id": 139,
       "name": "Russian Twists",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 137,
+      "id": 140,
       "name": "Mountain Climbers",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 138,
+      "id": 141,
       "name": "Leg Raises",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 139,
+      "id": 142,
       "name": "Hanging Leg Raises",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Unterarme"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 140,
+      "id": 143,
       "name": "Knee Raises",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 141,
+      "id": 144,
       "name": "Reverse Crunches",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 142,
+      "id": 145,
       "name": "V-Ups",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Rumpf"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 143,
+      "id": 146,
       "name": "Flutter Kicks",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 144,
+      "id": 147,
       "name": "Scissor Kicks",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 145,
+      "id": 148,
       "name": "Ab Wheel Rollouts",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": ["Rumpf"],
       "equipment": "Maschine"
     },
     {
-      "id": 146,
+      "id": 149,
       "name": "Cable Crunches",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
       "equipment": "Kabelzug"
     },
     {
-      "id": 147,
+      "id": 150,
+      "name": "Crunch Maschine",
+      "primaryMuscleGroup": "Bauch",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 151,
+      "name": "Captain's Chair",
+      "primaryMuscleGroup": "Bauch",
+      "secondaryMuscleGroups": [],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 152,
+      "name": "Roman Chair",
+      "primaryMuscleGroup": "Bauch",
+      "secondaryMuscleGroups": ["Rumpf"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 153,
+      "name": "Torso Rotation Maschine",
+      "primaryMuscleGroup": "Bauch",
+      "secondaryMuscleGroups": ["Rumpf"],
+      "equipment": "Maschine"
+    },
+    {
+      "id": 154,
+      "name": "Plank",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 155,
+      "name": "Side Plank",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 156,
+      "name": "Plank Up-Downs",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch", "Trizeps"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 157,
+      "name": "Plank Jacks",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 158,
+      "name": "Dead Bug",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 159,
+      "name": "Bird Dog",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Gesäß"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 160,
+      "name": "Pallof Press",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 161,
+      "name": "Wood Chops",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 162,
+      "name": "Cable Woodchops hoch zu tief",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 163,
+      "name": "Cable Woodchops tief zu hoch",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Bauch"],
+      "equipment": "Kabelzug"
+    },
+    {
+      "id": 164,
+      "name": "Farmers Walk",
+      "primaryMuscleGroup": "Unterarme",
+      "secondaryMuscleGroups": ["Nacken", "Rumpf"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 165,
+      "name": "Suitcase Carry",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Unterarme"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 166,
+      "name": "Turkish Get-Ups",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Schultern", "Rücken"],
+      "equipment": "Kurzhantel"
+    },
+    {
+      "id": 167,
       "name": "Wrist Curls",
       "primaryMuscleGroup": "Unterarme",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 148,
+      "id": 168,
       "name": "Reverse Wrist Curls",
       "primaryMuscleGroup": "Unterarme",
       "secondaryMuscleGroups": [],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 149,
-      "name": "Wrist Roller",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 150,
-      "name": "Grip Crushers",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 151,
-      "name": "Plate Pinches",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 152,
-      "name": "Burpees",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Brust", "Schultern", "Quadrizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 153,
-      "name": "Thrusters",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Quadrizeps", "Trizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 154,
-      "name": "Man Makers",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Brust", "Schultern", "Rücken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 155,
+      "id": 169,
       "name": "Clean and Press",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Rücken", "Quadrizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 156,
+      "id": 170,
       "name": "Clean and Jerk",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Rücken", "Quadrizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 157,
+      "id": 171,
       "name": "Snatch",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Rücken", "Quadrizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 158,
+      "id": 172,
       "name": "Power Clean",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Schultern", "Quadrizeps"],
       "equipment": "Langhantel"
     },
     {
-      "id": 159,
+      "id": 173,
       "name": "High Pull",
       "primaryMuscleGroup": "Nacken",
       "secondaryMuscleGroups": ["Rücken", "Schultern"],
       "equipment": "Langhantel"
     },
     {
-      "id": 160,
-      "name": "Kettlebell Swings",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Beinbeuger", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 161,
-      "name": "Kettlebell Goblet Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 162,
-      "name": "Kettlebell Snatches",
+      "id": 174,
+      "name": "Thrusters",
       "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Rumpf"],
+      "secondaryMuscleGroups": ["Quadrizeps", "Trizeps"],
       "equipment": "Kurzhantel"
     },
     {
-      "id": 163,
-      "name": "Kettlebell Clean and Press",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 164,
-      "name": "Kettlebell Turkish Get-Ups",
+      "id": 175,
+      "name": "Burpees",
       "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Rücken"],
-      "equipment": "Kurzhantel"
+      "secondaryMuscleGroups": ["Brust", "Schultern", "Quadrizeps"],
+      "equipment": "Körpergewicht"
     },
     {
-      "id": 165,
-      "name": "Battle Ropes",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Unterarme"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 166,
+      "id": 176,
       "name": "Box Jumps",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": ["Gesäß", "Waden"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 167,
-      "name": "Medicine Ball Slams",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Bauch"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 168,
-      "name": "Medicine Ball Throws",
-      "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Schultern", "Rumpf"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 169,
-      "name": "Sled Push",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 170,
-      "name": "Sled Pull",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Beinbeuger", "Bizeps"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 171,
-      "name": "Tire Flips",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Gesäß", "Quadrizeps"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 172,
-      "name": "Rope Climbs",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Unterarme"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 173,
-      "name": "Bear Crawls",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Quadrizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 174,
-      "name": "Crab Walks",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 175,
-      "name": "Duck Walks",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 176,
-      "name": "Lateral Bounds",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Quadrizeps", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
       "id": 177,
-      "name": "Single Leg Bounds",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 178,
       "name": "Broad Jumps",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": ["Gesäß", "Waden"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 179,
+      "id": 178,
       "name": "Vertical Jumps",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": ["Gesäß", "Waden"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 180,
+      "id": 179,
       "name": "Split Jumps",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": ["Gesäß"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 181,
+      "id": 180,
       "name": "Tuck Jumps",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": ["Bauch", "Waden"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 182,
-      "name": "Star Jumps",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Schultern", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 183,
+      "id": 181,
       "name": "Jumping Jacks",
       "primaryMuscleGroup": "Waden",
       "secondaryMuscleGroups": ["Schultern"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 184,
+      "id": 182,
       "name": "High Knees",
       "primaryMuscleGroup": "Quadrizeps",
       "secondaryMuscleGroups": ["Waden"],
       "equipment": "Körpergewicht"
     },
     {
-      "id": 185,
+      "id": 183,
       "name": "Butt Kicks",
       "primaryMuscleGroup": "Beinbeuger",
       "secondaryMuscleGroups": ["Waden"],
       "equipment": "Körpergewicht"
     },
     {
+      "id": 184,
+      "name": "Bear Crawls",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Schultern", "Quadrizeps"],
+      "equipment": "Körpergewicht"
+    },
+    {
+      "id": 185,
+      "name": "Crab Walks",
+      "primaryMuscleGroup": "Trizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
+      "equipment": "Körpergewicht"
+    },
+    {
       "id": 186,
-      "name": "Skipping",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": ["Quadrizeps"],
+      "name": "Duck Walks",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
       "equipment": "Körpergewicht"
     },
     {
       "id": 187,
-      "name": "Side Shuffles",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Quadrizeps"],
-      "equipment": "Körpergewicht"
+      "name": "Man Makers",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Brust", "Schultern", "Rücken"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 188,
-      "name": "Kaarioka",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
+      "name": "Battle Ropes",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Schultern", "Unterarme"],
+      "equipment": "Maschine"
     },
     {
       "id": 189,
-      "name": "Sprint Intervals",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Beinbeuger", "Waden"],
-      "equipment": "Körpergewicht"
+      "name": "Kettlebell Swings",
+      "primaryMuscleGroup": "Gesäß",
+      "secondaryMuscleGroups": ["Beinbeuger", "Rumpf"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 190,
-      "name": "Hill Sprints",
+      "name": "Kettlebell Goblet Squats",
       "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 191,
-      "name": "Stair Climbing",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
+      "name": "Kettlebell Snatches",
+      "primaryMuscleGroup": "Schultern",
+      "secondaryMuscleGroups": ["Rücken", "Rumpf"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 192,
-      "name": "Wall Ball Shots",
+      "name": "Kettlebell Clean and Press",
       "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Quadrizeps", "Rumpf"],
-      "equipment": "Maschine"
+      "secondaryMuscleGroups": ["Rücken", "Rumpf"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 193,
-      "name": "Double Unders",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Maschine"
+      "name": "Kettlebell Turkish Get-Ups",
+      "primaryMuscleGroup": "Rumpf",
+      "secondaryMuscleGroups": ["Schultern", "Rücken"],
+      "equipment": "Kurzhantel"
     },
     {
       "id": 194,
-      "name": "Single Unders",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Maschine"
+      "name": "Overhead Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf", "Schultern"],
+      "equipment": "Langhantel"
     },
     {
       "id": 195,
-      "name": "Rope Jumping",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": ["Unterarme"],
+      "name": "Smith Machine Squats",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
       "equipment": "Maschine"
     },
     {
       "id": 196,
-      "name": "Rowing Machine",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Biceps", "Quadrizeps"],
+      "name": "Smith Machine Bankdrücken",
+      "primaryMuscleGroup": "Brust",
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
       "equipment": "Maschine"
     },
     {
       "id": 197,
-      "name": "Assault Bike",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Schultern", "Rumpf"],
+      "name": "Smith Machine Schrägbankdrücken",
+      "primaryMuscleGroup": "Brust",
+      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
       "equipment": "Maschine"
     },
     {
       "id": 198,
-      "name": "Ski Erg",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Schultern", "Rumpf"],
+      "name": "Smith Machine Ausfallschritte",
+      "primaryMuscleGroup": "Quadrizeps",
+      "secondaryMuscleGroups": ["Gesäß"],
       "equipment": "Maschine"
     },
     {
       "id": 199,
-      "name": "Elliptical",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Beinbeuger", "Gesäß"],
+      "name": "Smith Machine Kreuzheben",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Gesäß", "Beinbeuger"],
       "equipment": "Maschine"
     },
     {
       "id": 200,
-      "name": "Laufband",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Beinbeuger", "Waden"],
+      "name": "Smith Machine Schulterdrücken",
+      "primaryMuscleGroup": "Schultern",
+      "secondaryMuscleGroups": ["Trizeps"],
       "equipment": "Maschine"
     }
   ]

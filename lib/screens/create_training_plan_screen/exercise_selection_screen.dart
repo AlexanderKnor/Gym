@@ -1,16 +1,17 @@
-// lib/screens/create_training_plan_screen/exercise_selection_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/training_plan_screen/exercise_model.dart';
+import '../../models/exercise_database/predefined_exercise_model.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
+import 'exercise_database_selection_screen.dart';
 
 class ExerciseSelectionScreen extends StatefulWidget {
   final ExerciseModel? initialExercise;
-  final int? exerciseIndex; // For training session context
-  final Function(ExerciseModel)? onExerciseUpdated; // Callback for UI updates
+  final int? exerciseIndex;
+  final Function(ExerciseModel)? onExerciseUpdated;
 
   const ExerciseSelectionScreen({
     Key? key,
@@ -24,11 +25,102 @@ class ExerciseSelectionScreen extends StatefulWidget {
 }
 
 class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
-  final _formKey = GlobalKey<FormState>();
-  
-  late TextEditingController _nameController;
-  late TextEditingController _primaryMuscleController;
-  late TextEditingController _secondaryMuscleController;
+  @override
+  void initState() {
+    super.initState();
+    
+    // If creating new exercise, immediately redirect to database selection
+    if (widget.initialExercise == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ExerciseDatabaseSelectionScreen(
+              onExerciseSelected: (PredefinedExercise predefinedExercise) {
+                // Create exercise model from selected predefined exercise
+                final exercise = ExerciseModel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: predefinedExercise.name,
+                  primaryMuscleGroup: predefinedExercise.primaryMuscleGroup,
+                  secondaryMuscleGroup: predefinedExercise.secondaryMuscleGroups.join(', '),
+                  numberOfSets: 3,
+                  repRangeMin: 8,
+                  repRangeMax: 12,
+                  rirRangeMin: 1,
+                  rirRangeMax: 3,
+                  standardIncrease: 2.5,
+                  restPeriodSeconds: 90,
+                  progressionProfileId: null,
+                );
+                
+                // Navigate to configuration screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExerciseConfigurationScreen(
+                      exercise: exercise,
+                      isNewExercise: true,
+                      onExerciseSaved: widget.onExerciseUpdated,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      });
+    } else {
+      // If editing existing exercise, go directly to configuration
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ExerciseConfigurationScreen(
+              exercise: widget.initialExercise!,
+              isNewExercise: false,
+              onExerciseSaved: widget.onExerciseUpdated,
+            ),
+          ),
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Show loading while redirecting
+    return Scaffold(
+      backgroundColor: const Color(0xFF000000),
+      body: Center(
+        child: CircularProgressIndicator(
+          color: const Color(0xFFFF4500),
+        ),
+      ),
+    );
+  }
+}
+
+// New configuration screen for exercise parameters
+class ExerciseConfigurationScreen extends StatefulWidget {
+  final ExerciseModel exercise;
+  final bool isNewExercise;
+  final Function(ExerciseModel)? onExerciseSaved;
+
+  const ExerciseConfigurationScreen({
+    Key? key,
+    required this.exercise,
+    required this.isNewExercise,
+    this.onExerciseSaved,
+  }) : super(key: key);
+
+  @override
+  State<ExerciseConfigurationScreen> createState() => _ExerciseConfigurationScreenState();
+}
+
+class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   
   late int _numberOfSets;
   late int _repRangeMin;
@@ -37,53 +129,64 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
   late int _rirRangeMax;
   late double _standardIncrease;
   late int _restPeriodSeconds;
-  
   String? _selectedProfileId;
+  
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     
-    _nameController = TextEditingController(
-      text: widget.initialExercise?.name ?? '',
-    );
-    _primaryMuscleController = TextEditingController(
-      text: widget.initialExercise?.primaryMuscleGroup ?? '',
-    );
-    _secondaryMuscleController = TextEditingController(
-      text: widget.initialExercise?.secondaryMuscleGroup ?? '',
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
     );
     
-    _numberOfSets = widget.initialExercise?.numberOfSets ?? 3;
-    _repRangeMin = widget.initialExercise?.repRangeMin ?? 8;
-    _repRangeMax = widget.initialExercise?.repRangeMax ?? 12;
-    _rirRangeMin = widget.initialExercise?.rirRangeMin ?? 1;
-    _rirRangeMax = widget.initialExercise?.rirRangeMax ?? 3;
-    _standardIncrease = widget.initialExercise?.standardIncrease ?? 2.5;
-    _restPeriodSeconds = widget.initialExercise?.restPeriodSeconds ?? 90;
-    _selectedProfileId = widget.initialExercise?.progressionProfileId;
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _animationController.forward();
+    
+    _numberOfSets = widget.exercise.numberOfSets;
+    _repRangeMin = widget.exercise.repRangeMin;
+    _repRangeMax = widget.exercise.repRangeMax;
+    _rirRangeMin = widget.exercise.rirRangeMin;
+    _rirRangeMax = widget.exercise.rirRangeMax;
+    _standardIncrease = widget.exercise.standardIncrease;
+    _restPeriodSeconds = widget.exercise.restPeriodSeconds;
+    _selectedProfileId = widget.exercise.progressionProfileId;
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _primaryMuscleController.dispose();
-    _secondaryMuscleController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   void _saveExercise() async {
-    if (_formKey.currentState!.validate() && !_isSaving) {
+    if (!_isSaving) {
       setState(() {
         _isSaving = true;
       });
 
       final exercise = ExerciseModel(
-        id: widget.initialExercise?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text,
-        primaryMuscleGroup: _primaryMuscleController.text,
-        secondaryMuscleGroup: _secondaryMuscleController.text,
+        id: widget.exercise.id,
+        name: widget.exercise.name,
+        primaryMuscleGroup: widget.exercise.primaryMuscleGroup,
+        secondaryMuscleGroup: widget.exercise.secondaryMuscleGroup,
         numberOfSets: _numberOfSets,
         repRangeMin: _repRangeMin,
         repRangeMax: _repRangeMax,
@@ -94,53 +197,39 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
         progressionProfileId: _selectedProfileId,
       );
 
-      // Check if we have a callback for training session context (dialog mode)
-      if (widget.onExerciseUpdated != null) {
-        // Training session context - use callback (this runs setState in the right widget)
-        widget.onExerciseUpdated!(exercise);
-        return; // Don't continue with navigation logic
+      if (widget.onExerciseSaved != null) {
+        widget.onExerciseSaved!(exercise);
+        Navigator.of(context).pop();
+        return;
       }
 
-      // Training plan creation context or fallback logic
       try {
         final createProvider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
-        if (widget.initialExercise != null) {
-          // We're editing an existing exercise in training plan creation
+        if (widget.isNewExercise) {
+          createProvider.addExercise(exercise);
+        } else {
           final exercises = createProvider.draftPlan?.days[createProvider.selectedDayIndex].exercises ?? [];
-          final exerciseIndex = exercises.indexWhere((e) => e.id == widget.initialExercise!.id);
+          final exerciseIndex = exercises.indexWhere((e) => e.id == widget.exercise.id);
           if (exerciseIndex != -1) {
             createProvider.updateExercise(exerciseIndex, exercise);
-          } else {
-            createProvider.addExercise(exercise);
           }
-        } else {
-          // We're adding a new exercise in training plan creation
-          createProvider.addExercise(exercise);
         }
       } catch (e) {
-        // If CreateTrainingPlanProvider is not available, fall back to training session logic
         final sessionProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
-        
-        if (widget.initialExercise != null) {
-          // Fallback: search by ID
-          final exerciseIndex = sessionProvider.exercises.indexWhere((e) => e.id == widget.initialExercise!.id);
+        if (widget.isNewExercise) {
+          sessionProvider.addNewExerciseToSession(exercise);
+        } else {
+          final exerciseIndex = sessionProvider.exercises.indexWhere((e) => e.id == widget.exercise.id);
           if (exerciseIndex != -1) {
             sessionProvider.updateExerciseFullDetails(exerciseIndex, exercise);
-          } else {
-            sessionProvider.addNewExerciseToSession(exercise);
           }
-        } else {
-          // We're adding a new exercise in training session
-          sessionProvider.addNewExerciseToSession(exercise);
         }
       }
       
       HapticFeedback.mediumImpact();
-      
-      // Small delay to ensure provider updates are processed
       await Future.delayed(const Duration(milliseconds: 100));
-      
-      Navigator.pop(context);
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
     }
   }
 
@@ -149,7 +238,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
     final progressionProvider = Provider.of<ProgressionManagerProvider>(context);
     
     return Scaffold(
-      backgroundColor: const Color(0xFF000000), // Midnight
+      backgroundColor: const Color(0xFF000000),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -200,30 +289,25 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
             ),
           ),
         ),
-        title: Container(
-          constraints: const BoxConstraints(maxWidth: 200),
-          child: Text(
-            widget.initialExercise != null ? 'Übung bearbeiten' : 'Neue Übung',
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-              color: Color(0xFFFFFFFF),
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
+        title: const Text(
+          'Übung konfigurieren',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+            color: Color(0xFFFFFFFF),
           ),
         ),
         centerTitle: true,
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 24, top: 8, bottom: 8),
+            margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
             child: _isSaving
                 ? const SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 24,
+                    height: 24,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 2.5,
                       color: Color(0xFFFF4500),
                     ),
                   )
@@ -250,9 +334,9 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                         onTap: _saveExercise,
                         borderRadius: BorderRadius.circular(12),
                         child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                           child: Text(
-                            'SPEICHERN',
+                            'FERTIG',
                             style: TextStyle(
                               color: Color(0xFFFFFFFF),
                               fontWeight: FontWeight.w700,
@@ -267,674 +351,622 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
-            bottom: 32,
-          ),
-          children: [
-            // Übungsname
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF48484A).withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Übungsname',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF4500),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _nameController,
-                      style: const TextStyle(
-                        color: Color(0xFFFFFFFF),
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'z.B. Bankdrücken',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF8E8E93),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFF2C2C2E),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Bitte geben Sie einen Übungsnamen ein';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: ListView(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+              bottom: 32,
             ),
-
-            // Muskelgruppen
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF48484A).withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Muskelgruppen',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF4500),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _primaryMuscleController,
-                      style: const TextStyle(
-                        color: Color(0xFFFFFFFF),
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Primäre Muskelgruppe',
-                        labelStyle: const TextStyle(
-                          color: Color(0xFFAEAEB2),
-                        ),
-                        hintText: 'z.B. Brust',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF8E8E93),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFF2C2C2E),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Bitte geben Sie eine primäre Muskelgruppe ein';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _secondaryMuscleController,
-                      style: const TextStyle(
-                        color: Color(0xFFFFFFFF),
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Sekundäre Muskelgruppe (optional)',
-                        labelStyle: const TextStyle(
-                          color: Color(0xFFAEAEB2),
-                        ),
-                        hintText: 'z.B. Trizeps',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF8E8E93),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFF2C2C2E),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Trainingsparameter
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF48484A).withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.fitness_center,
-                          size: 18,
-                          color: Color(0xFFFF4500),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Trainingsparameter',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFFFF4500),
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    
-                    // Sätze
-                    _buildParameterRow(
-                      'Sätze',
-                      Container(
-                        width: 120,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2C2C2E),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: IconButton(
-                                icon: const Icon(Icons.remove, size: 16),
-                                onPressed: _numberOfSets > 1
-                                    ? () {
-                                        setState(() {
-                                          _numberOfSets--;
-                                        });
-                                        HapticFeedback.lightImpact();
-                                      }
-                                    : null,
-                                padding: EdgeInsets.zero,
-                                color: const Color(0xFFFF4500),
-                                disabledColor: const Color(0xFF8E8E93),
-                              ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  '$_numberOfSets',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFFFFFFFF),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: IconButton(
-                                icon: const Icon(Icons.add, size: 16),
-                                onPressed: _numberOfSets < 10
-                                    ? () {
-                                        setState(() {
-                                          _numberOfSets++;
-                                        });
-                                        HapticFeedback.lightImpact();
-                                      }
-                                    : null,
-                                padding: EdgeInsets.zero,
-                                color: const Color(0xFFFF4500),
-                                disabledColor: const Color(0xFF8E8E93),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Wiederholungen
-                    _buildParameterRow(
-                      'Wiederholungen',
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2C2C2E),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Min Reps
-                            Container(
-                              width: 60,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2C2C2E),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: InkWell(
-                                onTap: () => _showNumberPicker(
-                                  context,
-                                  'Min. Wiederholungen',
-                                  _repRangeMin,
-                                  1,
-                                  30,
-                                  (value) {
-                                    setState(() {
-                                      _repRangeMin = value;
-                                      if (_repRangeMax < _repRangeMin) {
-                                        _repRangeMax = _repRangeMin;
-                                      }
-                                    });
-                                  },
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Center(
-                                  child: Text(
-                                    '$_repRangeMin',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: Text(
-                                '-',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFFAEAEB2),
-                                ),
-                              ),
-                            ),
-                            // Max Reps
-                            Container(
-                              width: 60,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2C2C2E),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: InkWell(
-                                onTap: () => _showNumberPicker(
-                                  context,
-                                  'Max. Wiederholungen',
-                                  _repRangeMax,
-                                  _repRangeMin,
-                                  30,
-                                  (value) {
-                                    setState(() {
-                                      _repRangeMax = value;
-                                    });
-                                  },
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Center(
-                                  child: Text(
-                                    '$_repRangeMax',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // RIR
-                    _buildParameterRow(
-                      'RIR (Reps in Reserve)',
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2C2C2E),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Min RIR
-                            Container(
-                              width: 60,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2C2C2E),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: InkWell(
-                                onTap: () => _showNumberPicker(
-                                  context,
-                                  'Min. RIR',
-                                  _rirRangeMin,
-                                  0,
-                                  10,
-                                  (value) {
-                                    setState(() {
-                                      _rirRangeMin = value;
-                                      if (_rirRangeMax < _rirRangeMin) {
-                                        _rirRangeMax = _rirRangeMin;
-                                      }
-                                    });
-                                  },
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Center(
-                                  child: Text(
-                                    '$_rirRangeMin',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: Text(
-                                '-',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFFAEAEB2),
-                                ),
-                              ),
-                            ),
-                            // Max RIR
-                            Container(
-                              width: 60,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2C2C2E),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: InkWell(
-                                onTap: () => _showNumberPicker(
-                                  context,
-                                  'Max. RIR',
-                                  _rirRangeMax,
-                                  _rirRangeMin,
-                                  10,
-                                  (value) {
-                                    setState(() {
-                                      _rirRangeMax = value;
-                                    });
-                                  },
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Center(
-                                  child: Text(
-                                    '$_rirRangeMax',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFFFFFFF),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Weitere Einstellungen
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF48484A).withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Weitere Einstellungen',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF4500),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    
-                    // Standard-Erhöhung
-                    _buildParameterRow(
-                      'Standard-Erhöhung (kg)',
-                      Container(
-                        width: 100,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2C2C2E),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: InkWell(
-                          onTap: () => _showIncrementPicker(context),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Center(
-                            child: Text(
-                              _standardIncrease.toStringAsFixed(_standardIncrease == _standardIncrease.roundToDouble() ? 0 : 1) + ' kg',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFFFFFFFF),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Pausenzeit
-                    _buildParameterRow(
-                      'Pausenzeit',
-                      Container(
-                        width: 100,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2C2C2E),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: InkWell(
-                          onTap: () => _showRestPeriodPicker(context),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Center(
-                            child: Text(
-                              _formatRestPeriod(_restPeriodSeconds),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFFFFFFFF),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Progressionsprofil
-            if (progressionProvider.progressionsProfile.isNotEmpty)
+            children: [
+              // Exercise Header Card
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
-                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFFFF4500).withOpacity(0.1),
+                      const Color(0xFFFF6B3D).withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF48484A).withOpacity(0.3),
+                    color: const Color(0xFFFF4500).withOpacity(0.3),
                     width: 1,
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(
-                            Icons.trending_up_rounded,
-                            size: 18,
-                            color: Color(0xFFFF4500),
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFFFF4500),
+                                  Color(0xFFFF6B3D),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFF4500).withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.fitness_center,
+                                color: Color(0xFFFFFFFF),
+                                size: 28,
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Progressionsprofil (optional)',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFFFF4500),
-                              letterSpacing: -0.3,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.exercise.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFFFFFFF),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFF4500).withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        widget.exercise.primaryMuscleGroup,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFFFF4500),
+                                        ),
+                                      ),
+                                    ),
+                                    if (widget.exercise.secondaryMuscleGroup.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        widget.exercise.secondaryMuscleGroup,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF8E8E93),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2C2C2E),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedProfileId,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                          ),
-                          hint: const Text(
-                            'Kein Profil ausgewählt',
-                            style: TextStyle(
-                              color: Color(0xFF8E8E93),
-                            ),
-                          ),
-                          style: const TextStyle(
-                            color: Color(0xFFFFFFFF),
-                            fontSize: 16,
-                          ),
-                          dropdownColor: const Color(0xFF1C1C1E),
-                          icon: const Icon(
-                            Icons.arrow_drop_down_rounded,
-                            color: Color(0xFFFF4500),
-                          ),
-                          items: [
-                            const DropdownMenuItem<String>(
-                              value: null,
-                              child: Text(
-                                'Kein Profil',
-                                style: TextStyle(
-                                  color: Color(0xFF8E8E93),
-                                ),
-                              ),
-                            ),
-                            ...progressionProvider.progressionsProfile.map((profile) {
-                              return DropdownMenuItem<String>(
-                                value: profile.id,
-                                child: Text(
-                                  profile.name,
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFFFFF),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedProfileId = value;
-                            });
-                          },
-                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-          ],
+
+              const SizedBox(height: 24),
+
+              // Training Parameters Section
+              _buildSection(
+                title: 'Trainingsparameter',
+                icon: Icons.tune_rounded,
+                children: [
+                  _buildParameterCard(
+                    'Sätze',
+                    Icons.repeat_rounded,
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2E),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _numberOfSets > 1
+                                    ? () {
+                                        setState(() => _numberOfSets--);
+                                        HapticFeedback.lightImpact();
+                                      }
+                                    : null,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  bottomLeft: Radius.circular(12),
+                                ),
+                                child: Container(
+                                  height: 48,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.remove_circle_outline,
+                                      size: 20,
+                                      color: _numberOfSets > 1
+                                          ? const Color(0xFFFF4500)
+                                          : const Color(0xFF8E8E93).withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: const Color(0xFF48484A),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Center(
+                              child: Text(
+                                '$_numberOfSets',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: const Color(0xFF48484A),
+                          ),
+                          Expanded(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _numberOfSets < 10
+                                    ? () {
+                                        setState(() => _numberOfSets++);
+                                        HapticFeedback.lightImpact();
+                                      }
+                                    : null,
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(12),
+                                  bottomRight: Radius.circular(12),
+                                ),
+                                child: Container(
+                                  height: 48,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.add_circle_outline,
+                                      size: 20,
+                                      color: _numberOfSets < 10
+                                          ? const Color(0xFFFF4500)
+                                          : const Color(0xFF8E8E93).withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  _buildParameterCard(
+                    'Wiederholungen',
+                    Icons.tag_rounded,
+                    _buildRangeSelector(
+                      minValue: _repRangeMin,
+                      maxValue: _repRangeMax,
+                      onMinChanged: (value) => setState(() {
+                        _repRangeMin = value;
+                        if (_repRangeMax < value) _repRangeMax = value;
+                      }),
+                      onMaxChanged: (value) => setState(() => _repRangeMax = value),
+                      minLimit: 1,
+                      maxLimit: 30,
+                    ),
+                  ),
+                  
+                  _buildParameterCard(
+                    'RIR (Reps in Reserve)',
+                    Icons.battery_charging_full_rounded,
+                    _buildRangeSelector(
+                      minValue: _rirRangeMin,
+                      maxValue: _rirRangeMax,
+                      onMinChanged: (value) => setState(() {
+                        _rirRangeMin = value;
+                        if (_rirRangeMax < value) _rirRangeMax = value;
+                      }),
+                      onMaxChanged: (value) => setState(() => _rirRangeMax = value),
+                      minLimit: 0,
+                      maxLimit: 10,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Additional Settings Section
+              _buildSection(
+                title: 'Weitere Einstellungen',
+                icon: Icons.settings_rounded,
+                children: [
+                  _buildParameterCard(
+                    'Standard-Erhöhung',
+                    Icons.trending_up_rounded,
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2E),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _showIncrementPicker(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Center(
+                            child: Text(
+                              '${_standardIncrease.toStringAsFixed(_standardIncrease == _standardIncrease.roundToDouble() ? 0 : 1)} kg',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFFFFFF),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  _buildParameterCard(
+                    'Pausenzeit',
+                    Icons.timer_outlined,
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2E),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _showRestPeriodPicker(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Center(
+                            child: Text(
+                              _formatRestPeriod(_restPeriodSeconds),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFFFFFF),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Progression Profile Section
+              if (progressionProvider.progressionsProfile.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: 'Progressionsprofil',
+                  icon: Icons.analytics_outlined,
+                  optional: true,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2E),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedProfileId,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        hint: const Text(
+                          'Kein Profil ausgewählt',
+                          style: TextStyle(
+                            color: Color(0xFF8E8E93),
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        dropdownColor: const Color(0xFF1C1C1E),
+                        icon: const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: Color(0xFFFF4500),
+                          size: 28,
+                        ),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text(
+                              'Kein Profil',
+                              style: TextStyle(
+                                color: Color(0xFF8E8E93),
+                              ),
+                            ),
+                          ),
+                          ...progressionProvider.progressionsProfile.map((profile) {
+                            return DropdownMenuItem<String>(
+                              value: profile.id,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF4500),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    profile.name,
+                                    style: const TextStyle(
+                                      color: Color(0xFFFFFFFF),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedProfileId = value;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildParameterRow(String label, Widget control) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFFAEAEB2),
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+    bool optional = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: const Color(0xFFFF4500),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFF4500),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                if (optional) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8E8E93).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Optional',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF8E8E93),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-        control,
-      ],
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF48484A).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: children,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParameterCard(String label, IconData icon, Widget control) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2C2C2E),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 20,
+                color: const Color(0xFFAEAEB2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFAEAEB2),
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 140,
+            child: control,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRangeSelector({
+    required int minValue,
+    required int maxValue,
+    required Function(int) onMinChanged,
+    required Function(int) onMaxChanged,
+    required int minLimit,
+    required int maxLimit,
+  }) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () => _showNumberPicker(
+                context,
+                'Minimum',
+                minValue,
+                minLimit,
+                maxLimit,
+                onMinChanged,
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  '$minValue',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFFFFFF),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 20,
+            child: Center(
+              child: Text(
+                '-',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: () => _showNumberPicker(
+                context,
+                'Maximum',
+                maxValue,
+                minValue,
+                maxLimit,
+                onMaxChanged,
+              ),
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  '$maxValue',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFFFFFF),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -958,7 +990,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
           builder: (context, setState) {
             return Container(
               padding: const EdgeInsets.all(20),
-              height: 300,
+              height: 350,
               child: Column(
                 children: [
                   Container(
@@ -1000,8 +1032,8 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                             child: Text(
                               '$value',
                               style: TextStyle(
-                                fontSize: isSelected ? 24 : 18,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                fontSize: isSelected ? 28 : 20,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                                 color: isSelected
                                     ? const Color(0xFFFF4500)
                                     : const Color(0xFFAEAEB2),
@@ -1013,27 +1045,38 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        onSelected(tempValue);
-                        Navigator.pop(context);
-                        HapticFeedback.lightImpact();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF4500),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFF4500),
+                          Color(0xFFFF6B3D),
+                        ],
                       ),
-                      child: const Text(
-                        'Auswählen',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          onSelected(tempValue);
+                          Navigator.pop(context);
+                          HapticFeedback.lightImpact();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              'Auswählen',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFFFFFF),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1102,7 +1145,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                             '${increment.toStringAsFixed(increment == increment.roundToDouble() ? 0 : 2)} kg',
                             style: TextStyle(
                               fontSize: isSelected ? 24 : 18,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                               color: isSelected
                                   ? const Color(0xFFFF4500)
                                   : const Color(0xFFAEAEB2),
@@ -1113,29 +1156,40 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        this.setState(() {
-                          _standardIncrease = tempValue;
-                        });
-                        Navigator.pop(context);
-                        HapticFeedback.lightImpact();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF4500),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFF4500),
+                          Color(0xFFFF6B3D),
+                        ],
                       ),
-                      child: const Text(
-                        'Auswählen',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          this.setState(() {
+                            _standardIncrease = tempValue;
+                          });
+                          Navigator.pop(context);
+                          HapticFeedback.lightImpact();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              'Auswählen',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFFFFFF),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1204,7 +1258,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                             _formatRestPeriod(period),
                             style: TextStyle(
                               fontSize: isSelected ? 24 : 18,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                               color: isSelected
                                   ? const Color(0xFFFF4500)
                                   : const Color(0xFFAEAEB2),
@@ -1215,29 +1269,40 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        this.setState(() {
-                          _restPeriodSeconds = tempValue;
-                        });
-                        Navigator.pop(context);
-                        HapticFeedback.lightImpact();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF4500),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFF4500),
+                          Color(0xFFFF6B3D),
+                        ],
                       ),
-                      child: const Text(
-                        'Auswählen',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          this.setState(() {
+                            _restPeriodSeconds = tempValue;
+                          });
+                          Navigator.pop(context);
+                          HapticFeedback.lightImpact();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              'Auswählen',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFFFFFFF),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

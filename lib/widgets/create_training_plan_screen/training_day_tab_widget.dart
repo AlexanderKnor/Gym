@@ -872,11 +872,16 @@ class TrainingDayTabWidget extends StatelessWidget {
     CreateTrainingPlanProvider createProvider,
     ProgressionManagerProvider progressionProvider,
   ) {
+    // Navigate directly to configuration screen for editing
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ExerciseSelectionScreen(
-          initialExercise: exercise,
+        builder: (context) => ExerciseConfigurationScreen(
+          exercise: exercise,
+          isNewExercise: false,
+          onExerciseSaved: (updatedExercise) {
+            createProvider.updateExercise(index, updatedExercise);
+          },
         ),
       ),
     );

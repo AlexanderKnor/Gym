@@ -35,10 +35,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  # Hier kannst du später Assets hinzufügen:
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+  # Assets
+  assets:
+    - assets/data/
   
   # Hier kannst du später Schriftarten hinzufügen:
   # fonts:

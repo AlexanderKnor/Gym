@@ -41,8 +41,8 @@ class OneRMCalculatorService {
       // Berechnung des Gewichts aus dem 1RM nach Epley-Formel umgekehrt
       final weight = adjustedRM / (1 + 0.0333 * (repetitions + rir));
 
-      // Auf 0,5 kg genau runden und sicherstellen, dass kein negativer Wert zurückgegeben wird
-      final roundedWeight = (weight * 2).round() / 2;
+      // Auf 1,25 kg genau runden und sicherstellen, dass kein negativer Wert zurückgegeben wird
+      final roundedWeight = (weight / 1.25).round() * 1.25;
       print('Berechnetes Gewicht: $roundedWeight kg (vor Rundung: $weight kg)');
 
       return roundedWeight > 0 ? roundedWeight : 0;

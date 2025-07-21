@@ -88,7 +88,7 @@ class ProgressionCalculatorService {
       final variables = <String, dynamic>{
         'lastKg': satz.kg > 0 ? satz.kg : mockHistoricalKg,
         'lastReps': satz.wiederholungen > 0 ? satz.wiederholungen : mockHistoricalReps,
-        'lastRIR': satz.rir > 0 ? satz.rir : mockHistoricalRir,
+        'lastRIR': satz.rir >= 0 ? satz.rir : mockHistoricalRir,
         'last1RM': letzter1RM > 0 ? letzter1RM : OneRMCalculatorService.calculate1RM(mockHistoricalKg, mockHistoricalReps, mockHistoricalRir),
         'previousKg': vorherigenSatz?.kg ?? mockHistoricalKg,
         'previousReps': vorherigenSatz?.wiederholungen ?? mockHistoricalReps,

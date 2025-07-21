@@ -9,6 +9,7 @@ class RuleEvaluatorService {
       final leftValue = evaluateValue(condition.left, variables);
       final rightValue = evaluateValue(condition.right, variables);
 
+
       switch (condition.operator) {
         case 'eq':
           return leftValue == rightValue;

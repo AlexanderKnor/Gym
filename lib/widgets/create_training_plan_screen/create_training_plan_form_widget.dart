@@ -17,6 +17,7 @@ class _CreateTrainingPlanFormWidgetState
     extends State<CreateTrainingPlanFormWidget> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _planNameController = TextEditingController();
+  final _gymController = TextEditingController();
   final _scrollController = ScrollController();
 
   late final AnimationController _animationController;
@@ -28,6 +29,7 @@ class _CreateTrainingPlanFormWidgetState
   void initState() {
     super.initState();
     _planNameController.addListener(_updatePlanName);
+    _gymController.addListener(_updateGym);
 
     // Animation für die Trainingstage
     _animationController = AnimationController(
@@ -47,6 +49,8 @@ class _CreateTrainingPlanFormWidgetState
   void dispose() {
     _planNameController.removeListener(_updatePlanName);
     _planNameController.dispose();
+    _gymController.removeListener(_updateGym);
+    _gymController.dispose();
     _scrollController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -55,6 +59,11 @@ class _CreateTrainingPlanFormWidgetState
   void _updatePlanName() {
     Provider.of<CreateTrainingPlanProvider>(context, listen: false)
         .setPlanName(_planNameController.text);
+  }
+
+  void _updateGym() {
+    Provider.of<CreateTrainingPlanProvider>(context, listen: false)
+        .setGym(_gymController.text);
   }
 
   // PROVER color system - consistent with other screens
@@ -73,10 +82,23 @@ class _CreateTrainingPlanFormWidgetState
   static const Color _proverGlow = Color(0xFFFF6B3D);
   static const Color _proverFlare = Color(0xFFFFA500);
 
+  void _syncControllers(CreateTrainingPlanProvider provider) {
+    // Sync controllers with provider data when editing
+    if (_planNameController.text != provider.planName) {
+      _planNameController.text = provider.planName;
+    }
+    if (_gymController.text != provider.gym) {
+      _gymController.text = provider.gym;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CreateTrainingPlanProvider>(context);
     final theme = Theme.of(context);
+
+    // Sync controllers with provider data
+    _syncControllers(provider);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -104,6 +126,9 @@ class _CreateTrainingPlanFormWidgetState
                         delegate: SliverChildListDelegate([
                           // Trainingsplan Name
                           _buildPlanNameSection(provider),
+
+                          // Fitnessstudio
+                          _buildGymSection(provider),
 
                           // Trainingsfrequenz
                           _buildFrequencySection(provider, theme),
@@ -277,6 +302,142 @@ class _CreateTrainingPlanFormWidgetState
                       }
                       return null;
                     },
+                    onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGymSection(CreateTrainingPlanProvider provider) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _stellar.withOpacity(0.8),
+                    _stellar.withOpacity(0.4),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _proverCore.withOpacity(0.6),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _void.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: _proverCore.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.fitness_center,
+                  size: 16,
+                  color: _stardust,
+                ),
+              ),
+            ),
+            
+            const SizedBox(width: 16),
+            
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'FITNESSSTUDIO (OPTIONAL)',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: _nova,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Eingabefeld
+                  TextFormField(
+                    controller: _gymController,
+                    decoration: InputDecoration(
+                      hintText: 'z.B. McFit, FitX, Local Gym',
+                      filled: true,
+                      fillColor: _stellar.withOpacity(0.4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: _proverCore.withOpacity(0.6),
+                          width: 1,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      hintStyle: TextStyle(
+                        color: _comet,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: _stardust,
+                    ),
+                    textCapitalization: TextCapitalization.words,
                     onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   ),
                 ],

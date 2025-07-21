@@ -258,6 +258,34 @@ class _TrainingScreenState extends State<TrainingScreen>
                               textAlign: TextAlign.center,
                             ),
                           ),
+                          // Gym name (if available)
+                          if (activePlan.gym != null && activePlan.gym!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.fitness_center,
+                                    size: 14,
+                                    color: _comet,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    activePlan.gym!.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: _comet,
+                                      letterSpacing: 0.5,
+                                      height: 1,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                         ],
                       ),

@@ -12,6 +12,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
   // Zustand für den ersten Screen
   String _planName = '';
+  String _gym = '';
   int _frequency = 3; // Standardwert: 3 Tage
   List<String> _dayNames = [
     'Tag 1',
@@ -40,6 +41,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
   // Getter
   String get planName => _planName;
+  String get gym => _gym;
   int get frequency => _frequency;
   List<String> get dayNames => _dayNames;
   TrainingPlanModel? get draftPlan => _draftPlan;
@@ -61,6 +63,11 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   // Methoden für den ersten Screen
   void setPlanName(String name) {
     _planName = name;
+    notifyListeners();
+  }
+
+  void setGym(String gym) {
+    _gym = gym;
     notifyListeners();
   }
 
@@ -179,6 +186,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
           name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
           days: days,
           isActive: false,
+          gym: _gym.isNotEmpty ? _gym : null,
           isPeriodized: true,
           numberOfWeeks: _numberOfWeeks,
           periodization: PeriodizationModel(
@@ -207,6 +215,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
           name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
           days: days,
           isActive: false,
+          gym: _gym.isNotEmpty ? _gym : null,
         );
       }
 
@@ -222,6 +231,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       _isEditMode = true;
       _editingPlanId = plan.id;
       _planName = plan.name;
+      _gym = plan.gym ?? '';
       _frequency = plan.days.length;
       _isPeriodized = plan.isPeriodized;
       _numberOfWeeks = plan.numberOfWeeks;
@@ -552,6 +562,7 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
   // Zustand zurücksetzen, wenn fertig
   void reset() {
     _planName = '';
+    _gym = '';
     _frequency = 3;
     _dayNames = ['Tag 1', 'Tag 2', 'Tag 3'];
     _draftPlan = null;

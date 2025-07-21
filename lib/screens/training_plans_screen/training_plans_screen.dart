@@ -627,6 +627,32 @@ class TrainingPlanCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            // Gym name (if available)
+            if (plan.gym != null && plan.gym!.isNotEmpty) ...[
+              Row(
+                children: [
+                  Icon(
+                    Icons.fitness_center,
+                    size: 12,
+                    color: _comet,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    plan.gym!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _comet,
+                      fontStyle: FontStyle.italic,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
+
             // Training days count
             Text(
               '${plan.days.length} Trainingstage',

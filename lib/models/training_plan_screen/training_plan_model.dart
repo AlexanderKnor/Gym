@@ -8,6 +8,9 @@ class TrainingPlanModel {
   List<TrainingDayModel> days;
   bool isActive;
 
+  // Optional gym field
+  String? gym;
+
   // Neue Felder für Periodisierung
   bool isPeriodized;
   int numberOfWeeks;
@@ -18,6 +21,7 @@ class TrainingPlanModel {
     required this.name,
     required this.days,
     this.isActive = false,
+    this.gym,
     this.isPeriodized = false,
     this.numberOfWeeks = 1,
     this.periodization,
@@ -29,6 +33,7 @@ class TrainingPlanModel {
     String? name,
     List<TrainingDayModel>? days,
     bool? isActive,
+    String? gym,
     bool? isPeriodized,
     int? numberOfWeeks,
     PeriodizationModel? periodization,
@@ -38,6 +43,7 @@ class TrainingPlanModel {
       name: name ?? this.name,
       days: days ?? this.days,
       isActive: isActive ?? this.isActive,
+      gym: gym ?? this.gym,
       isPeriodized: isPeriodized ?? this.isPeriodized,
       numberOfWeeks: numberOfWeeks ?? this.numberOfWeeks,
       periodization: periodization ?? this.periodization,
@@ -51,6 +57,7 @@ class TrainingPlanModel {
       'name': name,
       'days': days.map((day) => day.toMap()).toList(),
       'isActive': isActive,
+      'gym': gym,
       'isPeriodized': isPeriodized,
       'numberOfWeeks': numberOfWeeks,
       'periodization': periodization?.toMap(),
@@ -71,6 +78,7 @@ class TrainingPlanModel {
               .toList() ??
           [],
       isActive: map['isActive'] ?? false,
+      gym: map['gym'],
       isPeriodized: map['isPeriodized'] ?? false,
       numberOfWeeks: map['numberOfWeeks'] ?? 1,
       periodization: map['periodization'] != null
@@ -84,7 +92,7 @@ class TrainingPlanModel {
   factory TrainingPlanModel.fromJson(Map<String, dynamic> json) => TrainingPlanModel.fromMap(json);
 
   // Factory-Methode für neuen Plan
-  factory TrainingPlanModel.create(String name, int frequency) {
+  factory TrainingPlanModel.create(String name, int frequency, {String? gym}) {
     final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
     final days = List<TrainingDayModel>.generate(
       frequency,
@@ -99,12 +107,13 @@ class TrainingPlanModel {
       id: id,
       name: name,
       days: days,
+      gym: gym,
     );
   }
 
   // Neue Factory-Methode für periodisierten Plan
   factory TrainingPlanModel.createPeriodized(
-      String name, int frequency, int weeks) {
+      String name, int frequency, int weeks, {String? gym}) {
     final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
     final days = List<TrainingDayModel>.generate(
       frequency,
@@ -119,6 +128,7 @@ class TrainingPlanModel {
       id: id,
       name: name,
       days: days,
+      gym: gym,
       isPeriodized: true,
       numberOfWeeks: weeks,
       periodization: PeriodizationModel(

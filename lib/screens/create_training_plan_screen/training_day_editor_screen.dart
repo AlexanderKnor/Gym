@@ -357,24 +357,56 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
               ),
             ],
           ),
-          child: Center(
-            child: ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)], // Orange gradient
-              ).createShader(bounds),
-              child: Text(
-                isEditMode ? '${plan.name.toUpperCase()} BEARBEITEN' : plan.name.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFFFFFFFF), // Snow
-                  letterSpacing: 1.2,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)], // Orange gradient
+                ).createShader(bounds),
+                child: Text(
+                  isEditMode ? '${plan.name.toUpperCase()} BEARBEITEN' : plan.name.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFFFFFFF), // Snow
+                    letterSpacing: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
+              // Gym name (if available)
+              if (plan.gym != null && plan.gym!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.fitness_center,
+                      size: 8,
+                      color: const Color(0xFF65656F), // Comet
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        plan.gym!.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF65656F), // Comet
+                          letterSpacing: 0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
         ),
         centerTitle: true,

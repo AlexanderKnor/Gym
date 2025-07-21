@@ -310,6 +310,7 @@ class TrainingPlanService {
       'id': plan.id,
       'name': plan.name,
       'isActive': plan.isActive,
+      'gym': plan.gym,
       'isPeriodized': plan.isPeriodized,
       'numberOfWeeks': plan.numberOfWeeks,
       'days': plan.days
@@ -385,6 +386,7 @@ class TrainingPlanService {
       name: json['name'],
       days: days,
       isActive: json['isActive'] ?? false,
+      gym: json['gym'],
       isPeriodized: json['isPeriodized'] ?? false,
       numberOfWeeks: json['numberOfWeeks'] ?? 1,
       periodization: periodization,

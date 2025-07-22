@@ -32,6 +32,9 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
     // If creating new exercise, immediately redirect to database selection
     if (widget.initialExercise == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Check if widget is still mounted before navigating
+        if (!mounted) return;
+        
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -72,6 +75,9 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
     } else {
       // If editing existing exercise, go directly to configuration
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Check if widget is still mounted before navigating
+        if (!mounted) return;
+        
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -217,7 +223,6 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
 
       if (widget.onExerciseSaved != null) {
         widget.onExerciseSaved!(exercise);
-        Navigator.of(context).pop();
         Navigator.of(context).pop();
         return;
       }

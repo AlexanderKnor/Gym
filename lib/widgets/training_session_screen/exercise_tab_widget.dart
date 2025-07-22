@@ -145,14 +145,14 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final int originalRirRangeMin = adaptedExercise.rirRangeMin;
     final int originalRirRangeMax = adaptedExercise.rirRangeMax;
 
-    // Use normal navigation instead of dialog - fixes navigation stack issues
+    // Navigate directly to ExerciseConfigurationScreen to avoid the intermediate loading screen
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ExerciseSelectionScreen(
-          initialExercise: adaptedExercise,
-          exerciseIndex: widget.exerciseIndex,
-          onExerciseUpdated: (updatedExercise) async {
+        builder: (context) => ExerciseConfigurationScreen(
+          exercise: adaptedExercise,
+          isNewExercise: false,
+          onExerciseSaved: (updatedExercise) async {
             // Update the exercise in the session
             await sessionProvider.updateExerciseFullDetails(widget.exerciseIndex, updatedExercise);
             

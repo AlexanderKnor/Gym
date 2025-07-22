@@ -13,7 +13,7 @@ import '../main_screen.dart';
 import '../../widgets/training_session_screen/exercise_tab_widget.dart';
 import '../../widgets/training_session_screen/rest_timer_widget.dart';
 import '../../widgets/training_session_screen/training_completion_widget.dart';
-import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
+import '../create_training_plan_screen/exercise_selection_screen.dart';
 
 class TrainingSessionScreen extends StatefulWidget {
   final TrainingPlanModel trainingPlan;
@@ -1006,11 +1006,11 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   // NEU: Dialog zum Hinzufügen einer Übung anzeigen
   void _showAddExerciseDialog(
       BuildContext context, TrainingSessionProvider sessionProvider) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: ExerciseFormWidget(
-          onSave: (exercise) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExerciseSelectionScreen(
+          onExerciseUpdated: (exercise) async {
             await sessionProvider.addNewExerciseToSession(exercise);
 
             // TabController aktualisieren
@@ -1028,8 +1028,6 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
               _tabController!.animateTo(exerciseCount - 1);
               sessionProvider.selectExercise(exerciseCount - 1);
             }
-
-            Navigator.pop(context);
           },
         ),
       ),

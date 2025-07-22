@@ -218,6 +218,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
       if (widget.onExerciseSaved != null) {
         widget.onExerciseSaved!(exercise);
         Navigator.of(context).pop();
+        Navigator.of(context).pop();
         return;
       }
 

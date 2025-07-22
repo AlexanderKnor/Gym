@@ -12,7 +12,6 @@ import 'exercise_set_widget.dart';
 import 'strength_calculator_dialog.dart';
 import '../../widgets/shared/standard_increment_wheel_widget.dart';
 import '../../widgets/shared/rest_period_wheel_widget.dart';
-import '../../widgets/create_training_plan_screen/exercise_form_widget.dart';
 import '../../screens/create_training_plan_screen/exercise_selection_screen.dart';
 
 class ExerciseTabWidget extends StatefulWidget {
@@ -146,24 +145,16 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     final int originalRirRangeMin = adaptedExercise.rirRangeMin;
     final int originalRirRangeMax = adaptedExercise.rirRangeMax;
 
-    // Use Dialog for Training Sessions (like the old implementation)
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      useSafeArea: false,
-      builder: (dialogContext) => Dialog.fullscreen(
-        backgroundColor: const Color(0xFF000000), // Match app background
-        child: ExerciseSelectionScreen(
+    // Use normal navigation instead of dialog - fixes navigation stack issues
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExerciseSelectionScreen(
           initialExercise: adaptedExercise,
           exerciseIndex: widget.exerciseIndex,
           onExerciseUpdated: (updatedExercise) async {
-            // This runs in the dialog context - like the old implementation
-            
             // Update the exercise in the session
             await sessionProvider.updateExerciseFullDetails(widget.exerciseIndex, updatedExercise);
-            
-            // Close the dialog
-            Navigator.pop(dialogContext);
             
             // Check if relevant settings changed
             bool settingsChanged = originalProfileId != updatedExercise.progressionProfileId ||
@@ -172,7 +163,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
                 originalRirRangeMin != updatedExercise.rirRangeMin ||
                 originalRirRangeMax != updatedExercise.rirRangeMax;
 
-            // Update UI immediately - like the old implementation
+            // Update UI immediately
             if (settingsChanged) {
               setState(() {
                 _exerciseProfileId = updatedExercise.progressionProfileId;
@@ -200,273 +191,6 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     );
   }
 
-  void _showExerciseEditor(BuildContext context, ExerciseModel exercise) {
-    final sessionProvider =
-        Provider.of<TrainingSessionProvider>(context, listen: false);
-    final progressionProvider =
-        Provider.of<ProgressionManagerProvider>(context, listen: false);
-
-    // KORRIGIERT: Verwende die für den aktuellen Mikrozyklus angepasste Übung
-    // anstatt der Standardübung direkt zu verwenden
-    final adaptedExercise =
-        sessionProvider.getExerciseForMicrocycle(widget.exerciseIndex);
-
-    // Speichere die ursprünglichen Werte zum Vergleich
-    final String? originalProfileId = adaptedExercise.progressionProfileId;
-    final int originalRepRangeMin = adaptedExercise.repRangeMin;
-    final int originalRepRangeMax = adaptedExercise.repRangeMax;
-    final int originalRirRangeMin = adaptedExercise.rirRangeMin;
-    final int originalRirRangeMax = adaptedExercise.rirRangeMax;
-
-    // Prüfen, ob mehr als eine Übung vorhanden ist
-    final bool canDeleteExercise = sessionProvider.exercises.length > 1;
-
-    // Dialog mit StatefulBuilder zeigen, um Zustand im Dialog zu verwalten
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        // Lokale Variable für den Ladezustand
-        bool isFormLoaded = false;
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _charcoal,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Stack(
-                children: [
-                  // Das tatsächliche Formular mit Lösch-Button
-                  SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Form Widget mit der angepassten Übung
-                        ExerciseFormWidget(
-                          initialExercise: adaptedExercise,
-                          onSave: (updatedExercise) async {
-                            // Übung im Provider aktualisieren
-                            await sessionProvider.updateExerciseFullDetails(
-                                widget.exerciseIndex, updatedExercise);
-
-                            // Dialog schließen
-                            Navigator.pop(context);
-
-                            // Überprüfen, ob sich relevante Einstellungen geändert haben
-                            bool settingsChanged = originalProfileId !=
-                                    updatedExercise.progressionProfileId ||
-                                originalRepRangeMin !=
-                                    updatedExercise.repRangeMin ||
-                                originalRepRangeMax !=
-                                    updatedExercise.repRangeMax ||
-                                originalRirRangeMin !=
-                                    updatedExercise.rirRangeMin ||
-                                originalRirRangeMax !=
-                                    updatedExercise.rirRangeMax;
-
-                            // Wenn das Progressionsprofil geändert wurde oder ein neues hinzugefügt wurde,
-                            // oder wenn sich andere relevante Einstellungen geändert haben,
-                            // Empfehlungen sofort neu berechnen
-                            if (settingsChanged) {
-                              setState(() {
-                                _exerciseProfileId =
-                                    updatedExercise.progressionProfileId;
-                              });
-
-                              // Für den aktiven Satz sofort neu berechnen, falls es der aktuelle Index ist
-                              if (widget.exerciseIndex ==
-                                      sessionProvider.currentExerciseIndex &&
-                                  updatedExercise.progressionProfileId !=
-                                      null) {
-                                // Aktiven Satz-ID abrufen
-                                final activeSetId = sessionProvider
-                                    .getActiveSetIdForCurrentExercise();
-
-                                // Alte Empfehlungen zurücksetzen
-                                sessionProvider.resetProgressionRecommendations(
-                                    widget.exerciseIndex, activeSetId);
-
-                                // Neue Empfehlungen berechnen auf Basis der historischen Daten
-                                sessionProvider.calculateProgressionForSet(
-                                    widget.exerciseIndex,
-                                    activeSetId,
-                                    updatedExercise.progressionProfileId!,
-                                    progressionProvider,
-                                    forceRecalculation: true);
-                              }
-                            }
-
-                            // Haptic feedback für Bestätigung
-                            HapticFeedback.mediumImpact();
-                          },
-                          // Callback für den Ladezustand
-                          onFormLoaded: () {
-                            // Zustand im Dialog aktualisieren, wenn das Formular geladen ist
-                            setDialogState(() {
-                              isFormLoaded = true;
-                            });
-                          },
-                        ),
-
-                        // Lösch-Button - wird nur angezeigt, wenn das Formular geladen ist
-                        if (isFormLoaded && canDeleteExercise)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            child: ElevatedButton.icon(
-                              onPressed: _isProcessingDeletion
-                                  ? null // Deaktivieren während Löschvorgang läuft
-                                  : () async {
-                                      // NEU: Verarbeitung des Löschvorgangs
-                                      setDialogState(() {
-                                        _isProcessingDeletion = true;
-                                      });
-
-                                      try {
-                                        // Bestätigungsdialog anzeigen
-                                        bool confirmDelete =
-                                            await showDialog<bool>(
-                                                  context: context,
-                                                  barrierDismissible: false,
-                                                  builder: (confirmContext) =>
-                                                      AlertDialog(
-                                                    title: const Text(
-                                                        'Übung löschen?'),
-                                                    content: const Text(
-                                                        'Möchtest du diese Übung wirklich löschen? Dies kann später im Trainingsplan gespeichert werden.'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.of(
-                                                                    confirmContext)
-                                                                .pop(false),
-                                                        child: const Text(
-                                                            'Abbrechen'),
-                                                      ),
-                                                      ElevatedButton(
-                                                        onPressed: () =>
-                                                            Navigator.of(
-                                                                    confirmContext)
-                                                                .pop(true),
-                                                        style: ElevatedButton
-                                                            .styleFrom(
-                                                          backgroundColor:
-                                                              Colors.red,
-                                                        ),
-                                                        child: const Text(
-                                                            'Löschen'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ) ??
-                                                false;
-
-                                        // Wenn Benutzer abgebrochen hat, Dialog-Status zurücksetzen
-                                        if (!confirmDelete) {
-                                          setDialogState(() {
-                                            _isProcessingDeletion = false;
-                                          });
-                                          return;
-                                        }
-
-                                        // Erst Dialog schließen
-                                        Navigator.pop(context);
-
-                                        // Kurze Verzögerung vor Löschoperation
-                                        await Future.delayed(
-                                            const Duration(milliseconds: 300));
-
-                                        // Dann die Übung löschen
-                                        final success = await sessionProvider
-                                            .removeExerciseFromSession(
-                                          widget.exerciseIndex,
-                                          onTabsChanged:
-                                              widget.onExerciseRemoved,
-                                        );
-
-                                        // Haptisches Feedback, wenn erfolgreich
-                                        if (success && mounted) {
-                                          HapticFeedback.mediumImpact();
-                                        }
-                                      } catch (e) {
-                                        print(
-                                            'Fehler beim Löschen der Übung: $e');
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                  'Fehler beim Löschen: $e'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-
-                                        // Bei Fehler auch den Dialog-Status zurücksetzen
-                                        if (mounted) {
-                                          setState(() {
-                                            _isProcessingDeletion = false;
-                                          });
-                                        }
-                                      }
-                                    },
-                              icon: _isProcessingDeletion
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.delete_outline,
-                                      color: Colors.white),
-                              label: Text(_isProcessingDeletion
-                                  ? 'Wird gelöscht...'
-                                  : 'Übung löschen'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                minimumSize: const Size(double.infinity, 45),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  // Overlay mit Ladeindikator, wenn das Formular noch nicht geladen ist
-                  if (!isFormLoaded)
-                    Container(
-                      color: Colors.white,
-                      width: double.infinity,
-                      height: double.infinity,
-                      child: const Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Übung wird geladen...'),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   void _openStrengthCalculator(BuildContext context) {
     HapticFeedback.mediumImpact();
@@ -1052,7 +776,7 @@ class _ExerciseTabWidgetState extends State<ExerciseTabWidget>
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
       child: InkWell(
-        onTap: () => _showExerciseEditor(context, adaptedExercise),
+        onTap: () => _navigateToExerciseSelection(context, adaptedExercise),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

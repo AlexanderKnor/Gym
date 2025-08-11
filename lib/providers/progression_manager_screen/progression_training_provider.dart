@@ -69,6 +69,20 @@ class ProgressionTrainingProvider with ChangeNotifier {
         break;
     }
 
+    // WICHTIG: Invalidiere Empfehlungen für alle nachfolgenden Sätze,
+    // da sie möglicherweise von den Änderungen des aktuellen Satzes abhängen
+    for (int i = 0; i < updatedSaetze.length; i++) {
+      if (updatedSaetze[i].id > id) {
+        print('DEBUG: Invalidiere Empfehlung für Satz ${updatedSaetze[i].id} nach Änderung von Satz $id');
+        updatedSaetze[i] = updatedSaetze[i].copyWith(
+          empfehlungBerechnet: false,
+          empfKg: null,
+          empfWiederholungen: null,
+          empfRir: null,
+        );
+      }
+    }
+
     _saetze = updatedSaetze;
     notifyListeners();
   }
@@ -101,7 +115,9 @@ class ProgressionTrainingProvider with ChangeNotifier {
 
     final aktiverSatz = _saetze[aktiverSatzIndex];
 
-    // GEÄNDERT: Immer neu berechnen, ignorieren ob schon berechnet wurde
+    // Nur neu berechnen, wenn noch keine Empfehlung vorhanden oder explizit angefordert
+    if (aktiverSatz.empfehlungBerechnet && !notify) return;
+
     final empfehlung = ProgressionCalculatorService.berechneProgression(
         aktiverSatz, aktuellesProfil, _saetze);
 
@@ -117,6 +133,58 @@ class ProgressionTrainingProvider with ChangeNotifier {
 
     if (notify) {
       notifyListeners();
+    }
+  }
+
+  // NEUE METHODE: Berechnet Empfehlungen für alle nachfolgenden Sätze neu
+  void aktualisiereFolgeSatzEmpfehlungen(ProgressionProfileModel? aktuellesProfil) {
+    if (aktuellesProfil == null) return;
+
+    print('DEBUG: aktualisiereFolgeSatzEmpfehlungen aufgerufen, _aktiverSatz = $_aktiverSatz');
+    
+    final updatedSaetze = List<TrainingSetModel>.from(_saetze);
+    bool hasChanges = false;
+
+    for (int i = 0; i < updatedSaetze.length; i++) {
+      final satz = updatedSaetze[i];
+      
+      print('DEBUG: Prüfe Satz ${satz.id}, empfehlungBerechnet: ${satz.empfehlungBerechnet}');
+      
+      // Berechne Empfehlung nur für Sätze nach dem aktuellen Satz, 
+      // die noch nicht berechnet wurden oder invalidiert sind
+      if (satz.id > _aktiverSatz && !satz.empfehlungBerechnet) {
+        print('DEBUG: Berechne neue Empfehlung für Satz ${satz.id}');
+        
+        // Vorherigen Satz für Debug-Ausgaben finden
+        final vorherigenSatz = updatedSaetze.firstWhere(
+          (s) => s.id == satz.id - 1, 
+          orElse: () => TrainingSetModel(id: 0, kg: 0, wiederholungen: 0, rir: 0)
+        );
+        print('DEBUG: Vorheriger Satz (${vorherigenSatz.id}): ${vorherigenSatz.kg}kg');
+        
+        // WICHTIGER FIX: Verwende updatedSaetze statt _saetze für die Berechnung!
+        // So werden die NEUEN Werte der bereits geänderten Sätze berücksichtigt
+        final empfehlung = ProgressionCalculatorService.berechneProgression(
+            satz, aktuellesProfil, updatedSaetze);
+
+        print('DEBUG: Neue Empfehlung für Satz ${satz.id}: ${empfehlung['kg']}kg');
+
+        updatedSaetze[i] = satz.copyWith(
+          empfKg: empfehlung['kg'],
+          empfWiederholungen: empfehlung['wiederholungen'],
+          empfRir: empfehlung['rir'],
+          empfehlungBerechnet: true,
+        );
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      print('DEBUG: Empfehlungen aktualisiert, notifyListeners wird aufgerufen');
+      _saetze = updatedSaetze;
+      notifyListeners();
+    } else {
+      print('DEBUG: Keine Änderungen, notifyListeners wird NICHT aufgerufen');
     }
   }
 

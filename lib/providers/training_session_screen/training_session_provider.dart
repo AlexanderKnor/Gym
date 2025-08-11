@@ -391,7 +391,57 @@ class TrainingSessionProvider with ChangeNotifier {
         return; // Ungültiges Feld, nichts tun
     }
 
+    // WICHTIGER FIX: Invalidiere Empfehlungen für alle nachfolgenden Sätze
+    // da sie möglicherweise von den Änderungen des aktuellen Satzes abhängen
+    final currentSets = _exerciseSets[_currentExerciseIndex];
+    if (currentSets != null) {
+      final invalidationSets = List<TrainingSetModel>.from(currentSets);
+      bool hasInvalidations = false;
+      
+      for (int i = 0; i < invalidationSets.length; i++) {
+        if (invalidationSets[i].id > setId) {
+          _log('DEBUG: Invalidiere Empfehlung für Satz ${invalidationSets[i].id} nach Änderung von Satz $setId');
+          invalidationSets[i] = invalidationSets[i].copyWith(
+            empfehlungBerechnet: false,
+            empfKg: null,
+            empfWiederholungen: null,
+            empfRir: null,
+          );
+          hasInvalidations = true;
+        }
+      }
+      
+      if (hasInvalidations) {
+        _exerciseSets[_currentExerciseIndex] = invalidationSets;
+        _saveSession();
+      }
+    }
+
     notifyListeners();
+  }
+
+  // NEUE METHODE: Berechnet Empfehlungen für alle nachfolgenden Sätze neu
+  Future<void> recalculateFollowingSetsProgression(int currentSetId, 
+      ProgressionManagerProvider progressionProvider) async {
+    final sets = _exerciseSets[_currentExerciseIndex];
+    if (sets == null) return;
+
+    // Hole die Profile-ID für die aktuelle Übung
+    final exercise = getExerciseForMicrocycle(_currentExerciseIndex);
+    if (exercise?.progressionProfileId == null) return;
+
+    final profileId = exercise!.progressionProfileId!;
+    
+    _log('DEBUG: Neuberechnung für nachfolgende Sätze nach Änderung von Satz $currentSetId');
+    
+    // Berechne Empfehlungen für alle Sätze nach dem aktuellen
+    for (final set in sets) {
+      if (set.id > currentSetId && !set.empfehlungBerechnet) {
+        _log('DEBUG: Berechne Empfehlung neu für Satz ${set.id}');
+        await calculateProgressionForSet(_currentExerciseIndex, set.id, 
+            profileId, progressionProvider, forceRecalculation: false);
+      }
+    }
   }
 
   // Reaktiviert den letzten abgeschlossenen Satz einer Übung
@@ -973,22 +1023,43 @@ class TrainingSessionProvider with ChangeNotifier {
         _log(
             'Berechne Progression auf Basis historischer Daten: ${historicalSet.kg}kg, ${historicalSet.wiederholungen} Wdh, ${historicalSet.rir} RIR');
 
-        // Erstelle eine Liste von historischen Sets für die Berechnung
-        List<TrainingSetModel> historicalSets = [];
-        for (var histSet in lastSetData) {
-          historicalSets.add(TrainingSetModel(
-              id: histSet.setNumber,
-              kg: histSet.kg,
-              wiederholungen: histSet.reps,
-              rir: histSet.rir,
-              abgeschlossen: histSet.completed));
+        // WICHTIGER FIX: Für die Berechnung von Empfehlungen brauchen wir eine Mischung aus:
+        // - Historischen Daten (für "last" Variablen - gleicher Satz vom letzten Training)
+        // - Aktuellen Session-Daten (für "previous" Variablen - vorheriger Satz der aktuellen Einheit)
+        
+        List<TrainingSetModel> mixedSets = [];
+        for (int i = 0; i < sets.length; i++) {
+          if (i < lastSetData.length) {
+            // Für historische Vergleiche: Verwende historische Daten (last)
+            final histSet = lastSetData[i];
+            // ABER: Für ALLE bereits bearbeiteten Sätze der aktuellen Session verwende aktuelle Daten!
+            if (i <= setIndex) {
+              // Das ist der aktuelle Satz oder ein bereits bearbeiteter Satz - verwende AKTUELLE Werte!
+              mixedSets.add(sets[i]);
+              _log('DEBUG: Verwende AKTUELLE Werte für Satz ${sets[i].id}: ${sets[i].kg}kg, ${sets[i].wiederholungen} Wdh, ${sets[i].rir} RIR');
+            } else {
+              // Das sind zukünftige Sätze - verwende historische Daten
+              mixedSets.add(TrainingSetModel(
+                  id: histSet.setNumber,
+                  kg: histSet.kg,
+                  wiederholungen: histSet.reps,
+                  rir: histSet.rir,
+                  abgeschlossen: histSet.completed));
+              _log('DEBUG: Verwende HISTORISCHE Werte für Satz ${histSet.setNumber}: ${histSet.kg}kg, ${histSet.reps} Wdh, ${histSet.rir} RIR');
+            }
+          } else {
+            // Kein historischer Satz verfügbar - verwende aktuellen Satz
+            mixedSets.add(sets[i]);
+          }
         }
 
-        // GEÄNDERT: Empfehlung berechnen mit allen angepassten Werten aus der Übung
+        _log('DEBUG: Berechne Empfehlung für Satz $setId mit Mixed-Data');
+
+        // GEÄNDERT: Empfehlung berechnen mit gemischten Daten (historisch + aktuell)
         final empfehlung = progressionProvider.berechneEmpfehlungMitProfil(
           historicalSet,
           actualProfileId,
-          historicalSets,
+          mixedSets,
           customIncrement: customIncrement,
           repRangeMin: repRangeMin,
           repRangeMax: repRangeMax,

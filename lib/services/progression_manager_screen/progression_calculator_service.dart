@@ -62,20 +62,26 @@ class ProgressionCalculatorService {
       final config = profil.config;
       final rules = profil.rules;
 
+      // WICHTIG: alleSaetze enthält die AKTUELLEN Sätze der laufenden Trainingseinheit
+      // Für den vorherigen Satz nehmen wir den Satz mit der ID = satz.id - 1
+      
       final vorherigenSatzIndex = satz.id - 1;
       TrainingSetModel? vorherigenSatz;
+      
       if (vorherigenSatzIndex >= 1) {
+        // Hole den vorherigen Satz aus der AKTUELLEN Trainingseinheit
         vorherigenSatz = alleSaetze.firstWhere(
             (s) => s.id == vorherigenSatzIndex,
-            orElse: () =>
-                TrainingSetModel(id: 0, kg: 0, wiederholungen: 0, rir: 0));
+            orElse: () => TrainingSetModel(id: 0, kg: 0, wiederholungen: 0, rir: 0));
       }
+      
       final istErsterSatz = satz.id == 1;
 
+      // 1RM Berechnungen
       final letzter1RM = OneRMCalculatorService.calculate1RM(
           satz.kg, satz.wiederholungen, satz.rir);
 
-      final vorheriger1RM = vorherigenSatz != null
+      final vorheriger1RM = vorherigenSatz != null && vorherigenSatz.kg > 0
           ? OneRMCalculatorService.calculate1RM(vorherigenSatz.kg,
               vorherigenSatz.wiederholungen, vorherigenSatz.rir)
           : 0.0;
@@ -85,21 +91,32 @@ class ProgressionCalculatorService {
       final mockHistoricalReps = satz.wiederholungen > 0 ? satz.wiederholungen : 8;
       final mockHistoricalRir = satz.rir > 0 ? satz.rir : 2;
       
+      print('DEBUG: Erstelle Variables für Satz ${satz.id}');
+      print('DEBUG: Vorheriger Satz (${vorherigenSatz?.id}): ${vorherigenSatz?.kg}kg, ${vorherigenSatz?.wiederholungen} Wdh, ${vorherigenSatz?.rir} RIR');
+      
       final variables = <String, dynamic>{
+        // 'last' bezieht sich auf den gleichen Satz der letzten Einheit (historisch)
+        // Da wir die historischen Daten nicht haben, verwenden wir die aktuellen Werte als Fallback
         'lastKg': satz.kg > 0 ? satz.kg : mockHistoricalKg,
         'lastReps': satz.wiederholungen > 0 ? satz.wiederholungen : mockHistoricalReps,
         'lastRIR': satz.rir >= 0 ? satz.rir : mockHistoricalRir,
         'last1RM': letzter1RM > 0 ? letzter1RM : OneRMCalculatorService.calculate1RM(mockHistoricalKg, mockHistoricalReps, mockHistoricalRir),
-        'previousKg': vorherigenSatz?.kg ?? mockHistoricalKg,
-        'previousReps': vorherigenSatz?.wiederholungen ?? mockHistoricalReps,
-        'previousRIR': vorherigenSatz?.rir ?? mockHistoricalRir,
-        'previous1RM': vorheriger1RM > 0 ? vorheriger1RM : OneRMCalculatorService.calculate1RM(mockHistoricalKg, mockHistoricalReps, mockHistoricalRir),
+        
+        // 'previous' bezieht sich auf den vorherigen Satz der AKTUELLEN Einheit
+        // Das ist der entscheidende Fix: previousKg muss vom vorherigen Satz der aktuellen Einheit kommen!
+        'previousKg': vorherigenSatz?.kg ?? 0,
+        'previousReps': vorherigenSatz?.wiederholungen ?? 0,
+        'previousRIR': vorherigenSatz?.rir ?? 0,
+        'previous1RM': vorheriger1RM,
+        
         'targetRepsMin': config['targetRepsMin'] ?? 8,
         'targetRepsMax': config['targetRepsMax'] ?? 10,
         'targetRIRMin': config['targetRIRMin'] ?? 1,
         'targetRIRMax': config['targetRIRMax'] ?? 2,
         'increment': config['increment'] ?? 2.5,
       };
+      
+      print('DEBUG: Variables: previousKg=${variables['previousKg']}, previousReps=${variables['previousReps']}, previousRIR=${variables['previousRIR']}');
 
       double neueKg = satz.kg;
       int neueWiederholungen = satz.wiederholungen;

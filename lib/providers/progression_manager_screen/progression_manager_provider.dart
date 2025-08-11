@@ -199,8 +199,14 @@ class ProgressionManagerProvider with ChangeNotifier {
   // ===== DELEGIERTE METHODEN =====
 
   // Training Methoden
-  void handleChange(int id, String feld, dynamic wert) =>
-      _trainingProvider.handleChange(id, feld, wert);
+  void handleChange(int id, String feld, dynamic wert) {
+    print('DEBUG: handleChange aufgerufen für Satz $id, Feld: $feld, Wert: $wert');
+    _trainingProvider.handleChange(id, feld, wert);
+    
+    // WICHTIGER FIX: Empfehlungen SYNCHRON neu berechnen, nicht asynchron!
+    // Asynchrone Berechnung führt dazu, dass die UI alte Werte anzeigt
+    _trainingProvider.aktualisiereFolgeSatzEmpfehlungen(aktuellesProfil);
+  }
 
   void toggleProgressionManager() => _uiProvider.toggleProgressionManager();
 

@@ -619,9 +619,17 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [_stellar, _nebula],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: _lunar.withOpacity(0.3),
+              width: 1,
+            ),
           ),
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -633,24 +641,54 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                 padding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
                 child: Row(
                   children: [
-                    const Text(
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_proverCore, _proverGlow],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.content_copy_rounded,
+                        color: _nova,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
                       'Profil auswählen',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.3,
+                        color: _nova,
                       ),
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 22),
+                      icon: Icon(Icons.close, size: 22, color: _stardust),
                       onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
               ),
 
-              const Divider(height: 16),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _lunar.withOpacity(0.0),
+                      _lunar.withOpacity(0.8),
+                      _lunar.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
 
               // Liste der Profile
               Expanded(
@@ -661,64 +699,140 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                     final profile = provider.progressionsProfile[index];
                     final bool isSystemProfile = _isStandardProfile(profile.id);
 
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      leading: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isSystemProfile
-                              ? Colors.blue[50]
-                              : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _lunar.withOpacity(0.3),
+                            _lunar.withOpacity(0.1),
+                          ],
                         ),
-                        child: Icon(
-                          isSystemProfile
-                              ? Icons.verified_outlined
-                              : Icons.settings_outlined,
-                          size: 18,
-                          color: isSystemProfile
-                              ? Colors.blue[700]
-                              : Colors.grey[700],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _lunar.withOpacity(0.4),
+                          width: 1,
                         ),
                       ),
-                      title: Text(
-                        profile.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      subtitle: Text(
-                        profile.description,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                DuplicateProfileScreen(profileId: profile.id),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DuplicateProfileScreen(profileId: profile.id),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                // Icon
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    gradient: isSystemProfile
+                                        ? LinearGradient(
+                                            colors: [Color(0xFF007AFF), Color(0xFF40A2FF)],
+                                          )
+                                        : LinearGradient(
+                                            colors: [_asteroid, _comet],
+                                          ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    isSystemProfile
+                                        ? Icons.verified_outlined
+                                        : Icons.settings_outlined,
+                                    size: 20,
+                                    color: _nova,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                
+                                // Content
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              profile.name,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: -0.3,
+                                                color: _nova,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (isSystemProfile)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [Color(0xFF007AFF), Color(0xFF40A2FF)],
+                                                ),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                'SYSTEM',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: _nova,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        profile.description,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _stardust,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                
+                                // Arrow
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  size: 16,
+                                  color: _comet,
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
                 ),
               ),
+              
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -1244,6 +1358,11 @@ class DuplicateProfileScreen extends StatefulWidget {
 
 class _DuplicateProfileScreenState extends State<DuplicateProfileScreen> {
   bool _isInitialized = false;
+  
+  // Color constants - lokale Kopie für diese Klasse
+  static const Color _void = Color(0xFF000000);
+  static const Color _nova = Color(0xFFF5F5F7);
+  static const Color _proverCore = Color(0xFFFF4500);
 
   @override
   void initState() {
@@ -1263,24 +1382,25 @@ class _DuplicateProfileScreenState extends State<DuplicateProfileScreen> {
   Widget build(BuildContext context) {
     if (!_isInitialized) {
       return Scaffold(
+        backgroundColor: _void,
         appBar: AppBar(
-          title: const Text(
+          title: Text(
             'Profil duplizieren',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: _nova,
               letterSpacing: -0.3,
             ),
           ),
           centerTitle: false,
-          backgroundColor: Colors.white,
+          backgroundColor: _void,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black),
+          iconTheme: IconThemeData(color: _nova),
         ),
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(
-            color: Colors.black,
+            color: _proverCore,
             strokeWidth: 2,
           ),
         ),
@@ -1300,6 +1420,11 @@ class NewProfileScreen extends StatefulWidget {
 
 class _NewProfileScreenState extends State<NewProfileScreen> {
   bool _isInitialized = false;
+  
+  // Color constants - lokale Kopie für diese Klasse
+  static const Color _void = Color(0xFF000000);
+  static const Color _nova = Color(0xFFF5F5F7);
+  static const Color _proverCore = Color(0xFFFF4500);
 
   @override
   void initState() {
@@ -1319,24 +1444,25 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
   Widget build(BuildContext context) {
     if (!_isInitialized) {
       return Scaffold(
+        backgroundColor: _void,
         appBar: AppBar(
-          title: const Text(
+          title: Text(
             'Neues Profil',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: _nova,
               letterSpacing: -0.3,
             ),
           ),
           centerTitle: false,
-          backgroundColor: Colors.white,
+          backgroundColor: _void,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black),
+          iconTheme: IconThemeData(color: _nova),
         ),
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(
-            color: Colors.black,
+            color: _proverCore,
             strokeWidth: 2,
           ),
         ),

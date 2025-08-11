@@ -417,47 +417,65 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
   }
 
   Widget _buildSaveButton(BuildContext context, ProgressionManagerProvider provider) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_proverCore, _proverGlow],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: _proverCore.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return Consumer<ProgressionManagerProvider>(
+      builder: (context, prov, child) {
+        final isLoading = prov.profileProvider.isSaving;
+        
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isLoading 
+                ? [_comet, _mercury] 
+                : [_proverCore, _proverGlow],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: (isLoading ? _comet : _proverCore).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _handleSave(context, provider),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              children: const [
-                Icon(Icons.check, color: _nova, size: 18),
-                SizedBox(width: 8),
-                Text(
-                  'SPEICHERN',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: _nova,
-                    letterSpacing: 1,
-                  ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: isLoading ? null : () => _handleSave(context, provider),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  children: [
+                    if (isLoading) 
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(_nova),
+                        ),
+                      )
+                    else
+                      const Icon(Icons.check, color: _nova, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      isLoading ? 'SPEICHERN...' : 'SPEICHERN',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: _nova,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -959,42 +977,67 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [_proverCore, _proverGlow],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: _proverCore.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+            child: Consumer<ProgressionManagerProvider>(
+              builder: (context, prov, child) {
+                final isLoading = prov.profileProvider.isSaving;
+                
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isLoading 
+                        ? [_comet, _mercury] 
+                        : [_proverCore, _proverGlow],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isLoading ? _comet : _proverCore).withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _handleSave(context, provider),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'SPEICHERN',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: _nova,
-                        letterSpacing: 1.5,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: isLoading ? null : () => _handleSave(context, provider),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isLoading) 
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(_nova),
+                                ),
+                              )
+                            else
+                              const SizedBox.shrink(),
+                            if (isLoading) const SizedBox(width: 8),
+                            Text(
+                              isLoading ? 'SPEICHERN...' : 'SPEICHERN',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -1005,83 +1048,62 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
   void _handleSave(BuildContext context, ProgressionManagerProvider provider) async {
     HapticFeedback.mediumImpact();
     
-    final result = await provider.saveProfile();
-
-    if (context.mounted) {
-      final bool isSuccess = result['success'] == true;
-      final String? profileId = result['profileId'];
-      final bool isNewProfile = result['isNewProfile'] ?? false;
-
-      if (isSuccess) {
-        // Force refresh of profile data to ensure UI shows latest values
-        await provider.refreshProfiles();
-        
-        // For existing profiles, update the current edited profile with fresh data
-        if (!isNewProfile && profileId != null) {
-          final updatedProfile = provider.profileProvider.getProfileById(profileId);
-          if (updatedProfile != null) {
-            // Update the provider's current edited profile
-            provider.openProfileEditor(updatedProfile);
-          }
-        }
-        
+    // Save profile reference BEFORE closing editor
+    final currentProfile = provider.bearbeitetesProfil;
+    if (currentProfile == null) return;
+    
+    // Check if this is a new profile before saving  
+    final bool isNewProfile = currentProfile.id.contains('profile_') || 
+                              currentProfile.id.contains('-copy-');
+    final String profileId = currentProfile.id;
+    
+    if (isNewProfile) {
+      // Start smooth transition while saving in background
+      _startSmoothTransitionAndSave(context, provider, currentProfile);
+    } else {
+      // For existing profiles, save normally
+      final result = await provider.saveProfile();
+      
+      if (context.mounted && result['success'] == true) {
         // Update UI controllers with the latest saved values
         _updateControllersFromProfile();
-        
-        // Show brief success feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                Icon(Icons.check_circle, color: Colors.green, size: 18),
-                SizedBox(width: 12),
-                Text('Profil erfolgreich gespeichert'),
-              ],
-            ),
-            backgroundColor: _stellar,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(milliseconds: 1500),
-          ),
-        );
-        
-        // For existing profiles, keep the editor open with updated data
-        // Only close for new profiles that should navigate to detail view
-        if (isNewProfile) {
-          provider.closeProfileEditor();
-        }
-      } else {
+      } else if (context.mounted) {
         // Close on failure
         provider.closeProfileEditor();
       }
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          if (isSuccess && isNewProfile && profileId != null) {
-            // For new profiles, navigate to ProfileDetailScreen
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) {
-                final updatedProfile = provider.profileProvider
-                    .getProfileById(profileId);
-                if (updatedProfile != null) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ProfileDetailScreen(
-                        profile: updatedProfile,
-                        initialTab: 0,
-                      ),
-                    ),
-                  );
-                }
-              }
-            });
-          }
-          // For existing profiles, the editor closes automatically via state management
-        }
-      });
+    }
+  }
+  
+  void _startSmoothTransitionAndSave(BuildContext context, ProgressionManagerProvider provider, dynamic currentProfile) async {
+    // KORREKTE REIHENFOLGE: Erst speichern, dann schließen!
+    
+    // 1. Profil speichern (während bearbeitetesProfil noch verfügbar ist)
+    final result = await provider.saveProfile();
+    
+    if (result['success'] == true) {
+      // 2. Profile refreshen um das gespeicherte Profil zu holen
+      await provider.refreshProfiles();
+      
+      // 3. Das korrekt gespeicherte Profil holen
+      final savedProfile = provider.profileProvider.getProfileById(currentProfile.id);
+      
+      // 4. Editor schließen 
+      provider.closeProfileEditor();
+      
+      // 5. Mit dem gespeicherten Profil navigieren
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          _SmoothSlidePageRoute(
+            builder: (context) => ProfileDetailScreen(
+              profile: savedProfile ?? currentProfile,
+              initialTab: 0,
+            ),
+          ),
+        );
+      }
+    } else {
+      // Bei Fehler nur Editor schließen
+      provider.closeProfileEditor();
     }
   }
 
@@ -1112,4 +1134,63 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
     _rirMaxController.text = rirMax is num ? rirMax.toInt().toString() : '3';
     _incrementController.text = increment is num ? increment.toString() : '2.5';
   }
+}
+
+// Custom smooth slide page transition
+class _SmoothSlidePageRoute<T> extends PageRouteBuilder<T> {
+  final Widget Function(BuildContext) builder;
+  final VoidCallback? onTransitionComplete;
+
+  _SmoothSlidePageRoute({
+    required this.builder,
+    this.onTransitionComplete,
+  }) : super(
+          transitionDuration: const Duration(milliseconds: 600),
+          reverseTransitionDuration: const Duration(milliseconds: 450),
+          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Curved animations for professional feel
+            final slideAnimation = Tween<Offset>(
+              begin: const Offset(0.15, 0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: const Cubic(0.25, 0.1, 0.0, 1.0), // Custom easing curve
+            ));
+
+            final fadeAnimation = Tween<double>(
+              begin: 0.0,
+              end: 1.0,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+            ));
+
+            final scaleAnimation = Tween<double>(
+              begin: 0.97,
+              end: 1.0,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: const Cubic(0.25, 0.1, 0.0, 1.0),
+            ));
+
+            // Call completion callback when animation is done
+            if (animation.isCompleted && onTransitionComplete != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                onTransitionComplete!();
+              });
+            }
+
+            return SlideTransition(
+              position: slideAnimation,
+              child: FadeTransition(
+                opacity: fadeAnimation,
+                child: ScaleTransition(
+                  scale: scaleAnimation,
+                  child: child,
+                ),
+              ),
+            );
+          },
+        );
 }

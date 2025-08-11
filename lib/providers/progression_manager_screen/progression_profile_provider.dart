@@ -469,8 +469,8 @@ class ProgressionProfileProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // VERBESSERTE METHODE: saveProfile mit zuverlässigerer UI-Aktualisierung
-  Future<void> saveProfile(ProgressionUIProvider uiProvider) async {
+  // VERBESSERTE METHODE: saveProfile mit zuverlässigerer UI-Aktualisierung und optionalem Editor-Schließen
+  Future<void> saveProfile(ProgressionUIProvider uiProvider, {bool closeEditor = true}) async {
     if (_bearbeitetesProfil == null) return;
 
     try {
@@ -497,9 +497,14 @@ class ProgressionProfileProvider with ChangeNotifier {
       // Lokale Liste aktualisieren und UI benachrichtigen
       _progressionsProfile = updatedProfiles;
 
-      // UI-Zustand zurücksetzen
-      _bearbeitetesProfil = null;
-      uiProvider.hideProfileEditor();
+      // UI-Zustand zurücksetzen nur wenn Editor geschlossen werden soll
+      if (closeEditor) {
+        _bearbeitetesProfil = null;
+        uiProvider.hideProfileEditor();
+        print('Profile Editor geschlossen');
+      } else {
+        print('Profile Editor bleibt geöffnet');
+      }
 
       // Sofortige UI-Benachrichtigung vor Speicherung
       notifyListeners();

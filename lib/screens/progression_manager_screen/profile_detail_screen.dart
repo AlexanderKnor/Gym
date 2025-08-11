@@ -44,18 +44,15 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     // Auf Tab-Wechsel reagieren
     _tabController.addListener(_handleTabChange);
 
-    // Bei Demo-Tab das aktuelle Profil setzen
+    // NUR bei Demo-Tab das aktuelle Profil setzen
     if (widget.initialTab == 1) {
       // Nach dem ersten Build das Demo-Profil initialisieren
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeDemoProfile();
       });
-    } else {
-      // Auch im Editor-Tab das aktuelle Profil initialisieren
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _initializeDemoProfile();
-      });
     }
+    // Editor-Tab (initialTab == 0) setzt KEIN Demo-Profil!
+    // Es verwendet direkt widget.profile für die Regel-Anzeige
   }
 
   void _handleTabChange() {
@@ -342,7 +339,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   }
 
   Widget _buildMainContent(BuildContext context, ProgressionManagerProvider provider) {
-    final profil = provider.aktuellesProfil;
+    final profil = _getCurrentProfile();
     
     if (profil == null || profil.rules.isEmpty) {
       return SingleChildScrollView(
@@ -1982,7 +1979,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   }
 
   Widget _buildModernRulesList(BuildContext context, ProgressionManagerProvider provider) {
-    final profil = provider.aktuellesProfil;
+    final profil = _getCurrentProfile();
     
     if (profil == null) {
       return _buildModernEmptyState(context, provider);
@@ -2513,7 +2510,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     ProgressionManagerProvider provider,
     ThemeData theme,
   ) {
-    final profil = provider.aktuellesProfil;
+    final profil = _getCurrentProfile();
 
     if (profil == null) {
       return const Center(
@@ -3160,15 +3157,18 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   // Regel-Reihenfolge ändern - umbenannt um Namenskonflikte zu vermeiden
   Future<void> _handleRuleReorder(ProgressionManagerProvider provider,
       dynamic rule, int oldIndex, int newIndex) async {
+    final currentProfile = _getCurrentProfile();
+    if (currentProfile == null || currentProfile.rules.isEmpty) return;
+    
     provider.handleDragStart(rule.id);
 
     if (oldIndex < newIndex) {
       // Nach unten verschieben
-      final targetRule = provider.aktuellesProfil!.rules[newIndex];
+      final targetRule = currentProfile.rules[newIndex];
       await provider.handleDrop(targetRule.id);
     } else {
       // Nach oben verschieben
-      final targetRule = provider.aktuellesProfil!.rules[newIndex];
+      final targetRule = currentProfile.rules[newIndex];
       await provider.handleDrop(targetRule.id);
     }
   }

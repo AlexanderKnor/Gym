@@ -385,8 +385,8 @@ class ProgressionManagerProvider with ChangeNotifier {
           profileId.contains('profile_') || // Neue Profile
               profileId.contains('-copy-'); // Duplizierte Profile
 
-      // Profil speichern und Editor schließen
-      await profileProvider.saveProfile(_uiProvider);
+      // Profil speichern - für neue Profile Editor NICHT schließen
+      await profileProvider.saveProfile(_uiProvider, closeEditor: !isNewProfile);
 
       // Längere Verzögerung, um sicherzustellen, dass Firebase-Operationen abgeschlossen sind
       await Future.delayed(const Duration(milliseconds: 500));

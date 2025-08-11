@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
+import '../../utils/smooth_page_route.dart';
 import 'profile_detail_screen.dart';
 
 class ProfileEditorScreen extends StatelessWidget {
@@ -1075,35 +1076,32 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
   }
   
   void _startSmoothTransitionAndSave(BuildContext context, ProgressionManagerProvider provider, dynamic currentProfile) async {
-    // KORREKTE REIHENFOLGE: Erst speichern, dann schließen!
+    // SOFORTIGE ANIMATION: Editor schließen und sofort navigieren, parallel speichern!
     
-    // 1. Profil speichern (während bearbeitetesProfil noch verfügbar ist)
-    final result = await provider.saveProfile();
+    // 1. Editor UI sofort schließen für butterweiche Animation
+    provider.closeProfileEditor();
     
-    if (result['success'] == true) {
-      // 2. Profile refreshen um das gespeicherte Profil zu holen
-      await provider.refreshProfiles();
-      
-      // 3. Das korrekt gespeicherte Profil holen
-      final savedProfile = provider.profileProvider.getProfileById(currentProfile.id);
-      
-      // 4. Editor schließen 
-      provider.closeProfileEditor();
-      
-      // 5. Mit dem gespeicherten Profil navigieren
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          _SmoothSlidePageRoute(
-            builder: (context) => ProfileDetailScreen(
-              profile: savedProfile ?? currentProfile,
-              initialTab: 0,
-            ),
+    // 2. Sofortige Navigation mit temporärem Profil - kein Warten!
+    if (context.mounted) {
+      Navigator.of(context).pushReplacement(
+        SmoothPageRoute(
+          builder: (context) => _ProfileDetailWithSaving(
+            profile: currentProfile,
+            initialTab: 0,
+            onSaveComplete: () async {
+              // Speichere das spezifische Profil parallel zur Animation
+              // Verwende die Kopie, da Editor bereits geschlossen wurde
+              final result = await provider.saveProfileDirectly(currentProfile);
+              if (result['success'] == true) {
+                await provider.refreshProfiles();
+                // NICHT setDemoProfileId für Editor-Tab!
+                // Editor-Tab nutzt ausschließlich widget.profile
+              }
+              return result;
+            },
           ),
-        );
-      }
-    } else {
-      // Bei Fehler nur Editor schließen
-      provider.closeProfileEditor();
+        ),
+      );
     }
   }
 
@@ -1136,61 +1134,123 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
   }
 }
 
-// Custom smooth slide page transition
-class _SmoothSlidePageRoute<T> extends PageRouteBuilder<T> {
-  final Widget Function(BuildContext) builder;
-  final VoidCallback? onTransitionComplete;
 
-  _SmoothSlidePageRoute({
-    required this.builder,
-    this.onTransitionComplete,
-  }) : super(
-          transitionDuration: const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 450),
-          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Curved animations for professional feel
-            final slideAnimation = Tween<Offset>(
-              begin: const Offset(0.15, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: const Cubic(0.25, 0.1, 0.0, 1.0), // Custom easing curve
-            ));
+// Wrapper-Widget für ProfileDetailScreen mit paralleler Speicherung
+class _ProfileDetailWithSaving extends StatefulWidget {
+  final dynamic profile;
+  final int initialTab;
+  final Future<Map<String, dynamic>> Function() onSaveComplete;
 
-            final fadeAnimation = Tween<double>(
-              begin: 0.0,
-              end: 1.0,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-            ));
+  const _ProfileDetailWithSaving({
+    required this.profile,
+    required this.initialTab,
+    required this.onSaveComplete,
+  });
 
-            final scaleAnimation = Tween<double>(
-              begin: 0.97,
-              end: 1.0,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: const Cubic(0.25, 0.1, 0.0, 1.0),
-            ));
+  @override
+  State<_ProfileDetailWithSaving> createState() => _ProfileDetailWithSavingState();
+}
 
-            // Call completion callback when animation is done
-            if (animation.isCompleted && onTransitionComplete != null) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                onTransitionComplete!();
+class _ProfileDetailWithSavingState extends State<_ProfileDetailWithSaving> {
+  bool _isSaving = true;
+  bool _saveSuccess = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Starte parallele Speicherung nach kurzer Verzögerung für butterweiche Animation
+    Future.delayed(const Duration(milliseconds: 200), () async {
+      try {
+        final result = await widget.onSaveComplete();
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+            _saveSuccess = result['success'] == true;
+          });
+          
+          // Kurzes Feedback bei erfolgreichem Speichern
+          if (_saveSuccess) {
+            await Future.delayed(const Duration(milliseconds: 800));
+            if (mounted) {
+              setState(() {
+                _saveSuccess = false;
               });
             }
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+            _saveSuccess = false;
+          });
+        }
+      }
+    });
+  }
 
-            return SlideTransition(
-              position: slideAnimation,
-              child: FadeTransition(
-                opacity: fadeAnimation,
-                child: ScaleTransition(
-                  scale: scaleAnimation,
-                  child: child,
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Hauptinhalt - ProfileDetailScreen
+        ProfileDetailScreen(
+          profile: widget.profile,
+          initialTab: widget.initialTab,
+        ),
+        
+        // Subtiler Save-Indicator oben rechts
+        if (_isSaving || _saveSuccess)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 60,
+            right: 16,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: _saveSuccess 
+                    ? [Colors.green.withOpacity(0.9), Colors.green.withOpacity(0.7)]
+                    : [Color(0xFFFF4500).withOpacity(0.9), Color(0xFFFF6B3D).withOpacity(0.7)],
                 ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: (_saveSuccess ? Colors.green : Color(0xFFFF4500)).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            );
-          },
-        );
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isSaving)
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    const Icon(Icons.check_circle, color: Colors.white, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    _isSaving ? 'Speichern...' : 'Gespeichert',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }

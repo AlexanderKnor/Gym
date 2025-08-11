@@ -470,14 +470,15 @@ class ProgressionProfileProvider with ChangeNotifier {
   }
 
   // VERBESSERTE METHODE: saveProfile mit zuverlässigerer UI-Aktualisierung und optionalem Editor-Schließen
-  Future<void> saveProfile(ProgressionUIProvider uiProvider, {bool closeEditor = true}) async {
-    if (_bearbeitetesProfil == null) return;
+  Future<void> saveProfile(ProgressionUIProvider uiProvider, {bool closeEditor = true, dynamic profileToSave}) async {
+    // Verwende übergebenes Profil oder bearbeitetesProfil
+    final profilToSave = profileToSave ?? _bearbeitetesProfil;
+    if (profilToSave == null) return;
 
     try {
-      print('Starte Speichern des Profils: ${_bearbeitetesProfil!.id}');
+      print('Starte Speichern des Profils: ${profilToSave.id}');
 
-      // Lokale Kopie des zu bearbeitenden Profils erstellen, bevor wir die UI schließen
-      final profilToSave = _bearbeitetesProfil!;
+      // Das zu speichernde Profil verwenden
 
       // UI-Status aktualisieren vor dem Speichern in Firebase
       final existingIndex =

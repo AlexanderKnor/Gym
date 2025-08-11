@@ -5,6 +5,7 @@ import 'dart:ui'; // Import für BackdropFilter
 import 'dart:math'; // Import für sin, pi
 import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
+import '../../utils/smooth_page_route.dart';
 import '../../widgets/progression_manager_screen/components/rule_list_widget.dart';
 import '../../widgets/progression_manager_screen/components/set_card_widget.dart';
 import 'rule_editor_screen.dart';
@@ -224,11 +225,23 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
 
   // Helper method to get current profile data (fresh from provider if available)
   dynamic _getCurrentProfile() {
-    final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
-    // Check if there's a fresh version in the provider's profile list
-    final freshProfile = provider.profileProvider.getProfileById(widget.profile.id);
-    // Return fresh profile if available, otherwise fallback to widget.profile
-    return freshProfile ?? widget.profile;
+    // Für Demo-Tab: Verwende Provider-Profil für Training-Simulation
+    // Für Editor-Tab: Verwende direkt widget.profile
+    try {
+      final currentTabIndex = _tabController.index;
+      if (currentTabIndex == 0) {
+        // Editor-Tab: Verwende direkt widget.profile, keine Provider-Interferenz
+        return widget.profile;
+      } else {
+        // Demo-Tab: Verwende Provider-Profil für Training-Simulation
+        final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+        final freshProfile = provider.profileProvider.getProfileById(widget.profile.id);
+        return freshProfile ?? widget.profile;
+      }
+    } catch (e) {
+      // Fallback auf widget.profile wenn TabController noch nicht initialisiert
+      return widget.profile;
+    }
   }
 
   @override
@@ -339,7 +352,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   }
 
   Widget _buildMainContent(BuildContext context, ProgressionManagerProvider provider) {
-    final profil = _getCurrentProfile();
+    // Editor-Tab: Verwende IMMER widget.profile (das übergebene Profil)
+    final profil = widget.profile;
     
     if (profil == null || profil.rules.isEmpty) {
       return SingleChildScrollView(
@@ -436,17 +450,17 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
             child: Row(
               children: [
                 _buildMinimalStatItem(
-                  '${_formatInteger(_getCurrentProfile().config['targetRepsMin'])}-${_formatInteger(_getCurrentProfile().config['targetRepsMax'])}',
+                  '${_formatInteger(widget.profile.config['targetRepsMin'])}-${_formatInteger(widget.profile.config['targetRepsMax'])}',
                   'Wdhl',
                 ),
                 _buildMinimalDivider(),
                 _buildMinimalStatItem(
-                  '${_formatInteger(_getCurrentProfile().config['targetRIRMin'])}-${_formatInteger(_getCurrentProfile().config['targetRIRMax'])}',
+                  '${_formatInteger(widget.profile.config['targetRIRMin'])}-${_formatInteger(widget.profile.config['targetRIRMax'])}',
                   'RIR',
                 ),
                 _buildMinimalDivider(),
                 _buildMinimalStatItem(
-                  '${_formatNumber(_getCurrentProfile().config['increment'])} kg',
+                  '${_formatNumber(widget.profile.config['increment'])} kg',
                   'Steigerung',
                 ),
               ],
@@ -1827,19 +1841,19 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
               children: [
                 _buildModernConfigValue(
                   'Wiederholungen',
-                  '${_formatInteger(_getCurrentProfile().config['targetRepsMin'])} - ${_formatInteger(_getCurrentProfile().config['targetRepsMax'])}',
+                  '${_formatInteger(widget.profile.config['targetRepsMin'])} - ${_formatInteger(widget.profile.config['targetRepsMax'])}',
                   Icons.repeat_rounded,
                 ),
                 _buildVerticalDivider(),
                 _buildModernConfigValue(
                   'RIR-Bereich',
-                  '${_formatInteger(_getCurrentProfile().config['targetRIRMin'])} - ${_formatInteger(_getCurrentProfile().config['targetRIRMax'])}',
+                  '${_formatInteger(widget.profile.config['targetRIRMin'])} - ${_formatInteger(widget.profile.config['targetRIRMax'])}',
                   Icons.trending_down_rounded,
                 ),
                 _buildVerticalDivider(),
                 _buildModernConfigValue(
                   'Steigerung',
-                  '${_formatNumber(_getCurrentProfile().config['increment'])} kg',
+                  '${_formatNumber(widget.profile.config['increment'])} kg',
                   Icons.trending_up_rounded,
                 ),
               ],
@@ -1979,7 +1993,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   }
 
   Widget _buildModernRulesList(BuildContext context, ProgressionManagerProvider provider) {
-    final profil = _getCurrentProfile();
+    // Editor-Tab: Verwende IMMER widget.profile (das übergebene Profil)  
+    final profil = widget.profile;
     
     if (profil == null) {
       return _buildModernEmptyState(context, provider);
@@ -2510,7 +2525,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
     ProgressionManagerProvider provider,
     ThemeData theme,
   ) {
-    final profil = _getCurrentProfile();
+    // Editor-Tab: Verwende IMMER widget.profile (das übergebene Profil)
+    final profil = widget.profile;
 
     if (profil == null) {
       return const Center(
@@ -3157,7 +3173,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen>
   // Regel-Reihenfolge ändern - umbenannt um Namenskonflikte zu vermeiden
   Future<void> _handleRuleReorder(ProgressionManagerProvider provider,
       dynamic rule, int oldIndex, int newIndex) async {
-    final currentProfile = _getCurrentProfile();
+    // Editor-Tab: Verwende IMMER widget.profile (das übergebene Profil)
+    final currentProfile = widget.profile;
     if (currentProfile == null || currentProfile.rules.isEmpty) return;
     
     provider.handleDragStart(rule.id);

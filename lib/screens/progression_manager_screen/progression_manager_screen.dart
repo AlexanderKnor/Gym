@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../providers/progression_manager_screen/progression_manager_provider.dart';
+import '../../utils/smooth_page_route.dart';
 import 'profile_detail_screen.dart';
 import 'profile_editor_screen.dart';
 
@@ -446,14 +447,10 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
   }
 
   void _openProfileDemo(BuildContext context, dynamic profile) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ProfileDetailScreen(
-          profile: profile,
-          initialTab: 1,
-        ),
-      ),
-    );
+    SmoothNavigator.push(context, (context) => ProfileDetailScreen(
+      profile: profile,
+      initialTab: 1,
+    ));
   }
 
   void _createNewProfile(BuildContext context) {
@@ -529,11 +526,7 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                   label: 'Leeres Profil erstellen',
                   onTap: () {
                     Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const NewProfileScreen(),
-                      ),
-                    );
+                    SmoothNavigator.push(context, (context) => const NewProfileScreen());
                   },
                   isPrimary: false,
                 ),
@@ -721,12 +714,8 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
                         child: InkWell(
                           onTap: () {
                             Navigator.of(context).pop();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DuplicateProfileScreen(profileId: profile.id),
-                              ),
-                            );
+                            SmoothNavigator.push(context, (context) =>
+                                DuplicateProfileScreen(profileId: profile.id));
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Padding(
@@ -1007,14 +996,10 @@ class _ProgressionManagerScreenState extends State<ProgressionManagerScreen>
   }
 
   void _editProfile(BuildContext context, dynamic profile) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ProfileDetailScreen(
-          profile: profile,
-          initialTab: 0, // Editor tab (0 = Editor, 1 = Demo)
-        ),
-      ),
-    );
+    SmoothNavigator.push(context, (context) => ProfileDetailScreen(
+      profile: profile,
+      initialTab: 0, // Editor tab (0 = Editor, 1 = Demo)
+    ));
   }
 
   void _confirmDeleteProfile(BuildContext context, dynamic profile) {

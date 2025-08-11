@@ -421,6 +421,32 @@ class ProgressionManagerProvider with ChangeNotifier {
     }
   }
 
+  // Neue Methode: Speichert ein spezifisches Profil direkt (für parallele Speicherung)
+  Future<Map<String, dynamic>> saveProfileDirectly(dynamic profile) async {
+    try {
+      print('Starte direktes Speichern des Profils: ${profile.id}');
+      
+      final String profileId = profile.id;
+      final bool isNewProfile = profileId.contains('profile_') || profileId.contains('-copy-');
+
+      // Profil direkt speichern ohne UI-Abhängigkeiten
+      await profileProvider.saveProfile(_uiProvider, closeEditor: false, profileToSave: profile);
+
+      // Profile explizit neu laden
+      await refreshProfiles();
+
+      print('Profil direkt gespeichert und UI aktualisiert');
+      return {
+        'success': true,
+        'profileId': profileId,
+        'isNewProfile': isNewProfile,
+      };
+    } catch (e) {
+      print('Fehler beim direkten Speichern des Profils: $e');
+      return {'success': false, 'profileId': null};
+    }
+  }
+
   void duplicateProfile(String profilId) =>
       profileProvider.duplicateProfile(profilId, _uiProvider);
 

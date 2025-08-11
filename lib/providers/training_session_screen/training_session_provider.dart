@@ -786,33 +786,37 @@ class TrainingSessionProvider with ChangeNotifier {
 
     // Starte einen neuen Timer
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_restTimeRemaining > 0) {
-        _restTimeRemaining--;
+      _restTimeRemaining--;
 
-        // Vibrieren, wenn nur noch 3 Sekunden übrig sind
-        if (_restTimeRemaining <= 3 && _restTimeRemaining > 0) {
-          try {
-            HapticFeedback.mediumImpact();
-          } catch (e) {
-            // Ignoriere Fehler bei Haptic Feedback
-          }
+      // Vibrieren, wenn nur noch 3 Sekunden übrig sind (nur im positiven Bereich)
+      if (_restTimeRemaining <= 3 && _restTimeRemaining > 0) {
+        try {
+          HapticFeedback.mediumImpact();
+        } catch (e) {
+          // Ignoriere Fehler bei Haptic Feedback
         }
+      }
 
-        notifyListeners();
-      } else {
-        // Timer ist abgelaufen
-        _isResting = false;
-        _cancelRestTimer();
-
-        // Starke Vibration, wenn der Timer abgelaufen ist
+      // Starke Vibration, wenn der Timer bei 0 ankommt
+      if (_restTimeRemaining == 0) {
         try {
           HapticFeedback.heavyImpact();
         } catch (e) {
           // Ignoriere Fehler bei Haptic Feedback
         }
-
-        notifyListeners();
       }
+
+      // Periodische Erinnerung alle 30 Sekunden bei Überschreitung
+      if (_restTimeRemaining < 0 && _restTimeRemaining % 30 == 0) {
+        try {
+          HapticFeedback.mediumImpact();
+        } catch (e) {
+          // Ignoriere Fehler bei Haptic Feedback
+        }
+      }
+
+      notifyListeners();
+      // Timer läuft weiter, auch bei negativen Werten (Überschreitung)
     });
 
     notifyListeners();
@@ -827,34 +831,37 @@ class TrainingSessionProvider with ChangeNotifier {
 
         // Neuen Timer starten
         _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_restTimeRemaining > 0) {
-            _restTimeRemaining--;
+          _restTimeRemaining--;
 
-            // Vibrieren, wenn nur noch 3 Sekunden übrig sind
-            if (_restTimeRemaining <= 3 && _restTimeRemaining > 0) {
-              try {
-                HapticFeedback.mediumImpact();
-              } catch (e) {
-                // Ignoriere Fehler bei Haptic Feedback
-              }
+          // Vibrieren, wenn nur noch 3 Sekunden übrig sind (nur im positiven Bereich)
+          if (_restTimeRemaining <= 3 && _restTimeRemaining > 0) {
+            try {
+              HapticFeedback.mediumImpact();
+            } catch (e) {
+              // Ignoriere Fehler bei Haptic Feedback
             }
+          }
 
-            notifyListeners();
-          } else {
-            // Timer ist abgelaufen
-            _isResting = false;
-            _isPaused = false;
-            _cancelRestTimer();
-
-            // Starke Vibration, wenn der Timer abgelaufen ist
+          // Starke Vibration, wenn der Timer bei 0 ankommt
+          if (_restTimeRemaining == 0) {
             try {
               HapticFeedback.heavyImpact();
             } catch (e) {
               // Ignoriere Fehler bei Haptic Feedback
             }
-
-            notifyListeners();
           }
+
+          // Periodische Erinnerung alle 30 Sekunden bei Überschreitung
+          if (_restTimeRemaining < 0 && _restTimeRemaining % 30 == 0) {
+            try {
+              HapticFeedback.mediumImpact();
+            } catch (e) {
+              // Ignoriere Fehler bei Haptic Feedback
+            }
+          }
+
+          notifyListeners();
+          // Timer läuft weiter, auch bei negativen Werten (Überschreitung)
         });
       } else {
         // Timer pausieren

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Professional smooth page transition for consistent UX throughout the app
+/// Professional smooth page transition with premium vertical slide animation
 class SmoothPageRoute<T> extends PageRouteBuilder<T> {
   final Widget Function(BuildContext) builder;
   final VoidCallback? onTransitionComplete;
@@ -11,17 +11,21 @@ class SmoothPageRoute<T> extends PageRouteBuilder<T> {
     this.onTransitionComplete,
     this.customDuration,
   }) : super(
-          transitionDuration: customDuration ?? const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 450),
+          transitionDuration: customDuration ?? const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 400),
           pageBuilder: (context, animation, secondaryAnimation) => builder(context),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Professional curved animations for premium feel
+            
+            // PREMIUM VERTICAL SLIDE ANIMATION
+            // Opening: Slides up from bottom (elegant entrance)
+            // Closing: Slides down to bottom (natural exit)
+            
             final slideAnimation = Tween<Offset>(
-              begin: const Offset(0.15, 0),
-              end: Offset.zero,
+              begin: const Offset(0.0, 1.0), // Start below screen
+              end: Offset.zero,               // End at normal position
             ).animate(CurvedAnimation(
               parent: animation,
-              curve: const Cubic(0.25, 0.1, 0.0, 1.0), // Custom iOS-like easing
+              curve: const Cubic(0.4, 0.0, 0.2, 1.0), // Material Design easing
             ));
 
             final fadeAnimation = Tween<double>(
@@ -29,15 +33,7 @@ class SmoothPageRoute<T> extends PageRouteBuilder<T> {
               end: 1.0,
             ).animate(CurvedAnimation(
               parent: animation,
-              curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-            ));
-
-            final scaleAnimation = Tween<double>(
-              begin: 0.97,
-              end: 1.0,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: const Cubic(0.25, 0.1, 0.0, 1.0),
+              curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
             ));
 
             // Call completion callback when animation is done
@@ -47,14 +43,12 @@ class SmoothPageRoute<T> extends PageRouteBuilder<T> {
               });
             }
 
+            // Clean vertical slide animation with fade
             return SlideTransition(
               position: slideAnimation,
               child: FadeTransition(
                 opacity: fadeAnimation,
-                child: ScaleTransition(
-                  scale: scaleAnimation,
-                  child: child,
-                ),
+                child: child,
               ),
             );
           },

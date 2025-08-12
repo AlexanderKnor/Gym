@@ -14,6 +14,7 @@ import '../../widgets/training_session_screen/exercise_tab_widget.dart';
 import '../../widgets/training_session_screen/rest_timer_widget.dart';
 import '../../widgets/training_session_screen/training_completion_widget.dart';
 import '../create_training_plan_screen/exercise_selection_screen.dart';
+import '../../utils/smooth_page_route.dart';
 
 class TrainingSessionScreen extends StatefulWidget {
   final TrainingPlanModel trainingPlan;
@@ -1006,9 +1007,8 @@ class _TrainingSessionScreenState extends State<TrainingSessionScreen>
   // NEU: Dialog zum Hinzufügen einer Übung anzeigen
   void _showAddExerciseDialog(
       BuildContext context, TrainingSessionProvider sessionProvider) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
+    Navigator.of(context).push(
+      SmoothPageRoute(
         builder: (context) => ExerciseSelectionScreen(
           onExerciseUpdated: (exercise) async {
             await sessionProvider.addNewExerciseToSession(exercise);

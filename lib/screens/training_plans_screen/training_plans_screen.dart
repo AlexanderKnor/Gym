@@ -393,9 +393,8 @@ class TrainingPlansScreen extends StatelessWidget {
     // Plan in den Provider laden und direkt zum Editor navigieren
     createProvider.skipToEditor(plan);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
+    Navigator.of(context).push(
+      SmoothPageRoute(
         builder: (context) => ChangeNotifierProvider.value(
           value: createProvider,
           child: const TrainingDayEditorScreen(),

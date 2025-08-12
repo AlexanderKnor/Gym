@@ -529,9 +529,8 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
           provider.loadExistingPlanForEditing(planToEdit);
           
           // Navigate to exercise editor instead of going back
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
+          Navigator.of(context).pushReplacement(
+            SmoothPageRoute(
               builder: (context) => ChangeNotifierProvider.value(
                 value: provider,
                 child: const TrainingDayEditorScreen(),

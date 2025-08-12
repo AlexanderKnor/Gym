@@ -11,6 +11,7 @@ import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../screens/main_screen.dart';
 import 'create_plan_wizard_screen.dart';
+import '../../utils/smooth_page_route.dart';
 
 class TrainingDayEditorScreen extends StatefulWidget {
   const TrainingDayEditorScreen({Key? key}) : super(key: key);
@@ -408,7 +409,7 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                               colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)], // Orange gradient
                             ).createShader(bounds),
                             child: Text(
-                              isEditMode ? '${_truncateText(plan.name, 20)} BEARBEITEN' : _truncateText(plan.name.toUpperCase(), 25),
+                              _truncateText(plan.name.toUpperCase(), 25),
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
@@ -1379,9 +1380,8 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     }
     
     // Navigate to wizard with current plan data now properly loaded in provider
-    Navigator.push(
-      context,
-      MaterialPageRoute(
+    Navigator.of(context).push(
+      SmoothPageRoute(
         builder: (context) => ChangeNotifierProvider.value(
           value: createProvider,
           child: const CreatePlanWizardScreen(isEditingExisting: true),

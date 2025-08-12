@@ -1015,9 +1015,8 @@ class _TrainingScreenState extends State<TrainingScreen>
     final createProvider =
         Provider.of<CreateTrainingPlanProvider>(context, listen: false);
     createProvider.skipToEditor(plan);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
+    Navigator.of(context).push(
+      SmoothPageRoute(
         builder: (context) => ChangeNotifierProvider.value(
           value: createProvider,
           child: const TrainingDayEditorScreen(),
@@ -1032,32 +1031,15 @@ class _TrainingScreenState extends State<TrainingScreen>
     HapticFeedback.lightImpact();
 
     Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return ChangeNotifierProvider(
-            create: (context) => TrainingSessionProvider(),
-            child: TrainingSessionScreen(
-              trainingPlan: plan,
-              dayIndex: dayIndex,
-              weekIndex: weekIndex,
-            ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // Smooth fade transition without flicker
-          return FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOut,
-            ),
-            child: Container(
-              color: _void,
-              child: child,
-            ),
-          );
-        },
+      SmoothPageRoute(
+        builder: (context) => ChangeNotifierProvider(
+          create: (context) => TrainingSessionProvider(),
+          child: TrainingSessionScreen(
+            trainingPlan: plan,
+            dayIndex: dayIndex,
+            weekIndex: weekIndex,
+          ),
+        ),
       ),
     );
   }

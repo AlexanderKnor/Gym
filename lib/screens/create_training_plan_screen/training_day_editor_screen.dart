@@ -1143,9 +1143,16 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () {
+                        onTap: () async {
                           Navigator.pop(context); // Dialog schließen
-                          Navigator.pop(context); // Screen verlassen
+                          
+                          // Refresh training plans before leaving
+                          final plansProvider = Provider.of<TrainingPlansProvider>(context, listen: false);
+                          await plansProvider.refreshPlans();
+                          
+                          if (context.mounted) {
+                            Navigator.pop(context); // Screen verlassen
+                          }
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: const Padding(
@@ -1312,6 +1319,9 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
 
       // Gelöschte Übungen und Trainingstage bereinigen
       await createProvider.cleanupDeletedItems();
+      
+      // Refresh plans to ensure list is up to date
+      await plansProvider.refreshPlans();
 
       // Visuelles Feedback
       HapticFeedback.mediumImpact();

@@ -79,6 +79,11 @@ class TrainingPlansProvider extends ChangeNotifier {
     }
   }
 
+  // Öffentliche Methode zum Neuladen der Pläne
+  Future<void> refreshPlans() async {
+    await _loadTrainingPlans();
+  }
+
   // Trainingsplan speichern
   Future<bool> saveTrainingPlan(TrainingPlanModel plan, bool activate) async {
     try {

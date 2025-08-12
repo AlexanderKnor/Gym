@@ -106,6 +106,9 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                       icon: const Icon(Icons.close, color: _stardust, size: 24),
                       onPressed: () {
                         provider.closeProfileEditor();
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
                       },
                     ),
                     const SizedBox(width: 8),
@@ -160,7 +163,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       children: [
         // Backdrop
         GestureDetector(
-          onTap: provider.closeProfileEditor,
+          onTap: () {
+            provider.closeProfileEditor();
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
+          },
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
             child: Container(
@@ -187,7 +195,11 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     return WillPopScope(
       onWillPop: () async {
         provider.closeProfileEditor();
-        return false;
+        // Explizit zurück navigieren nach Provider-Update
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+        return false; // Verhindert doppelte Navigation
       },
       child: Scaffold(
         backgroundColor: _void,
@@ -452,6 +464,9 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   provider.closeProfileEditor();
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
                 },
               ),
             ),
@@ -1025,6 +1040,9 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
                   onTap: () {
                     HapticFeedback.lightImpact();
                     provider.closeProfileEditor();
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1138,6 +1156,7 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
       } else if (context.mounted) {
         // Close on failure
         provider.closeProfileEditor();
+        Navigator.of(context).pop();
       }
     }
   }

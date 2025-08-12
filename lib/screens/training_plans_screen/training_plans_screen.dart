@@ -7,6 +7,7 @@ import '../../providers/create_training_plan_screen/create_training_plan_provide
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../create_training_plan_screen/create_plan_wizard_screen.dart';
 import '../create_training_plan_screen/training_day_editor_screen.dart';
+import '../../utils/smooth_page_route.dart';
 
 class TrainingPlansScreen extends StatelessWidget {
   const TrainingPlansScreen({Key? key}) : super(key: key);
@@ -148,9 +149,8 @@ class TrainingPlansScreen extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
+                    Navigator.of(context).push(
+                      SmoothPageRoute(
                         builder: (context) => const CreatePlanWizardScreen(),
                       ),
                     );
@@ -358,9 +358,8 @@ class TrainingPlansScreen extends StatelessWidget {
                 child: InkWell(
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
+                    Navigator.of(context).push(
+                      SmoothPageRoute(
                         builder: (context) => const CreatePlanWizardScreen(),
                       ),
                     );

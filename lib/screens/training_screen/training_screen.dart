@@ -13,6 +13,7 @@ import '../../services/training/session_recovery_service.dart';
 import '../create_training_plan_screen/create_plan_wizard_screen.dart';
 import '../create_training_plan_screen/training_day_editor_screen.dart';
 import '../training_session_screen/training_session_screen.dart';
+import '../../utils/smooth_page_route.dart';
 
 class TrainingScreen extends StatefulWidget {
   const TrainingScreen({super.key});
@@ -959,7 +960,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                   onTap: () {
                     HapticFeedback.lightImpact();
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      SmoothPageRoute(
                         builder: (context) => const CreatePlanWizardScreen(),
                       ),
                     );

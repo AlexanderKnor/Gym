@@ -10,7 +10,7 @@ import '../../providers/training_plans_screen/training_plans_screen_provider.dar
 import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
 import '../../providers/training_session_screen/training_session_provider.dart';
 import '../../services/training/session_recovery_service.dart';
-import '../create_training_plan_screen/create_training_plan_screen.dart';
+import '../create_training_plan_screen/create_plan_wizard_screen.dart';
 import '../create_training_plan_screen/training_day_editor_screen.dart';
 import '../training_session_screen/training_session_screen.dart';
 
@@ -960,7 +960,7 @@ class _TrainingScreenState extends State<TrainingScreen>
                     HapticFeedback.lightImpact();
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const CreateTrainingPlanScreen(),
+                        builder: (context) => const CreatePlanWizardScreen(),
                       ),
                     );
                   },

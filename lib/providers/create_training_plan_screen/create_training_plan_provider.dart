@@ -79,6 +79,57 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
     }
   }
 
+  void setPeriodization(bool isPeriodized) {
+    _isPeriodized = isPeriodized;
+    notifyListeners();
+  }
+
+  // Generiere einen Draft Plan basierend auf den aktuellen Einstellungen
+  void generateDraftPlan() {
+    try {
+      final id = 'plan_${DateTime.now().millisecondsSinceEpoch}';
+      
+      // Erstelle Trainingstage basierend auf der Frequenz
+      final days = List<TrainingDayModel>.generate(
+        _frequency,
+        (index) => TrainingDayModel(
+          id: 'day_${DateTime.now().millisecondsSinceEpoch}_$index',
+          name: index < _dayNames.length ? _dayNames[index] : 'Tag ${index + 1}',
+          exercises: [], // Leere Übungsliste
+        ),
+      );
+
+      if (_isPeriodized) {
+        _draftPlan = TrainingPlanModel(
+          id: id,
+          name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
+          days: days,
+          isActive: false,
+          gym: _gym.isNotEmpty ? _gym : null,
+          isPeriodized: true,
+          numberOfWeeks: _numberOfWeeks,
+          periodization: PeriodizationModel(
+            weeks: _numberOfWeeks,
+            dayConfigurations: {},
+            startDate: DateTime.now(),
+          ),
+        );
+      } else {
+        _draftPlan = TrainingPlanModel(
+          id: id,
+          name: _planName.isNotEmpty ? _planName : 'Neuer Trainingsplan',
+          days: days,
+          isActive: false,
+          gym: _gym.isNotEmpty ? _gym : null,
+        );
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print('Fehler beim Generieren des Draft Plans: $e');
+    }
+  }
+
   // Sichere Methode zum Setzen eines Tagesnamens
   void setDayName(int index, String name) {
     try {
@@ -681,5 +732,22 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
 
     // UI aktualisieren
     notifyListeners();
+  }
+
+  // Speichere den aktuellen Plan
+  Future<bool> savePlan() async {
+    if (_draftPlan == null) return false;
+    
+    try {
+      final success = await _trainingPlanService.addSingleTrainingPlan(_draftPlan!);
+      if (success) {
+        // Nach erfolgreichem Speichern zurücksetzen
+        reset();
+      }
+      return success;
+    } catch (e) {
+      print('Fehler beim Speichern des Plans: $e');
+      return false;
+    }
   }
 }

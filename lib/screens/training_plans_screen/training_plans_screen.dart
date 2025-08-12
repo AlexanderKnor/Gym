@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../providers/training_plans_screen/training_plans_screen_provider.dart';
 import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
-import '../create_training_plan_screen/create_training_plan_screen.dart';
+import '../create_training_plan_screen/create_plan_wizard_screen.dart';
 import '../create_training_plan_screen/training_day_editor_screen.dart';
 
 class TrainingPlansScreen extends StatelessWidget {
@@ -151,7 +151,7 @@ class TrainingPlansScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const CreateTrainingPlanScreen(),
+                        builder: (context) => const CreatePlanWizardScreen(),
                       ),
                     );
                   },
@@ -361,7 +361,7 @@ class TrainingPlansScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const CreateTrainingPlanScreen(),
+                        builder: (context) => const CreatePlanWizardScreen(),
                       ),
                     );
                   },

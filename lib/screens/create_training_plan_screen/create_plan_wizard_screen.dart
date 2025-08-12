@@ -4,10 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/create_training_plan_screen/create_training_plan_provider.dart';
 import '../../utils/smooth_page_route.dart';
+import '../../models/training_plan_screen/training_day_model.dart';
 import 'training_day_editor_screen.dart';
 
 class CreatePlanWizardScreen extends StatefulWidget {
-  const CreatePlanWizardScreen({Key? key}) : super(key: key);
+  final bool isEditingExisting;
+  
+  const CreatePlanWizardScreen({
+    Key? key,
+    this.isEditingExisting = false,
+  }) : super(key: key);
 
   @override
   State<CreatePlanWizardScreen> createState() => _CreatePlanWizardScreenState();
@@ -76,9 +82,12 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
     _progressAnimationController.forward();
     _stepAnimationController.forward();
 
-    // Reset provider for clean start
+    // Reset provider nur bei komplett neuen Plänen
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CreateTrainingPlanProvider>(context, listen: false).reset();
+      final provider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+      if (!widget.isEditingExisting) {
+        provider.reset();
+      }
     });
   }
 
@@ -429,7 +438,9 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
                       borderRadius: BorderRadius.circular(16),
                       child: Center(
                         child: Text(
-                          isLastStep ? 'PLAN ERSTELLEN' : 'WEITER',
+                          isLastStep 
+                            ? (provider.editingPlanId != null ? 'AKTUALISIEREN' : 'PLAN ERSTELLEN')
+                            : 'WEITER',
                           style: TextStyle(
                             color: canProceed ? _nova : _comet,
                             fontWeight: FontWeight.w800,
@@ -454,42 +465,89 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
     
     HapticFeedback.mediumImpact();
     
-    // Erstelle den Draft Plan, falls noch nicht vorhanden
-    if (provider.draftPlan == null) {
-      provider.generateDraftPlan();
-    }
+    final isEditMode = provider.isEditMode;
     
-    // Speichere Plan-Referenz vor dem Speichern (da savePlan() reset() aufruft)
-    final planToEdit = provider.draftPlan!;
-    final planName = provider.planName;
-    
-    // Save plan to database
-    final success = await provider.savePlan();
-    
-    if (context.mounted) {
-      if (success) {
-        // Lade Plan zurück in Provider für Bearbeitung
-        provider.loadExistingPlanForEditing(planToEdit);
+    if (isEditMode) {
+      // Im Edit-Modus: Plan aktualisieren
+      if (provider.draftPlan != null) {
+        // Intelligente Anpassung der Trainingstage basierend auf neuer Frequenz
+        List<TrainingDayModel> updatedDays = List<TrainingDayModel>.from(provider.draftPlan!.days);
+        final currentDayCount = updatedDays.length;
+        final newFrequency = provider.frequency;
         
-        // Navigate to exercise editor instead of going back
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChangeNotifierProvider.value(
-              value: provider,
-              child: const TrainingDayEditorScreen(),
+        if (newFrequency > currentDayCount) {
+          // Neue Tage hinzufügen
+          for (int i = currentDayCount; i < newFrequency; i++) {
+            final dayName = i < provider.dayNames.length 
+                ? provider.dayNames[i] 
+                : 'Tag ${i + 1}';
+            
+            updatedDays.add(TrainingDayModel(
+              id: 'day_${DateTime.now().millisecondsSinceEpoch}_$i',
+              name: dayName,
+              exercises: [],
+            ));
+          }
+        } else if (newFrequency < currentDayCount) {
+          // Überschüssige Tage entfernen
+          updatedDays = updatedDays.take(newFrequency).toList();
+        }
+        
+        // Plan mit neuen Werten aktualisieren
+        final updatedPlan = provider.draftPlan!.copyWith(
+          name: provider.planName,
+          gym: provider.gym.isNotEmpty ? provider.gym : null,
+          days: updatedDays,
+          isPeriodized: provider.isPeriodized,
+          numberOfWeeks: provider.numberOfWeeks,
+        );
+        
+        // Aktualisiere den Plan im Provider
+        provider.updateDraftPlan(updatedPlan);
+        
+        // Navigate back to exercise editor
+        Navigator.pop(context);
+      }
+    } else {
+      // Normaler Modus: Neuen Plan erstellen
+      
+      // Erstelle den Draft Plan, falls noch nicht vorhanden
+      if (provider.draftPlan == null) {
+        provider.generateDraftPlan();
+      }
+      
+      // Speichere Plan-Referenz vor dem Speichern (da savePlan() reset() aufruft)
+      final planToEdit = provider.draftPlan!;
+      final planName = provider.planName;
+      
+      // Save plan to database
+      final success = await provider.savePlan();
+      
+      if (context.mounted) {
+        if (success) {
+          // Lade Plan zurück in Provider für Bearbeitung
+          provider.loadExistingPlanForEditing(planToEdit);
+          
+          // Navigate to exercise editor instead of going back
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChangeNotifierProvider.value(
+                value: provider,
+                child: const TrainingDayEditorScreen(),
+              ),
             ),
-          ),
-        );
-      } else {
-        // Show error feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Fehler beim Erstellen des Plans!'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+          );
+        } else {
+          // Show error feedback
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Fehler beim Erstellen des Plans!'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
@@ -643,6 +701,34 @@ class __PlanBasicsStepState extends State<_PlanBasicsStep>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncControllersWithProvider();
+      }
+    });
+  }
+
+  void _syncControllersWithProvider() {
+    final provider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    
+    // Temporär Listener entfernen um rekursive Updates zu verhindern
+    _nameController.removeListener(_updateName);
+    
+    // Nur aktualisieren wenn die Werte sich unterscheiden (verhindert Cursor-Sprünge)
+    if (_nameController.text != provider.planName) {
+      _nameController.text = provider.planName;
+    }
+    
+    // Listener wieder hinzufügen
+    _nameController.addListener(_updateName);
+    
+    // _descriptionController wird momentan nicht mit Provider synchronisiert
+    // da kein description-Feld im Provider existiert
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
@@ -650,8 +736,11 @@ class __PlanBasicsStepState extends State<_PlanBasicsStep>
   }
 
   void _updateName() {
-    Provider.of<CreateTrainingPlanProvider>(context, listen: false)
-        .setPlanName(_nameController.text);
+    // Verhindere rekursive Updates während Synchronisation
+    final provider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    if (provider.planName != _nameController.text) {
+      provider.setPlanName(_nameController.text);
+    }
   }
 
   @override
@@ -759,14 +848,42 @@ class __TrainingSetupStepState extends State<_TrainingSetupStep>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncControllerWithProvider();
+      }
+    });
+  }
+
+  void _syncControllerWithProvider() {
+    final provider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    
+    // Temporär Listener entfernen um rekursive Updates zu verhindern
+    _gymController.removeListener(_updateGym);
+    
+    // Nur aktualisieren wenn die Werte sich unterscheiden (verhindert Cursor-Sprünge)
+    if (_gymController.text != provider.gym) {
+      _gymController.text = provider.gym;
+    }
+    
+    // Listener wieder hinzufügen
+    _gymController.addListener(_updateGym);
+  }
+
+  @override
   void dispose() {
     _gymController.dispose();
     super.dispose();
   }
 
   void _updateGym() {
-    Provider.of<CreateTrainingPlanProvider>(context, listen: false)
-        .setGym(_gymController.text);
+    // Verhindere rekursive Updates während Synchronisation
+    final provider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    if (provider.gym != _gymController.text) {
+      provider.setGym(_gymController.text);
+    }
   }
 
   @override
@@ -1223,6 +1340,16 @@ class __TrainingDaysStepState extends State<_TrainingDaysStep>
   void initState() {
     super.initState();
     _initializeControllers();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _updateControllers();
+      }
+    });
   }
 
   void _initializeControllers() {

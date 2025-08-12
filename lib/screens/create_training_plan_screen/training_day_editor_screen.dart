@@ -10,6 +10,7 @@ import '../../widgets/create_training_plan_screen/training_day_tab_widget.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 import '../../models/training_plan_screen/training_day_model.dart';
 import '../../screens/main_screen.dart';
+import 'create_plan_wizard_screen.dart';
 
 class TrainingDayEditorScreen extends StatefulWidget {
   const TrainingDayEditorScreen({Key? key}) : super(key: key);
@@ -264,6 +265,39 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
       );
     }
 
+    // TabController aktualisieren wenn sich die Anzahl der Tage geändert hat
+    if (_tabController.length != plan.days.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // Alten Controller entsorgen
+          _tabController.dispose();
+          
+          // Neuen Controller erstellen
+          _tabController = TabController(
+            length: plan.days.length,
+            vsync: this,
+            initialIndex: createProvider.selectedDayIndex < plan.days.length
+                ? createProvider.selectedDayIndex
+                : plan.days.length - 1,
+          );
+
+          // TabController-Listener für Updates der selectedDayIndex
+          _tabController.addListener(() {
+            if (_tabController.index != createProvider.selectedDayIndex) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  createProvider.setSelectedDayIndex(_tabController.index);
+                }
+              });
+            }
+          });
+
+          // UI neu aufbauen
+          setState(() {});
+        }
+      });
+    }
+
     // TabController aktualisieren wenn selectedDayIndex geändert wurde
     if (_tabController.index != createProvider.selectedDayIndex) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -332,81 +366,151 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
             ),
           ),
         ),
-        title: Container(
-          constraints: const BoxConstraints(minWidth: 200, maxWidth: 300),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF1C1C1E), // Charcoal
-                Color(0xFF000000), // Midnight
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFFF4500).withOpacity(0.3), // Orange
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFF4500).withOpacity(0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)], // Orange gradient
-                ).createShader(bounds),
-                child: Text(
-                  isEditMode ? '${plan.name.toUpperCase()} BEARBEITEN' : plan.name.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFFFFFFF), // Snow
-                    letterSpacing: 1.2,
+        title: Flexible(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _editPlanBasics(),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1C1C1E), // Charcoal
+                      Color(0xFF000000), // Midnight
+                    ],
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              // Gym name (if available)
-              if (plan.gym != null && plan.gym!.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.fitness_center,
-                      size: 8,
-                      color: const Color(0xFF65656F), // Comet
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        plan.gym!.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF65656F), // Comet
-                          letterSpacing: 0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFFF4500).withOpacity(0.3), // Orange
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF4500).withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-              ],
-            ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Plan name with edit icon - compact single row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)], // Orange gradient
+                            ).createShader(bounds),
+                            child: Text(
+                              isEditMode ? '${_truncateText(plan.name, 20)} BEARBEITEN' : _truncateText(plan.name.toUpperCase(), 25),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFFFFFFFF), // Snow
+                                letterSpacing: 1.0,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 12,
+                          color: const Color(0xFFFF4500).withOpacity(0.8),
+                        ),
+                      ],
+                    ),
+                    
+                    // Compact info line - prioritize most important info
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        // Always show training days
+                        Icon(
+                          Icons.calendar_today,
+                          size: 8,
+                          color: const Color(0xFF65656F), // Comet
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${plan.days.length} TAGE',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF65656F), // Comet
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        
+                        // Show weeks only if periodized
+                        if (plan.isPeriodized && plan.numberOfWeeks > 1) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 2,
+                            height: 2,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF65656F),
+                              borderRadius: BorderRadius.circular(1),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${plan.numberOfWeeks}W',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF65656F), // Comet
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                        
+                        // Show gym only if there's space (short gym names)
+                        if (plan.gym != null && plan.gym!.isNotEmpty && plan.gym!.length <= 12) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 2,
+                            height: 2,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF65656F),
+                              borderRadius: BorderRadius.circular(1),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.fitness_center,
+                            size: 8,
+                            color: const Color(0xFF65656F), // Comet
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              _truncateText(plan.gym!.toUpperCase(), 10),
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF65656F), // Comet
+                                letterSpacing: 0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         centerTitle: true,
@@ -1255,5 +1359,34 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
         );
       }
     }
+  }
+
+  // Methode zum intelligenten Kürzen von Text
+  String _truncateText(String text, int maxLength) {
+    if (text.length <= maxLength) return text;
+    return '${text.substring(0, maxLength - 3)}...';
+  }
+
+  // Methode zum Bearbeiten der Grundinformationen
+  void _editPlanBasics() {
+    final createProvider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+    
+    HapticFeedback.lightImpact();
+    
+    // Sicherstellen, dass alle Provider-Eigenschaften mit aktuellen Plan-Werten synchronisiert sind
+    if (createProvider.draftPlan != null) {
+      createProvider.loadExistingPlanForEditing(createProvider.draftPlan!);
+    }
+    
+    // Navigate to wizard with current plan data now properly loaded in provider
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangeNotifierProvider.value(
+          value: createProvider,
+          child: const CreatePlanWizardScreen(isEditingExisting: true),
+        ),
+      ),
+    );
   }
 }

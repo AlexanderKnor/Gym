@@ -750,4 +750,27 @@ class CreateTrainingPlanProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  // Aktualisiere den Draft Plan mit neuen Grundinformationen
+  void updateDraftPlan(TrainingPlanModel updatedPlan) {
+    _draftPlan = updatedPlan;
+    
+    // Synchronisiere Provider-Eigenschaften mit dem aktualisierten Plan
+    _planName = updatedPlan.name;
+    _gym = updatedPlan.gym ?? '';
+    _frequency = updatedPlan.days.length;
+    _dayNames = updatedPlan.days.map((day) => day.name).toList();
+    _isPeriodized = updatedPlan.isPeriodized;
+    _numberOfWeeks = updatedPlan.numberOfWeeks;
+    
+    // Stelle sicher, dass selectedDayIndex im gültigen Bereich liegt
+    if (_selectedDayIndex >= _frequency) {
+      _selectedDayIndex = _frequency - 1;
+    }
+    if (_selectedDayIndex < 0) {
+      _selectedDayIndex = 0;
+    }
+    
+    notifyListeners();
+  }
 }

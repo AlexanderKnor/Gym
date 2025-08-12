@@ -42,6 +42,12 @@ class ProgressionProfileProvider with ChangeNotifier {
 
   // ===== METHODEN =====
 
+  // Methode zum Löschen des aktuell bearbeiteten Profils (für saubere Initialisierung)
+  void clearEditedProfile() {
+    _bearbeitetesProfil = null;
+    // NICHT notifyListeners() aufrufen, um Build-Konflikte zu vermeiden
+  }
+
   // Hilfsmethode, um ein Profil anhand seiner ID zu erhalten
   ProgressionProfileModel? getProfileById(String? profileId) {
     if (profileId == null) return null;

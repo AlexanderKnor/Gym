@@ -6,9 +6,23 @@ import '../../providers/progression_manager_screen/progression_manager_provider.
 import '../../utils/smooth_page_route.dart';
 import 'profile_detail_screen.dart';
 
-class ProfileEditorScreen extends StatelessWidget {
+class ProfileEditorScreen extends StatefulWidget {
   final bool isDialog;
+  final VoidCallback? initialProfileAction;
 
+  const ProfileEditorScreen({
+    Key? key,
+    this.isDialog = false,
+    this.initialProfileAction,
+  }) : super(key: key);
+
+  @override
+  State<ProfileEditorScreen> createState() => _ProfileEditorScreenState();
+}
+
+class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
+  bool _initialized = false;
+  
   // Premium color scheme
   static const Color _void = Color(0xFF000000);
   static const Color _cosmos = Color(0xFF050507);
@@ -22,30 +36,46 @@ class ProfileEditorScreen extends StatelessWidget {
   static const Color _proverCore = Color(0xFFFF4500);
   static const Color _proverGlow = Color(0xFFFF6B3D);
 
-  const ProfileEditorScreen({
-    Key? key,
-    this.isDialog = false,
-  }) : super(key: key);
+  @override
+  void initState() {
+    super.initState();
+    
+    // Wenn eine initialProfileAction gegeben ist, führe sie SOFORT aus
+    if (widget.initialProfileAction != null) {
+      // WICHTIG: Zuerst das alte Profil löschen, DANN die neue Aktion ausführen
+      final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
+      provider.profileProvider.clearEditedProfile(); // Neue Methode die wir erstellen müssen
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.initialProfileAction!();
+          setState(() {
+            _initialized = true;
+          });
+        }
+      });
+    } else {
+      _initialized = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProgressionManagerProvider>(context);
-    final profil = provider.bearbeitetesProfil;
-
-    if (profil == null) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (context.mounted && provider.bearbeitetesProfil == null) {
-          provider.closeProfileEditor();
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-        }
-      });
-
+    // Wenn noch nicht initialisiert, zeige Loading (OHNE das Profil zu lesen)
+    if (!_initialized) {
+      final provider = Provider.of<ProgressionManagerProvider>(context);
       return _buildLoadingScreen(context, provider);
     }
 
-    if (isDialog) {
+    final provider = Provider.of<ProgressionManagerProvider>(context);
+    final profil = provider.bearbeitetesProfil;
+
+    // Jetzt erst das Profil prüfen, nachdem die Initialisierung abgeschlossen ist
+    if (profil == null) {
+      return _buildLoadingScreen(context, provider);
+    }
+
+    if (widget.isDialog) {
       return _buildDialogMode(context, provider, profil);
     }
 
@@ -239,18 +269,55 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
     return widget.profil;
   }
 
+  // Aktualisiert die Controller nur wenn nötig (verhindert Cursor-Sprünge)
+  void _updateControllersIfNeeded(dynamic profil) {
+    if (profil == null) return;
+    
+    // Prüfe und aktualisiere nur wenn sich Werte geändert haben
+    if (_nameController.text != profil.name) {
+      _nameController.text = profil.name;
+    }
+    if (_descriptionController.text != profil.description) {
+      _descriptionController.text = profil.description;
+    }
+    
+    final repsMin = (profil.config['targetRepsMin'] ?? 8).toInt().toString();
+    if (_repsMinController.text != repsMin) {
+      _repsMinController.text = repsMin;
+    }
+    
+    final repsMax = (profil.config['targetRepsMax'] ?? 12).toInt().toString();
+    if (_repsMaxController.text != repsMax) {
+      _repsMaxController.text = repsMax;
+    }
+    
+    final rirMin = (profil.config['targetRIRMin'] ?? 1).toInt().toString();
+    if (_rirMinController.text != rirMin) {
+      _rirMinController.text = rirMin;
+    }
+    
+    final rirMax = (profil.config['targetRIRMax'] ?? 3).toInt().toString();
+    if (_rirMaxController.text != rirMax) {
+      _rirMaxController.text = rirMax;
+    }
+    
+    final increment = (profil.config['increment'] ?? 2.5).toString();
+    if (_incrementController.text != increment) {
+      _incrementController.text = increment;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with fresh profile data
-    final currentProfile = _getCurrentProfileForInit();
-    _nameController = TextEditingController(text: currentProfile.name);
-    _descriptionController = TextEditingController(text: currentProfile.description);
-    _repsMinController = TextEditingController(text: (currentProfile.config['targetRepsMin'] ?? 8).toInt().toString());
-    _repsMaxController = TextEditingController(text: (currentProfile.config['targetRepsMax'] ?? 12).toInt().toString());
-    _rirMinController = TextEditingController(text: (currentProfile.config['targetRIRMin'] ?? 1).toInt().toString());
-    _rirMaxController = TextEditingController(text: (currentProfile.config['targetRIRMax'] ?? 3).toInt().toString());
-    _incrementController = TextEditingController(text: (currentProfile.config['increment'] ?? 2.5).toString());
+    // Initialize controllers with empty values first - will be updated in didUpdateWidget
+    _nameController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _repsMinController = TextEditingController();
+    _repsMaxController = TextEditingController();
+    _rirMinController = TextEditingController();
+    _rirMaxController = TextEditingController();
+    _incrementController = TextEditingController();
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -275,10 +342,7 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
     
     _animationController.forward();
     
-    // Update controllers with fresh data after initialization
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateControllersFromProfile();
-    });
+    // Update controllers will be done in build() when profile changes
   }
 
   @override
@@ -297,6 +361,9 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProgressionManagerProvider>(context);
+    
+    // Aktualisiere Controller, wenn sich das Profil geändert hat
+    _updateControllersIfNeeded(widget.profil);
     
     return AnimatedBuilder(
       animation: _animationController,
@@ -1106,31 +1173,10 @@ class _ProfileEditorContentState extends State<ProfileEditorContent>
   }
 
   void _updateControllersFromProfile() {
-    // Get the fresh profile data from provider instead of widget.profil
+    // Vereinfachte Methode - verwendet die neue _updateControllersIfNeeded
     final provider = Provider.of<ProgressionManagerProvider>(context, listen: false);
-    
-    // First try to get the most up-to-date profile from the profileProvider by ID
-    final profileId = (provider.bearbeitetesProfil ?? widget.profil).id;
-    final freshProfile = provider.profileProvider.getProfileById(profileId) ?? 
-                        provider.bearbeitetesProfil ?? 
-                        widget.profil;
-    
-    // Update controllers with the fresh profile values to sync UI
-    _nameController.text = freshProfile.name ?? '';
-    _descriptionController.text = freshProfile.description ?? '';
-    
-    // Format integers properly (no .0 suffix)
-    final repsMin = freshProfile.config['targetRepsMin'];
-    final repsMax = freshProfile.config['targetRepsMax'];
-    final rirMin = freshProfile.config['targetRIRMin'];
-    final rirMax = freshProfile.config['targetRIRMax'];
-    final increment = freshProfile.config['increment'];
-    
-    _repsMinController.text = repsMin is num ? repsMin.toInt().toString() : '8';
-    _repsMaxController.text = repsMax is num ? repsMax.toInt().toString() : '12';
-    _rirMinController.text = rirMin is num ? rirMin.toInt().toString() : '1';
-    _rirMaxController.text = rirMax is num ? rirMax.toInt().toString() : '3';
-    _incrementController.text = increment is num ? increment.toString() : '2.5';
+    final profil = provider.bearbeitetesProfil ?? widget.profil;
+    _updateControllersIfNeeded(profil);
   }
 }
 

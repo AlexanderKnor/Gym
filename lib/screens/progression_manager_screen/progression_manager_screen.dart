@@ -1342,57 +1342,11 @@ class DuplicateProfileScreen extends StatefulWidget {
 }
 
 class _DuplicateProfileScreenState extends State<DuplicateProfileScreen> {
-  bool _isInitialized = false;
-  
-  // Color constants - lokale Kopie für diese Klasse
-  static const Color _void = Color(0xFF000000);
-  static const Color _nova = Color(0xFFF5F5F7);
-  static const Color _proverCore = Color(0xFFFF4500);
-
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider =
-          Provider.of<ProgressionManagerProvider>(context, listen: false);
-      provider.duplicateProfile(widget.profileId);
-      setState(() {
-        _isInitialized = true;
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized) {
-      return Scaffold(
-        backgroundColor: _void,
-        appBar: AppBar(
-          title: Text(
-            'Profil duplizieren',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: _nova,
-              letterSpacing: -0.3,
-            ),
-          ),
-          centerTitle: false,
-          backgroundColor: _void,
-          elevation: 0,
-          iconTheme: IconThemeData(color: _nova),
-        ),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: _proverCore,
-            strokeWidth: 2,
-          ),
-        ),
-      );
-    }
-
-    return const ProfileEditorScreen();
+    return ProfileEditorScreen(
+      initialProfileAction: () => Provider.of<ProgressionManagerProvider>(context, listen: false).duplicateProfile(widget.profileId),
+    );
   }
 }
 
@@ -1404,56 +1358,10 @@ class NewProfileScreen extends StatefulWidget {
 }
 
 class _NewProfileScreenState extends State<NewProfileScreen> {
-  bool _isInitialized = false;
-  
-  // Color constants - lokale Kopie für diese Klasse
-  static const Color _void = Color(0xFF000000);
-  static const Color _nova = Color(0xFFF5F5F7);
-  static const Color _proverCore = Color(0xFFFF4500);
-
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider =
-          Provider.of<ProgressionManagerProvider>(context, listen: false);
-      provider.openProfileEditor(null);
-      setState(() {
-        _isInitialized = true;
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized) {
-      return Scaffold(
-        backgroundColor: _void,
-        appBar: AppBar(
-          title: Text(
-            'Neues Profil',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: _nova,
-              letterSpacing: -0.3,
-            ),
-          ),
-          centerTitle: false,
-          backgroundColor: _void,
-          elevation: 0,
-          iconTheme: IconThemeData(color: _nova),
-        ),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: _proverCore,
-            strokeWidth: 2,
-          ),
-        ),
-      );
-    }
-
-    return const ProfileEditorScreen();
+    return ProfileEditorScreen(
+      initialProfileAction: () => Provider.of<ProgressionManagerProvider>(context, listen: false).openProfileEditor(null),
+    );
   }
 }

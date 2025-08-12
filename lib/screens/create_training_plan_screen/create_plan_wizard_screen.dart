@@ -32,6 +32,10 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
   late Animation<double> _progressAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  
+  // Für flüssige Progress-Transition
+  double _previousProgress = 0.0;
+  double _targetProgress = 0.0;
 
   // Premium color scheme - exact match with app
   static const Color _void = Color(0xFF000000);
@@ -80,6 +84,10 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
       curve: Curves.easeOut,
     ));
 
+    // Initialer Progress-Wert
+    _targetProgress = _currentStep / _totalSteps;
+    _previousProgress = _targetProgress;
+    
     _progressAnimationController.forward();
     _stepAnimationController.forward();
 
@@ -139,6 +147,13 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
   }
 
   void _updateProgress() {
+    // Speichere den aktuellen Progress-Wert als Startpunkt
+    _previousProgress = _previousProgress + (_targetProgress - _previousProgress) * _progressAnimationController.value;
+    
+    // Setze den neuen Ziel-Progress
+    _targetProgress = _currentStep / _totalSteps;
+    
+    // Starte Animation vom aktuellen zum neuen Wert
     _progressAnimationController.reset();
     _progressAnimationController.forward();
   }
@@ -339,6 +354,9 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
           AnimatedBuilder(
             animation: _progressAnimation,
             builder: (context, child) {
+              // Berechne aktuellen Progress mit flüssiger Interpolation
+              final currentProgress = _previousProgress + (_targetProgress - _previousProgress) * _progressAnimation.value;
+              
               return Container(
                 height: 6,
                 decoration: BoxDecoration(
@@ -347,7 +365,7 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
                 ),
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
-                  widthFactor: ((_currentStep + _progressAnimation.value) / _totalSteps),
+                  widthFactor: currentProgress.clamp(0.0, 1.0),
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

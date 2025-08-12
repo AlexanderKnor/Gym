@@ -57,7 +57,7 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
     );
     
     _stepAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     
@@ -68,15 +68,15 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
     
     _fadeAnimation = CurvedAnimation(
       parent: _stepAnimationController,
-      curve: Curves.easeOut,
+      curve: Curves.easeIn,
     );
     
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.02),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _stepAnimationController,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOut,
     ));
 
     _progressAnimationController.forward();
@@ -110,8 +110,8 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
       });
       _stepAnimationController.reset();
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
       );
       _updateProgress();
       _stepAnimationController.forward();
@@ -129,8 +129,8 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
       });
       _stepAnimationController.reset();
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
       );
       _updateProgress();
       _stepAnimationController.forward();
@@ -1185,10 +1185,23 @@ class __AdvancedSettingsStepState extends State<_AdvancedSettingsStep>
                       // Periodization Toggle
                       _buildPeriodizationToggle(provider),
                       
-                      if (provider.isPeriodized) ...[
-                        const SizedBox(height: 32),
-                        _buildWeeksSelection(provider),
-                      ],
+                      // Animated visibility for weeks selection
+                      AnimatedCrossFade(
+                        firstChild: const SizedBox.shrink(),
+                        secondChild: Column(
+                          children: [
+                            const SizedBox(height: 32),
+                            _buildWeeksSelection(provider),
+                          ],
+                        ),
+                        crossFadeState: provider.isPeriodized 
+                          ? CrossFadeState.showSecond 
+                          : CrossFadeState.showFirst,
+                        duration: const Duration(milliseconds: 500),
+                        sizeCurve: Curves.easeOutCubic,
+                        firstCurve: Curves.easeOut,
+                        secondCurve: Curves.easeIn,
+                      ),
                     ],
                   );
                 },
@@ -1206,11 +1219,15 @@ class __AdvancedSettingsStepState extends State<_AdvancedSettingsStep>
         HapticFeedback.lightImpact();
         provider.setPeriodization(!provider.isPeriodized);
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [const Color(0xFF18181C).withOpacity(0.4), const Color(0xFF0F0F12).withOpacity(0.4)],
+            colors: provider.isPeriodized 
+              ? [const Color(0xFF242429).withOpacity(0.6), const Color(0xFF18181C).withOpacity(0.6)]
+              : [const Color(0xFF18181C).withOpacity(0.4), const Color(0xFF0F0F12).withOpacity(0.4)],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -1219,31 +1236,53 @@ class __AdvancedSettingsStepState extends State<_AdvancedSettingsStep>
               : const Color(0xFF242429).withOpacity(0.2),
             width: provider.isPeriodized ? 2 : 1,
           ),
+          boxShadow: provider.isPeriodized ? [
+            BoxShadow(
+              color: const Color(0xFFFF4500).withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ] : [],
         ),
         child: Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutBack,
+              width: provider.isPeriodized ? 36 : 32,
+              height: provider.isPeriodized ? 36 : 32,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: provider.isPeriodized
                     ? [const Color(0xFFFF4500), const Color(0xFFFF6B3D)]
                     : [const Color(0xFF35353C), const Color(0xFF242429)],
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(provider.isPeriodized ? 10 : 8),
                 border: Border.all(
                   color: provider.isPeriodized 
                     ? const Color(0xFFF5F5F7).withOpacity(0.3)
                     : const Color(0xFF65656F).withOpacity(0.3),
                 ),
               ),
-              child: Icon(
-                provider.isPeriodized ? Icons.check : Icons.close,
-                color: provider.isPeriodized 
-                  ? const Color(0xFFF5F5F7)
-                  : const Color(0xFF65656F),
-                size: 18,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return RotationTransition(
+                    turns: animation,
+                    child: ScaleTransition(
+                      scale: animation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Icon(
+                  provider.isPeriodized ? Icons.check_rounded : Icons.close_rounded,
+                  key: ValueKey(provider.isPeriodized),
+                  color: provider.isPeriodized 
+                    ? const Color(0xFFF5F5F7)
+                    : const Color(0xFF65656F),
+                  size: provider.isPeriodized ? 20 : 18,
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -1251,8 +1290,8 @@ class __AdvancedSettingsStepState extends State<_AdvancedSettingsStep>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Periodisierung aktivieren',
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1261,15 +1300,19 @@ class __AdvancedSettingsStepState extends State<_AdvancedSettingsStep>
                         : const Color(0xFFA5A5B0),
                       letterSpacing: -0.2,
                     ),
+                    child: const Text('Periodisierung aktivieren'),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Für strukturierte Trainingszyklen mit verschiedenen Phasen',
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF65656F),
+                      color: provider.isPeriodized 
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF65656F),
                       height: 1.3,
                     ),
+                    child: const Text('Für strukturierte Trainingszyklen mit verschiedenen Phasen'),
                   ),
                 ],
               ),

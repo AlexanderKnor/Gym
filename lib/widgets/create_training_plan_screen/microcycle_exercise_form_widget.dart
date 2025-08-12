@@ -165,7 +165,17 @@ class _MicrocycleExerciseFormWidgetState
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF000000), // Midnight
+            const Color(0xFF0F0F12), // Darker variant
+          ],
+        ),
+      ),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -176,23 +186,42 @@ class _MicrocycleExerciseFormWidgetState
               // Header mit Wochenanzeige
               Container(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.purple[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.purple[200]!),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF1C1C1E), // Charcoal
+                      const Color(0xFF0F0F12), // Darker variant
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFFF4500).withOpacity(0.3), // Orange
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF4500).withOpacity(0.1),
+                      offset: const Offset(0, 2),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.calendar_today,
-                        size: 16, color: Colors.purple[700]),
+                    const Icon(Icons.calendar_today_rounded,
+                        size: 18, color: Color(0xFFFF4500)), // Orange
                     const SizedBox(width: 8),
                     Text(
                       'Woche ${widget.weekIndex + 1} von ${widget.weekCount}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple[700],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFF4500), // Orange
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ],
@@ -465,7 +494,11 @@ class _MicrocycleExerciseFormWidgetState
               const SizedBox(height: 4),
               Text(
                 'Wähle ein Progressionsprofil für Woche ${widget.weekIndex + 1}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFFAEAEB2), // Silver
+                  letterSpacing: -0.3,
+                ),
               ),
               const SizedBox(height: 8),
 
@@ -505,37 +538,57 @@ class _MicrocycleExerciseFormWidgetState
                 ...progressionProfiles
                     .where((p) => p.id == _selectedProfileId)
                     .map((selectedProfile) => Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.purple[50],
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.purple[200]!),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                const Color(0xFF1C1C1E), // Charcoal
+                                const Color(0xFF0F0F12), // Darker variant
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFFF4500).withOpacity(0.3), // Orange
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF000000).withOpacity(0.2),
+                                offset: const Offset(0, 2),
+                                blurRadius: 8,
+                                spreadRadius: 0,
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.info_outline,
-                                      size: 16, color: Colors.purple[700]),
-                                  const SizedBox(width: 4),
+                                  const Icon(Icons.trending_up_rounded,
+                                      size: 18, color: Color(0xFFFF4500)), // Orange
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       selectedProfile.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.purple[700],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFFFFFFFF), // Snow
+                                        fontSize: 15,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 8),
                               Text(
                                 selectedProfile.description,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.purple[600],
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFAEAEB2), // Silver
+                                  height: 1.3,
                                 ),
                               ),
                             ],

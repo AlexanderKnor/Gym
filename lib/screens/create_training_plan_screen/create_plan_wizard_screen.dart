@@ -149,7 +149,7 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
       case 0: // Plan Basics
         return provider.planName.isNotEmpty;
       case 1: // Training Setup
-        return provider.frequency >= 3 && provider.frequency <= 6;
+        return provider.frequency >= 2 && provider.frequency <= 7;
       case 2: // Advanced Settings
         return true; // Always can proceed
       case 3: // Training Days
@@ -990,63 +990,129 @@ class __TrainingSetupStepState extends State<_TrainingSetupStep>
         ),
         const SizedBox(height: 20),
         
-        // Frequency options
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [3, 4, 5, 6].map((freq) {
-            final isSelected = provider.frequency == freq;
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                provider.setFrequency(freq);
-              },
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                    ? const LinearGradient(colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)])
-                    : LinearGradient(colors: [const Color(0xFF2C2C2E).withOpacity(0.6), const Color(0xFF18181C).withOpacity(0.6)]),
-                  borderRadius: BorderRadius.circular(16),
-                  border: isSelected 
-                    ? Border.all(color: const Color(0xFFF5F5F7).withOpacity(0.3), width: 2)
-                    : Border.all(color: const Color(0xFF35353C).withOpacity(0.5), width: 1),
-                  boxShadow: isSelected ? [
-                    BoxShadow(
-                      color: const Color(0xFFFF4500).withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ] : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$freq',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: isSelected ? const Color(0xFFF5F5F7) : const Color(0xFFA5A5B0),
-                        letterSpacing: -1,
+        // Frequency options - Two rows for better layout
+        Column(
+          children: [
+            // First row: 2-4 days
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [2, 3, 4].map((freq) {
+                final isSelected = provider.frequency == freq;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      provider.setFrequency(freq);
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: freq == 3 ? 8 : 0),
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                          ? const LinearGradient(colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)])
+                          : LinearGradient(colors: [const Color(0xFF2C2C2E).withOpacity(0.6), const Color(0xFF18181C).withOpacity(0.6)]),
+                        borderRadius: BorderRadius.circular(16),
+                        border: isSelected 
+                          ? Border.all(color: const Color(0xFFF5F5F7).withOpacity(0.3), width: 2)
+                          : Border.all(color: const Color(0xFF35353C).withOpacity(0.5), width: 1),
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: const Color(0xFFFF4500).withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ] : null,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '$freq',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: isSelected ? const Color(0xFFF5F5F7) : const Color(0xFFA5A5B0),
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'TAGE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? const Color(0xFFF5F5F7).withOpacity(0.8) : const Color(0xFF65656F),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      freq == 1 ? 'TAG' : 'TAGE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? const Color(0xFFF5F5F7).withOpacity(0.8) : const Color(0xFF65656F),
-                        letterSpacing: 0.5,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            // Second row: 5-7 days
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [5, 6, 7].map((freq) {
+                final isSelected = provider.frequency == freq;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      provider.setFrequency(freq);
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: freq == 6 ? 8 : 0),
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                          ? const LinearGradient(colors: [Color(0xFFFF4500), Color(0xFFFF6B3D)])
+                          : LinearGradient(colors: [const Color(0xFF2C2C2E).withOpacity(0.6), const Color(0xFF18181C).withOpacity(0.6)]),
+                        borderRadius: BorderRadius.circular(16),
+                        border: isSelected 
+                          ? Border.all(color: const Color(0xFFF5F5F7).withOpacity(0.3), width: 2)
+                          : Border.all(color: const Color(0xFF35353C).withOpacity(0.5), width: 1),
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: const Color(0xFFFF4500).withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ] : null,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '$freq',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: isSelected ? const Color(0xFFF5F5F7) : const Color(0xFFA5A5B0),
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'TAGE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? const Color(0xFFF5F5F7).withOpacity(0.8) : const Color(0xFF65656F),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ],
     );

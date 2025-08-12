@@ -25,6 +25,7 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
   final PageController _pageController = PageController();
   int _currentStep = 0;
   final int _totalSteps = 5;
+  bool _isCreatingPlan = false;
 
   late AnimationController _progressAnimationController;
   late AnimationController _stepAnimationController;
@@ -432,21 +433,35 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: canProceed 
+                      onTap: canProceed && !_isCreatingPlan
                         ? (isLastStep ? _createPlan : _nextStep)
                         : null,
                       borderRadius: BorderRadius.circular(16),
                       child: Center(
-                        child: Text(
-                          isLastStep 
-                            ? (provider.editingPlanId != null ? 'AKTUALISIEREN' : 'PLAN ERSTELLEN')
-                            : 'WEITER',
-                          style: TextStyle(
-                            color: canProceed ? _nova : _comet,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            letterSpacing: 0.8,
-                          ),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: _isCreatingPlan && isLastStep
+                            ? SizedBox(
+                                key: const ValueKey('loading'),
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(_nova),
+                                ),
+                              )
+                            : Text(
+                                key: const ValueKey('text'),
+                                isLastStep 
+                                  ? (provider.editingPlanId != null ? 'AKTUALISIEREN' : 'PLAN ERSTELLEN')
+                                  : 'WEITER',
+                                style: TextStyle(
+                                  color: canProceed && !_isCreatingPlan ? _nova : _comet,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
                         ),
                       ),
                     ),
@@ -464,6 +479,14 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
     final provider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
     
     HapticFeedback.mediumImpact();
+    
+    // Show loading indicator with fade animation
+    setState(() {
+      _isCreatingPlan = true;
+    });
+    
+    // Small delay for visual feedback
+    await Future.delayed(const Duration(milliseconds: 150));
     
     final isEditMode = provider.isEditMode;
     
@@ -505,8 +528,13 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
         // Aktualisiere den Plan im Provider
         provider.updateDraftPlan(updatedPlan);
         
+        // Fade out animation before navigation
+        await _stepAnimationController.reverse();
+        
         // Navigate back to exercise editor
-        Navigator.pop(context);
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
       }
     } else {
       // Normaler Modus: Neuen Plan erstellen
@@ -528,17 +556,39 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
           // Lade Plan zurück in Provider für Bearbeitung
           provider.loadExistingPlanForEditing(planToEdit);
           
+          // Fade out animation before navigation
+          await _stepAnimationController.reverse();
+          
           // Navigate to exercise editor instead of going back
           Navigator.of(context).pushReplacement(
-            SmoothPageRoute(
-              builder: (context) => ChangeNotifierProvider.value(
-                value: provider,
-                child: const TrainingDayEditorScreen(),
-              ),
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 400),
+              pageBuilder: (context, animation, secondaryAnimation) => 
+                ChangeNotifierProvider.value(
+                  value: provider,
+                  child: const TrainingDayEditorScreen(),
+                ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                const begin = 0.0;
+                const end = 1.0;
+                const curve = Curves.easeInOut;
+                
+                var tween = Tween(begin: begin, end: end).chain(
+                  CurveTween(curve: curve),
+                );
+                
+                return FadeTransition(
+                  opacity: animation.drive(tween),
+                  child: child,
+                );
+              },
             ),
           );
         } else {
           // Show error feedback
+          setState(() {
+            _isCreatingPlan = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Fehler beim Erstellen des Plans!'),
@@ -548,6 +598,13 @@ class _CreatePlanWizardScreenState extends State<CreatePlanWizardScreen>
           );
         }
       }
+    }
+    
+    // Reset loading state if still mounted but navigation failed
+    if (context.mounted) {
+      setState(() {
+        _isCreatingPlan = false;
+      });
     }
   }
 }

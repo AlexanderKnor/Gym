@@ -1,12 +1,29 @@
 // lib/widgets/friend_profile_screen/friend_training_plans_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/friend_profile_screen/friend_profile_provider.dart';
-import '../../providers/training_plans_screen/training_plans_screen_provider.dart'; // Neuer Import
+import '../../providers/training_plans_screen/training_plans_screen_provider.dart';
 import '../../models/training_plan_screen/training_plan_model.dart';
 
 class FriendTrainingPlansWidget extends StatelessWidget {
   const FriendTrainingPlansWidget({Key? key}) : super(key: key);
+
+  // PROVER color system - consistent with other screens
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
 
   @override
   Widget build(BuildContext context) {
@@ -14,160 +31,320 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     final trainingPlans = provider.trainingPlans;
 
     if (trainingPlans.isEmpty) {
-      return Center(
+      return _buildEmptyState();
+    }
+
+    // Fixed: Remove Expanded from Column inside SliverToBoxAdapter
+    // Build list directly without wrapping Column
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'TRAININGSPLÄNE',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: _proverCore,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Use a fixed height container or shrinkWrap ListView
+        ...trainingPlans.map((plan) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTrainingPlanCard(context, plan, plan.isActive),
+        )).toList(),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.fitness_center,
-              size: 64,
-              color: Colors.grey[400],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _lunar.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.fitness_center_rounded,
+                size: 32,
+                color: _comet,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Keine Trainingspläne verfügbar',
+              'KEINE PLÄNE',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: _stardust,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Dein Freund hat noch keine Trainingspläne erstellt',
+              'Dein Freund hat noch keine\nTrainingspläne erstellt',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[600],
+                fontSize: 14,
+                color: _comet,
+                height: 1.4,
               ),
             ),
           ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Trainingspläne',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: trainingPlans.length,
-              itemBuilder: (context, index) {
-                final plan = trainingPlans[index];
-                return _buildTrainingPlanCard(context, plan, plan.isActive);
-              },
-            ),
+  Widget _buildTrainingPlanCard(BuildContext context, TrainingPlanModel plan, bool isActive) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isActive 
+              ? _proverCore.withOpacity(0.15)
+              : _stellar.withOpacity(0.6),
+            isActive
+              ? _proverGlow.withOpacity(0.08)
+              : _nebula.withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isActive 
+            ? _proverCore.withOpacity(0.5)
+            : _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isActive 
+              ? _proverCore.withOpacity(0.1)
+              : _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTrainingPlanCard(
-      BuildContext context, TrainingPlanModel plan, bool isActive) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 2,
-      color: isActive ? Colors.blue[50] : null,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: CircleAvatar(
-          backgroundColor: isActive ? Colors.blue : Colors.grey[300],
-          child: Icon(
-            Icons.fitness_center,
-            color: Colors.white,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showTrainingPlanDetails(context, plan),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isActive 
+                            ? [_proverCore, _proverGlow]
+                            : [_asteroid, _comet.withOpacity(0.8)],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: isActive 
+                              ? _proverCore.withOpacity(0.3)
+                              : _asteroid.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.fitness_center_rounded,
+                        color: _nova,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  plan.name.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: isActive ? _proverCore : _nova,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              if (isActive)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [_proverCore, _proverGlow],
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'AKTIV',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: _nova,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${plan.days.length} Trainingstage • ${_getTotalExercises(plan)} Übungen',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _stardust,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Action Buttons
+                Row(
+                  children: [
+                    // Copy Button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _copyTrainingPlan(context, plan);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.green[600]!, Colors.green[400]!],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.copy_rounded, color: _nova, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                'KOPIEREN',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: _nova,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Details Button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _showTrainingPlanDetails(context, plan);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isActive 
+                              ? _proverCore.withOpacity(0.2)
+                              : _lunar.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isActive 
+                                ? _proverCore.withOpacity(0.5)
+                                : _stellar.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded, 
+                                color: isActive ? _proverCore : _stardust, 
+                                size: 16
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'DETAILS',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: isActive ? _proverCore : _stardust,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                plan.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isActive ? Colors.blue[800] : null,
-                ),
-              ),
-            ),
-            if (isActive)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'AKTIV',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6.0),
-          child: Text(
-            '${plan.days.length} Trainingstage • ${_getTotalExercises(plan)} Übungen',
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Kopier-Button
-            ElevatedButton.icon(
-              onPressed: () => _copyTrainingPlan(context, plan),
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Kopieren'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () => _showTrainingPlanDetails(context, plan),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isActive ? Colors.blue : Colors.grey[200],
-                foregroundColor: isActive ? Colors.white : Colors.black87,
-              ),
-              child: const Text('Details'),
-            ),
-          ],
-        ),
-        onTap: () => _showTrainingPlanDetails(context, plan),
       ),
     );
-  }
-
-  // Hilfsmethode, um den Profilnamen basierend auf der ID zu erhalten
-  String _getProfileNameById(BuildContext context, String profileId) {
-    final provider = Provider.of<FriendProfileProvider>(context, listen: false);
-
-    try {
-      final profile = provider.progressionProfiles.firstWhere(
-        (profile) => profile.id == profileId,
-      );
-      return profile.name;
-    } catch (e) {
-      // Wenn kein Profil gefunden wird, geben wir die ID zurück
-      return 'Profil: $profileId';
-    }
   }
 
   int _getTotalExercises(TrainingPlanModel plan) {
@@ -178,32 +355,44 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     return total;
   }
 
-  // Überarbeitete Kopier-Funktion mit verbesserter Dialog-Verwaltung
   void _copyTrainingPlan(BuildContext context, TrainingPlanModel plan) async {
-    // Holen Sie den Provider nur einmal am Anfang
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
-    // Zugriff auf den TrainingPlansProvider, um die Aktualisierung auszulösen
-    final trainingPlansProvider =
-        Provider.of<TrainingPlansProvider>(context, listen: false);
+    final trainingPlansProvider = Provider.of<TrainingPlansProvider>(context, listen: false);
 
-    // Dialog-Kontext zur späteren Verwendung merken
     BuildContext? dialogContext;
 
-    // Zeige Ladeanzeige mit Barrier
     showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: _void.withOpacity(0.7),
       builder: (context) {
         dialogContext = context;
         return WillPopScope(
           onWillPop: () async => false,
-          child: const AlertDialog(
+          child: AlertDialog(
+            backgroundColor: _stellar,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: _lunar.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
             content: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 20),
-                Text('Trainingsplan wird kopiert...'),
+                CircularProgressIndicator(
+                  color: _proverCore,
+                  strokeWidth: 2,
+                ),
+                const SizedBox(width: 20),
+                Text(
+                  'Trainingsplan wird kopiert...',
+                  style: TextStyle(
+                    color: _nova,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -212,56 +401,39 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     );
 
     try {
-      // Versuche, den Plan zu kopieren
       final result = await provider.copyTrainingPlanToOwnCollection(plan);
 
-      // Dialog schließen - hier mit verbesserten Sicherheitschecks
       if (dialogContext != null && Navigator.canPop(dialogContext!)) {
         Navigator.of(dialogContext!).pop();
       }
 
-      // Wichtig: Prüfen, ob der Widget noch im Baum ist, bevor die UI aktualisiert wird
       if (!context.mounted) {
-        print('Kontext nicht mehr aktiv, kann Dialog nicht anzeigen');
         return;
       }
 
-      // Kurze Verzögerung, um sicherzustellen, dass der Dialog geschlossen wurde
       await Future.delayed(const Duration(milliseconds: 200));
 
-      // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
       if (context.mounted) {
         if (result['success'] == true) {
           final missingProfileIds = result['missingProfileIds'] as List;
 
-          // Aktualisiere die Liste der Trainingspläne
           await trainingPlansProvider.refreshTrainingPlans();
 
           if (missingProfileIds.isNotEmpty) {
-            // Es gibt fehlende Profile, frage Benutzer, ob diese kopiert werden sollen
-            await _showMissingProfilesDialog(
-                context, missingProfileIds, plan, result['plan']);
+            await _showMissingProfilesDialog(context, missingProfileIds, plan, result['plan']);
           } else {
-            // Erfolg ohne fehlende Profile
             await _showSuccessDialog(context, plan);
           }
         } else {
-          // Fehler beim Kopieren
-          await _showErrorDialog(
-              context, result['error'] ?? 'Unbekannter Fehler');
+          await _showErrorDialog(context, result['error'] ?? 'Unbekannter Fehler');
         }
       }
     } catch (e) {
-      // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
       if (dialogContext != null && Navigator.canPop(dialogContext!)) {
         Navigator.of(dialogContext!).pop();
       }
 
-      print('Fehler beim Kopieren des Plans: $e');
-
-      // Prüfen, ob der Kontext noch aktiv ist
       if (!context.mounted) {
-        print('Kontext nicht mehr aktiv, kann Fehlerdialog nicht anzeigen');
         return;
       }
 
@@ -273,128 +445,221 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     }
   }
 
-  // Dialog für fehlende Profile anzeigen - aktualisiert, mit Profilnamen statt IDs
   Future<void> _showMissingProfilesDialog(
       BuildContext context,
       List missingProfileIds,
       TrainingPlanModel originalPlan,
       TrainingPlanModel copiedPlan) async {
-    // Lokalen Provider speichern, um Kontextprobleme zu vermeiden
+    
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
-    final trainingPlansProvider =
-        Provider.of<TrainingPlansProvider>(context, listen: false);
+    final trainingPlansProvider = Provider.of<TrainingPlansProvider>(context, listen: false);
 
-    // Rückgabewert für die Benutzerwahl
     bool? shouldCopyProfiles;
 
-    // Vorbereiten der fehlenden Profil-Namen als einfachen Text (statt ListView)
     final String profilesList = missingProfileIds.map((id) {
       try {
-        // Suche das Profil mit dieser ID in den Freundesprofilen
         final profile = provider.progressionProfiles.firstWhere(
           (p) => p.id == id.toString(),
         );
-        // Zeige Name und ID an
-        return '• ${profile.name} (ID: ${profile.id})';
+        return '• ${profile.name}';
       } catch (e) {
-        // Falls kein Profil gefunden wird, zeige nur die ID an
-        return '• Profil mit ID: $id';
+        return '• Profil ID: $id';
       }
     }).join('\n');
 
     await showDialog(
       context: context,
+      barrierColor: _void.withOpacity(0.7),
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Fehlende Progressionsprofile'),
+        backgroundColor: _stellar,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.orange.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        title: Text(
+          'Fehlende Progressionsprofile',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _nova,
+            letterSpacing: 0.3,
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Der Trainingsplan verwendet Progressionsprofile, die in deiner Sammlung fehlen:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: _nova,
+                ),
               ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange[50],
+                  color: Colors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange[200]!),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.warning, color: Colors.orange),
+                        Icon(Icons.warning_rounded, color: Colors.orange, size: 20),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'Fehlende Profile:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: _nova,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(profilesList),
+                    Text(
+                      profilesList,
+                      style: TextStyle(
+                        color: _stardust,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Möchtest du diese Profile ebenfalls kopieren?',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: _nova,
+                ),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              shouldCopyProfiles = false;
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Nein, nur Plan kopieren'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              shouldCopyProfiles = true;
-              Navigator.of(dialogContext).pop();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+          Container(
+            decoration: BoxDecoration(
+              color: _lunar.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _stellar.withOpacity(0.5),
+                width: 1,
+              ),
             ),
-            child: const Text('Ja, alle kopieren'),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  shouldCopyProfiles = false;
+                  Navigator.of(dialogContext).pop();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'NUR PLAN',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _stardust,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.green[600]!, Colors.green[400]!],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  shouldCopyProfiles = true;
+                  Navigator.of(dialogContext).pop();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'ALLES KOPIEREN',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _nova,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
 
-    // Nach dem Schließen des Dialogs prüfen, ob der Kontext noch montiert ist
     if (!context.mounted) {
-      print('Kontext nicht mehr aktiv nach Dialog, kann nicht fortfahren');
       return;
     }
 
-    // Benutzerentscheidung auswerten
     if (shouldCopyProfiles == true) {
-      // Laden-Dialog anzeigen
       BuildContext? loadingContext;
 
       showDialog(
         context: context,
         barrierDismissible: false,
+        barrierColor: _void.withOpacity(0.7),
         builder: (ctx) {
           loadingContext = ctx;
           return WillPopScope(
             onWillPop: () async => false,
-            child: const AlertDialog(
+            child: AlertDialog(
+              backgroundColor: _stellar,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: _lunar.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
               content: Row(
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(width: 20),
-                  Text('Profile werden kopiert...'),
+                  CircularProgressIndicator(
+                    color: _proverCore,
+                    strokeWidth: 2,
+                  ),
+                  const SizedBox(width: 20),
+                  Text(
+                    'Profile werden kopiert...',
+                    style: TextStyle(
+                      color: _nova,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -403,28 +668,21 @@ class FriendTrainingPlansWidget extends StatelessWidget {
       );
 
       try {
-        // Kopiere fehlende Profile
         final success = await provider.copyMissingProfiles(
             missingProfileIds.map((id) => id.toString()).toList());
 
-        // Dialog schließen
         if (loadingContext != null && Navigator.canPop(loadingContext!)) {
           Navigator.of(loadingContext!).pop();
         }
 
-        // Prüfen, ob der Kontext noch gültig ist
         if (!context.mounted) {
-          print('Kontext nicht mehr aktiv nach Profilkopieren');
           return;
         }
 
         await Future.delayed(const Duration(milliseconds: 200));
 
-        // Erfolgs- oder Fehlermeldung anzeigen
         if (context.mounted) {
           if (success) {
-            // Aktualisiere die Liste der Trainingspläne noch einmal, um sicherzustellen,
-            // dass die Pläne mit den kopierten Profilen korrekt angezeigt werden
             await trainingPlansProvider.refreshTrainingPlans();
             await _showSuccessDialog(context, originalPlan, withProfiles: true);
           } else {
@@ -433,12 +691,9 @@ class FriendTrainingPlansWidget extends StatelessWidget {
           }
         }
       } catch (e) {
-        // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
         if (loadingContext != null && Navigator.canPop(loadingContext!)) {
           Navigator.of(loadingContext!).pop();
         }
-
-        print('Fehler beim Kopieren der Profile: $e');
 
         if (context.mounted) {
           await Future.delayed(const Duration(milliseconds: 200));
@@ -448,42 +703,69 @@ class FriendTrainingPlansWidget extends StatelessWidget {
         }
       }
     } else if (shouldCopyProfiles == false) {
-      // Nur Plan-Erfolg mit Warnung anzeigen
       if (context.mounted) {
         await _showSuccessDialog(context, originalPlan,
-            withWarning:
-                'Einige Übungen verwenden Profile, die du nicht kopiert hast.');
+            withWarning: 'Einige Übungen verwenden Profile, die du nicht kopiert hast.');
       }
     }
   }
 
-  // Erfolgs-Dialog anzeigen - aktualisiert
   Future<void> _showSuccessDialog(BuildContext context, TrainingPlanModel plan,
       {String? withWarning, bool withProfiles = false}) async {
     await showDialog(
       context: context,
+      barrierColor: _void.withOpacity(0.7),
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Erfolgreich kopiert'),
+        backgroundColor: _stellar,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.green.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        title: Text(
+          'Erfolgreich kopiert',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _nova,
+            letterSpacing: 0.3,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 48,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: Colors.green,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               'Der Trainingsplan "${plan.name}" wurde erfolgreich in deine Sammlung kopiert.',
               textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _stardust,
+                height: 1.4,
+              ),
             ),
             if (withProfiles) ...[
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Alle benötigten Progressionsprofile wurden ebenfalls kopiert.',
                 textAlign: TextAlign.center,
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
               ),
             ],
             if (withWarning != null) ...[
@@ -492,49 +774,144 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                 withWarning,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.orange),
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange,
+                ),
               ),
             ],
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_proverCore, _proverGlow],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: _proverCore.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(dialogContext).pop();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _nova,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Fehler-Dialog anzeigen - aktualisiert
-  Future<void> _showErrorDialog(
-      BuildContext context, String errorMessage) async {
+  Future<void> _showErrorDialog(BuildContext context, String errorMessage) async {
     await showDialog(
       context: context,
+      barrierColor: _void.withOpacity(0.7),
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Fehler'),
+        backgroundColor: _stellar,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.red.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        title: Text(
+          'Fehler',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _nova,
+            letterSpacing: 0.3,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error,
-              color: Colors.red,
-              size: 48,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               'Beim Kopieren ist ein Fehler aufgetreten:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: _nova,
+              ),
             ),
             const SizedBox(height: 8),
-            Text(errorMessage),
+            Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _stardust,
+                height: 1.4,
+              ),
+            ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
+          Container(
+            decoration: BoxDecoration(
+              color: _lunar.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _stellar.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(dialogContext).pop();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _stardust,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -545,102 +922,179 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         maxChildSize: 0.9,
         minChildSize: 0.4,
         expand: false,
         builder: (context, scrollController) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Header
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          plan.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_stellar, _nebula],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border.all(
+                color: _lunar.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: _asteroid,
+                          borderRadius: BorderRadius.circular(5),
                         ),
                       ),
-                      if (plan.isActive)
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Header
+                    Row(
+                      children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'AKTIV',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                            gradient: LinearGradient(
+                              colors: [_proverCore, _proverGlow],
                             ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.fitness_center_rounded, color: _nova, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      plan.name.toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: _nova,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  if (plan.isActive)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [_proverCore, _proverGlow],
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        'AKTIV',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          color: _nova,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${plan.days.length} Tage • ${_getTotalExercises(plan)} Übungen',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _stardust,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                      ],
+                    ),
 
-                  // Kopier-Button im Detail-Bereich
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context); // Schließe Details
-                            _copyTrainingPlan(
-                                context, plan); // Starte Kopier-Prozess
-                          },
-                          icon: const Icon(Icons.copy),
-                          label: const Text('In meine Sammlung kopieren'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
+                    const SizedBox(height: 24),
+
+                    // Copy Button
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                        _copyTrainingPlan(context, plan);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.green[600]!, Colors.green[400]!],
                           ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.copy_rounded, color: _nova, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'IN MEINE SAMMLUNG KOPIEREN',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 8),
-
-                  // Scrollable content
-                  Expanded(
-                    child: ListView.separated(
-                      controller: scrollController,
-                      itemCount: plan.days.length,
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemBuilder: (context, i) =>
-                          _buildDayDetails(context, plan.days[i], i),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 24),
+                    
+                    Text(
+                      'TRAININGSTAGE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _proverCore,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Scrollable content
+                    Expanded(
+                      child: ListView.separated(
+                        controller: scrollController,
+                        itemCount: plan.days.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, i) => _buildDayDetails(context, plan.days[i], i),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -649,19 +1103,29 @@ class FriendTrainingPlansWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDayDetails(BuildContext context, day, int index) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+  Widget _buildDayDetails(BuildContext context, dynamic day, int index) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _lunar.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _stellar.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: Colors.blue[200],
+                  gradient: LinearGradient(
+                    colors: [_proverCore, _proverGlow],
+                  ),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -669,150 +1133,136 @@ class FriendTrainingPlansWidget extends StatelessWidget {
                     '${index + 1}',
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[800],
+                      fontWeight: FontWeight.w800,
+                      color: _nova,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Text(
-                day.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                day.name.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: _nova,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
-          // Übungen des Tages
-          for (int i = 0; i < day.exercises.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(left: 36, bottom: 8),
-              child: Card(
-                margin: EdgeInsets.zero,
-                elevation: 0,
-                color: Colors.grey[100],
-                shape: RoundedRectangleBorder(
+          // Exercises
+          ...day.exercises.asMap().entries.map((entry) {
+            final exercise = entry.value;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _stellar.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _lunar.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              day.exercises[i].name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            exercise.name,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: _nova,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[100],
-                              borderRadius: BorderRadius.circular(4),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [_proverCore.withOpacity(0.8), _proverGlow.withOpacity(0.8)],
                             ),
-                            child: Text(
-                              '${day.exercises[i].numberOfSets}×',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[800],
-                              ),
-                            ),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          // Zeige Profil-Information an
-                          if (day.exercises[i].progressionProfileId != null &&
-                              day.exercises[i].progressionProfileId!
-                                  .isNotEmpty) ...[
-                            const SizedBox(width: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.purple[100],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.trending_up,
-                                    size: 12,
-                                    color: Colors.purple[800],
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    _getProfileNameById(context,
-                                        day.exercises[i].progressionProfileId!),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.purple[800],
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
+                          child: Text(
+                            '${exercise.numberOfSets}×',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: _nova,
                             ),
-                          ],
-                        ],
-                      ),
-                      if (day.exercises[i].primaryMuscleGroup.isNotEmpty ||
-                          day.exercises[i].secondaryMuscleGroup.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _getMuscleGroups(day.exercises[i]),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
                           ),
                         ),
                       ],
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.timer, size: 12, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${day.exercises[i].restPeriodSeconds}s Pause',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(Icons.trending_up,
-                              size: 12, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            '+${day.exercises[i].standardIncrease}kg',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                    ),
+                    if (exercise.primaryMuscleGroup.isNotEmpty ||
+                        exercise.secondaryMuscleGroup.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _getMuscleGroups(exercise),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _stardust,
+                        ),
                       ),
                     ],
-                  ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.timer_outlined, size: 14, color: _comet),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${exercise.restPeriodSeconds}s',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _comet,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.trending_up_rounded, size: 14, color: _comet),
+                        const SizedBox(width: 4),
+                        Text(
+                          '+${exercise.standardIncrease}kg',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _comet,
+                          ),
+                        ),
+                        if (exercise.progressionProfileId != null &&
+                            exercise.progressionProfileId!.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          Icon(Icons.auto_graph_rounded, size: 14, color: _proverCore),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getProfileNameById(context, exercise.progressionProfileId!),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _proverCore,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
+            );
+          }).toList(),
         ],
       ),
     );
   }
 
-  String _getMuscleGroups(exercise) {
+  String _getMuscleGroups(dynamic exercise) {
     List<String> groups = [];
     if (exercise.primaryMuscleGroup.isNotEmpty) {
       groups.add(exercise.primaryMuscleGroup);
@@ -821,5 +1271,17 @@ class FriendTrainingPlansWidget extends StatelessWidget {
       groups.add(exercise.secondaryMuscleGroup);
     }
     return groups.join(' • ');
+  }
+
+  String _getProfileNameById(BuildContext context, String profileId) {
+    final provider = Provider.of<FriendProfileProvider>(context, listen: false);
+    try {
+      final profile = provider.progressionProfiles.firstWhere(
+        (profile) => profile.id == profileId,
+      );
+      return profile.name;
+    } catch (e) {
+      return 'Profil';
+    }
   }
 }

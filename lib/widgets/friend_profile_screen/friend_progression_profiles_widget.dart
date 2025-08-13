@@ -1,12 +1,29 @@
 // lib/widgets/friend_profile_screen/friend_progression_profiles_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/friend_profile_screen/friend_profile_provider.dart';
-import '../../providers/progression_manager_screen/progression_manager_provider.dart'; // Neuer Import
+import '../../providers/progression_manager_screen/progression_manager_provider.dart';
 import '../../models/progression_manager_screen/progression_profile_model.dart';
 
 class FriendProgressionProfilesWidget extends StatelessWidget {
   const FriendProgressionProfilesWidget({Key? key}) : super(key: key);
+
+  // PROVER color system - consistent with other screens
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
 
   @override
   Widget build(BuildContext context) {
@@ -15,176 +32,362 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     final activeProfileId = provider.activeProfileId;
 
     if (profiles.isEmpty) {
-      return Center(
+      return _buildEmptyState();
+    }
+
+    // Fixed: Remove Expanded from Column inside SliverToBoxAdapter
+    // Build list directly without wrapping Column
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'PROGRESSIONSPROFILE',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: _proverCore,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Use a fixed height container or shrinkWrap ListView
+        ...profiles.map((profile) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildProfileCard(context, profile, profile.id == activeProfileId),
+        )).toList(),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _stellar.withOpacity(0.6),
+            _nebula.withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.trending_up,
-              size: 64,
-              color: Colors.grey[400],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _lunar.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.trending_up_rounded,
+                size: 32,
+                color: _comet,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Keine Progressionsprofile verfügbar',
+              'KEINE PROFILE',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: _stardust,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Dein Freund hat noch keine Progressionsprofile erstellt',
+              'Dein Freund hat noch keine\nProgressionsprofile erstellt',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[600],
+                fontSize: 14,
+                color: _comet,
+                height: 1.4,
               ),
             ),
           ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Progressionsprofile',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: profiles.length,
-              itemBuilder: (context, index) {
-                final profile = profiles[index];
-                return _buildProfileCard(
-                    context, profile, profile.id == activeProfileId);
-              },
-            ),
+  Widget _buildProfileCard(BuildContext context, ProgressionProfileModel profile, bool isActive) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isActive 
+              ? _proverCore.withOpacity(0.15)
+              : _stellar.withOpacity(0.6),
+            isActive
+              ? _proverGlow.withOpacity(0.08)
+              : _nebula.withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isActive 
+            ? _proverCore.withOpacity(0.5)
+            : _lunar.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isActive 
+              ? _proverCore.withOpacity(0.1)
+              : _void.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showProfileDetails(context, profile),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isActive 
+                            ? [_proverCore, _proverGlow]
+                            : [_asteroid, _comet.withOpacity(0.8)],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: isActive 
+                              ? _proverCore.withOpacity(0.3)
+                              : _asteroid.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.trending_up_rounded,
+                        color: _nova,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  profile.name.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: isActive ? _proverCore : _nova,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              if (isActive)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [_proverCore, _proverGlow],
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'AKTIV',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: _nova,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            profile.description,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _stardust,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Action Buttons
+                Row(
+                  children: [
+                    // Copy Button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _copyProfile(context, profile);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.green[600]!, Colors.green[400]!],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.copy_rounded, color: _nova, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                'KOPIEREN',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: _nova,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Details Button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _showProfileDetails(context, profile);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isActive 
+                              ? _proverCore.withOpacity(0.2)
+                              : _lunar.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isActive 
+                                ? _proverCore.withOpacity(0.5)
+                                : _stellar.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded, 
+                                color: isActive ? _proverCore : _stardust, 
+                                size: 16
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'DETAILS',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: isActive ? _proverCore : _stardust,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildProfileCard(
-      BuildContext context, ProgressionProfileModel profile, bool isActive) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 2,
-      color: isActive ? Colors.purple[50] : null,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: CircleAvatar(
-          backgroundColor: isActive ? Colors.purple : Colors.grey[300],
-          child: Icon(
-            Icons.trending_up,
-            color: Colors.white,
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                profile.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isActive ? Colors.purple[800] : null,
-                ),
-              ),
-            ),
-            if (isActive)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.purple,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'AKTIV',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6.0),
-          child: Text(
-            profile.description,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Kopier-Button
-            ElevatedButton.icon(
-              onPressed: () => _copyProfile(context, profile),
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Kopieren'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () => _showProfileDetails(context, profile),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isActive ? Colors.purple : Colors.grey[200],
-                foregroundColor: isActive ? Colors.white : Colors.black87,
-              ),
-              child: const Text('Details'),
-            ),
-          ],
-        ),
-        onTap: () => _showProfileDetails(context, profile),
-      ),
-    );
-  }
-
-  // Überarbeitete Kopier-Funktion mit verbesserter Dialog-Verwaltung
-  void _copyProfile(
-      BuildContext context, ProgressionProfileModel profile) async {
+  void _copyProfile(BuildContext context, ProgressionProfileModel profile) async {
     final provider = Provider.of<FriendProfileProvider>(context, listen: false);
-    // Zugriff auf den ProgressionManagerProvider für Aktualisierungen
-    final progressionProvider =
-        Provider.of<ProgressionManagerProvider>(context, listen: false);
+    final progressionProvider = Provider.of<ProgressionManagerProvider>(context, listen: false);
 
-    // Dialog-Kontext zur späteren Verwendung merken
     BuildContext? dialogContext;
 
-    // Zeige Ladeanzeige mit Barrier
     showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: _void.withOpacity(0.7),
       builder: (context) {
         dialogContext = context;
         return WillPopScope(
           onWillPop: () async => false,
-          child: const AlertDialog(
+          child: AlertDialog(
+            backgroundColor: _stellar,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: _lunar.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
             content: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 20),
-                Text('Profil wird kopiert...'),
+                CircularProgressIndicator(
+                  color: _proverCore,
+                  strokeWidth: 2,
+                ),
+                const SizedBox(width: 20),
+                Text(
+                  'Profil wird kopiert...',
+                  style: TextStyle(
+                    color: _nova,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -193,33 +396,23 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     );
 
     try {
-      // Versuche, das Profil zu kopieren
       final success = await provider.copyProfileToOwnCollection(profile);
 
-      // Dialog schließen - hier mit verbesserten Sicherheitschecks
       if (dialogContext != null && Navigator.canPop(dialogContext!)) {
         Navigator.of(dialogContext!).pop();
       }
 
-      // Kurze Verzögerung, um sicherzustellen, dass der Dialog vollständig geschlossen wurde
       await Future.delayed(const Duration(milliseconds: 200));
-
-      // Aktualisiere die Profilliste im ProgressionManagerProvider
       await progressionProvider.refreshProfiles();
 
-      // Nur einen neuen Dialog anzeigen, wenn der Kontext noch gültig ist
       if (context.mounted) {
         if (success) {
-          // Erfolg
           _showSuccessDialog(context, profile);
         } else {
-          // Fehler
-          _showErrorDialog(
-              context, provider.errorMessage ?? 'Unbekannter Fehler');
+          _showErrorDialog(context, provider.errorMessage ?? 'Unbekannter Fehler');
         }
       }
     } catch (e) {
-      // Exception abfangen, Dialog schließen und Fehlermeldung anzeigen
       if (dialogContext != null && Navigator.canPop(dialogContext!)) {
         Navigator.of(dialogContext!).pop();
       }
@@ -232,241 +425,414 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     }
   }
 
-  // Erfolgs-Dialog anzeigen
-  void _showSuccessDialog(
-      BuildContext context, ProgressionProfileModel profile) {
+  void _showSuccessDialog(BuildContext context, ProgressionProfileModel profile) {
     showDialog(
       context: context,
+      barrierColor: _void.withOpacity(0.7),
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Erfolgreich kopiert'),
+        backgroundColor: _stellar,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.green.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        title: Text(
+          'Erfolgreich kopiert',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _nova,
+            letterSpacing: 0.3,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 48,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: Colors.green,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               'Das Progressionsprofil "${profile.name}" wurde erfolgreich in deine Sammlung kopiert.',
               textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _stardust,
+                height: 1.4,
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_proverCore, _proverGlow],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: _proverCore.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(dialogContext).pop();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _nova,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Fehler-Dialog anzeigen
   void _showErrorDialog(BuildContext context, String errorMessage) {
     showDialog(
       context: context,
+      barrierColor: _void.withOpacity(0.7),
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Fehler'),
+        backgroundColor: _stellar,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.red.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        title: Text(
+          'Fehler',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _nova,
+            letterSpacing: 0.3,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error,
-              color: Colors.red,
-              size: 48,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               'Beim Kopieren ist ein Fehler aufgetreten:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: _nova,
+              ),
             ),
             const SizedBox(height: 8),
-            Text(errorMessage),
+            Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _stardust,
+                height: 1.4,
+              ),
+            ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
+          Container(
+            decoration: BoxDecoration(
+              color: _lunar.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _stellar.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(dialogContext).pop();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _stardust,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showProfileDetails(
-      BuildContext context, ProgressionProfileModel profile) {
+  void _showProfileDetails(BuildContext context, ProgressionProfileModel profile) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         maxChildSize: 0.9,
         minChildSize: 0.4,
         expand: false,
         builder: (context, scrollController) {
-          return SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          profile.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_stellar, _nebula],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border.all(
+                color: _lunar.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.purple,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          profile.id == profile.id ? 'AKTIV' : 'PROFIL',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          color: _asteroid,
+                          borderRadius: BorderRadius.circular(5),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    profile.description,
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey[700],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Kopier-Button im Detail-Bereich
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context); // Schließe Details
-                            _copyProfile(
-                                context, profile); // Starte Kopier-Prozess
-                          },
-                          icon: const Icon(Icons.copy),
-                          label: const Text('In meine Sammlung kopieren'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
+                    const SizedBox(height: 20),
+                    
+                    // Profile Header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [_proverCore, _proverGlow],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.trending_up_rounded, color: _nova, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile.name.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: _nova,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                profile.description,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _stardust,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 8),
-
-                  // Konfiguration
-                  const Text(
-                    'Konfiguration',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    elevation: 0,
-                    color: Colors.purple[50],
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Copy Button
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                        _copyProfile(context, profile);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.green[600]!, Colors.green[400]!],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.copy_rounded, color: _nova, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'IN MEINE SAMMLUNG KOPIEREN',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Configuration Section
+                    Text(
+                      'KONFIGURATION',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _proverCore,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _lunar.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _stellar.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
                       child: Column(
                         children: [
-                          _buildConfigDetailItem(
+                          _buildConfigItem(
                             'Wiederholungsbereich',
-                            '${_formatInteger(profile.config['targetRepsMin'] ?? 0)} - ${_formatInteger(profile.config['targetRepsMax'] ?? 0)} Wdh.',
-                            Icons.repeat,
+                            '${profile.config['targetRepsMin'] ?? 0} - ${profile.config['targetRepsMax'] ?? 0} Wdh.',
+                            Icons.repeat_rounded,
                           ),
                           const SizedBox(height: 12),
-                          _buildConfigDetailItem(
+                          _buildConfigItem(
                             'RIR-Bereich',
-                            '${_formatInteger(profile.config['targetRIRMin'] ?? 0)} - ${_formatInteger(profile.config['targetRIRMax'] ?? 0)} RIR',
-                            Icons.battery_5_bar,
+                            '${profile.config['targetRIRMin'] ?? 0} - ${profile.config['targetRIRMax'] ?? 0} RIR',
+                            Icons.battery_5_bar_rounded,
                           ),
                           const SizedBox(height: 12),
-                          _buildConfigDetailItem(
+                          _buildConfigItem(
                             'Gewichtssteigerung',
-                            '${_formatNumber(profile.config['increment'] ?? 0)} kg',
-                            Icons.fitness_center,
+                            '${profile.config['increment'] ?? 0} kg',
+                            Icons.fitness_center_rounded,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Regeln
-                  const Text(
-                    'Progressionsregeln',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Rules Section
+                    Text(
+                      'PROGRESSIONSREGELN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _proverCore,
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  profile.rules.isEmpty
-                      ? Card(
-                          elevation: 0,
-                          color: Colors.grey[100],
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
+                    const SizedBox(height: 12),
+                    
+                    profile.rules.isEmpty
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: _lunar.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _stellar.withOpacity(0.5),
+                                width: 1,
+                              ),
+                            ),
                             child: Center(
                               child: Text(
                                 'Keine Regeln definiert',
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: _comet,
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ),
+                          )
+                        : Column(
+                            children: profile.rules.asMap().entries.map((entry) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _buildRuleCard(entry.value, entry.key + 1),
+                              );
+                            }).toList(),
                           ),
-                        )
-                      : Column(
-                          children: [
-                            for (int i = 0; i < profile.rules.length; i++) ...[
-                              _buildRuleCard(profile.rules[i], i + 1),
-                              if (i < profile.rules.length - 1)
-                                const SizedBox(height: 8),
-                            ],
-                          ],
-                        ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
@@ -475,10 +841,17 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildConfigDetailItem(String label, String value, IconData icon) {
+  Widget _buildConfigItem(String label, String value, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.purple[700]),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _proverCore.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 18, color: _proverCore),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -487,17 +860,18 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _comet,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.purple[800],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _nova,
                 ),
               ),
             ],
@@ -507,209 +881,151 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRuleCard(rule, int index) {
+  Widget _buildRuleCard(dynamic rule, int index) {
     final ruleType = rule.type;
-
-    return Card(
-      elevation: 0,
-      color: ruleType == 'condition' ? Colors.blue[50] : Colors.green[50],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+    final isCondition = ruleType == 'condition';
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isCondition 
+          ? Colors.blue.withOpacity(0.05)
+          : Colors.green.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isCondition
+            ? Colors.blue.withOpacity(0.3)
+            : Colors.green.withOpacity(0.3),
+          width: 1,
+        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor:
-                      ruleType == 'condition' ? Colors.blue : Colors.green,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isCondition
+                      ? [Colors.blue[600]!, Colors.blue[400]!]
+                      : [Colors.green[600]!, Colors.green[400]!],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: _nova,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: ruleType == 'condition' ? Colors.blue : Colors.green,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    ruleType == 'condition' ? 'BEDINGUNG' : 'ZUWEISUNG',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isCondition
+                    ? Colors.blue.withOpacity(0.2)
+                    : Colors.green.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isCondition ? 'BEDINGUNG' : 'ZUWEISUNG',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: isCondition ? Colors.blue : Colors.green,
+                    letterSpacing: 1,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          if (isCondition && rule.conditions != null && rule.conditions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'WENN:',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: _comet,
+                letterSpacing: 0.5,
+              ),
             ),
-            const SizedBox(height: 8),
-
-            // Bedingungen und Aktionen
-            if (ruleType == 'condition' && rule.conditions.isNotEmpty) ...[
-              const Text(
-                'Wenn:',
+            const SizedBox(height: 4),
+            ...List.generate(rule.conditions.length, (i) => Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: Text(
+                _buildConditionText(rule.conditions[i]),
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
                   fontSize: 12,
+                  color: _stardust,
                 ),
               ),
-              const SizedBox(height: 4),
-              for (int i = 0; i < rule.conditions.length; i++) ...[
-                Container(
-                  margin: const EdgeInsets.only(left: 8),
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      if (i > 0) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 1),
-                          margin: const EdgeInsets.only(right: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[100],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            rule.logicalOperator,
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[800],
-                            ),
-                          ),
-                        ),
-                      ],
-                      Expanded(
-                        child: Text(
-                          _buildConditionText(rule.conditions[i]),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-
-            if (rule.children.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              const Text(
-                'Dann:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 4),
-              for (final action in rule.children) ...[
-                if (action.type == 'assignment') ...[
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: _getTargetColor(action.target)[0],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _getTargetLabel(action.target),
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              color: _getTargetColor(action.target)[1],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            '= ${_renderValueNode(action.value)}',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ],
+            )),
           ],
-        ),
+          if (rule.children != null && rule.children.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'DANN:',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: _comet,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            ...rule.children.map((action) => Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: Text(
+                '${_getTargetLabel(action.target ?? '')} = ${_renderValueNode(action.value ?? {})}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _stardust,
+                ),
+              ),
+            )).toList(),
+          ],
+        ],
       ),
     );
   }
 
-  String _buildConditionText(condition) {
-    final leftLabel = _getVariableLabel(condition.left['value']);
-    final operatorLabel = _getOperatorLabel(condition.operator);
-    final rightLabel = condition.right['type'] == 'variable'
-        ? _getVariableLabel(condition.right['value'])
-        : condition.right['value'].toString();
-
-    return '$leftLabel $operatorLabel $rightLabel';
-  }
-
-  List<Color> _getTargetColor(String target) {
-    switch (target) {
-      case 'kg':
-        return [Colors.blue[50]!, Colors.blue[800]!];
-      case 'reps':
-        return [Colors.purple[50]!, Colors.purple[800]!];
-      case 'rir':
-        return [Colors.amber[50]!, Colors.amber[800]!];
-      default:
-        return [Colors.grey[50]!, Colors.grey[800]!];
-    }
+  String _buildConditionText(dynamic condition) {
+    if (condition == null) return '';
+    final left = condition.left?['value'] ?? '';
+    final operator = condition.operator ?? '';
+    final right = condition.right?['value'] ?? '';
+    return '${_getVariableLabel(left.toString())} ${_getOperatorLabel(operator)} ${right}';
   }
 
   String _getTargetLabel(String target) {
     switch (target) {
-      case 'kg':
-        return 'GEWICHT';
-      case 'reps':
-        return 'WIEDERHOLUNGEN';
-      case 'rir':
-        return 'RIR';
-      default:
-        return target.toUpperCase();
+      case 'kg': return 'GEWICHT';
+      case 'reps': return 'WIEDERHOLUNGEN';
+      case 'rir': return 'RIR';
+      default: return target.toUpperCase();
     }
   }
 
   String _getVariableLabel(String variableId) {
     final labels = {
       'lastKg': 'Letztes Gewicht',
-      'lastReps': 'Letzte Wiederholungen',
+      'lastReps': 'Letzte Wdh.',
       'lastRIR': 'Letzter RIR',
-      'last1RM': 'Letzter 1RM',
-      'previousKg': 'Vorheriges Gewicht',
-      'previousReps': 'Vorherige Wiederholungen',
-      'previousRIR': 'Vorheriger RIR',
-      'previous1RM': 'Vorheriger 1RM',
       'targetRepsMin': 'Ziel Wdh. Min',
       'targetRepsMax': 'Ziel Wdh. Max',
       'targetRIRMin': 'Ziel RIR Min',
       'targetRIRMax': 'Ziel RIR Max',
-      'increment': 'Std. Steigerung',
+      'increment': 'Steigerung',
     };
-
     return labels[variableId] ?? variableId;
   }
 
@@ -720,48 +1036,21 @@ class FriendProgressionProfilesWidget extends StatelessWidget {
       'lt': '<',
       'gte': '>=',
       'lte': '<=',
-      'add': '+',
-      'subtract': '-',
-      'multiply': '*',
     };
-
     return operators[operatorId] ?? operatorId;
   }
 
   String _renderValueNode(Map<String, dynamic> node) {
-    if (node == null) return '';
-
+    if (node.isEmpty) return '';
     switch (node['type']) {
       case 'variable':
-        return _getVariableLabel(node['value']);
+        return _getVariableLabel(node['value'] ?? '');
       case 'constant':
         return node['value'].toString();
       case 'operation':
-        return '${_renderValueNode(node['left'])} ${_getOperatorLabel(node['operator'])} ${_renderValueNode(node['right'])}';
-      case 'oneRM':
-        return '1RM +${node['percentage']}% (nach Epley-Formel)';
+        return '${_renderValueNode(node['left'] ?? {})} ${_getOperatorLabel(node['operator'] ?? '')} ${_renderValueNode(node['right'] ?? {})}';
       default:
-        return 'Unbekannter Wert';
+        return 'Unbekannt';
     }
   }
-}
-
-// Helper functions for number formatting
-String _formatInteger(dynamic value) {
-  if (value == null) return '0';
-  if (value is int) return value.toString();
-  if (value is double) return value.toInt().toString();
-  return value.toString();
-}
-
-String _formatNumber(dynamic value) {
-  if (value == null) return '0';
-  if (value is int) return value.toString();
-  if (value is double) {
-    if (value == value.toInt()) {
-      return value.toInt().toString();
-    }
-    return value.toString();
-  }
-  return value.toString();
 }

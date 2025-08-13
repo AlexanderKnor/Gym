@@ -1,4 +1,5 @@
 // lib/widgets/create_training_plan_screen/training_day_tab_widget.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -525,7 +526,7 @@ class TrainingDayTabWidget extends StatelessWidget {
     );
   }
 
-  // Modernisierte Übungsliste
+  // Modernisierte Übungsliste mit Drag & Drop
   Widget _buildExerciseList(
     BuildContext context,
     List<ExerciseModel> exercises,
@@ -534,17 +535,61 @@ class TrainingDayTabWidget extends StatelessWidget {
     bool isPeriodized,
     int activeWeekIndex,
   ) {
-    return ListView.builder(
+    return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       itemCount: exercises.length,
+      // Proxy decorator für visuelles Feedback beim Ziehen
+      proxyDecorator: (Widget child, int index, Animation<double> animation) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (BuildContext context, Widget? child) {
+            final double animValue = Curves.easeInOut.transform(animation.value);
+            final double scale = 1 + (animValue * 0.05); // Leichte Vergrößerung beim Ziehen
+            
+            return Transform.scale(
+              scale: scale,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF4500).withOpacity(0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+      },
+      onReorder: (int oldIndex, int newIndex) {
+        // Haptisches Feedback beim Neuordnen
+        HapticFeedback.mediumImpact();
+        
+        if (oldIndex < newIndex) {
+          newIndex -= 1;
+        }
+        
+        // Übungen im Provider umordnen
+        createProvider.reorderExercises(dayIndex, oldIndex, newIndex);
+      },
       itemBuilder: (context, index) {
         // Bei periodisierten Plänen die Übung mit den Werten für die aktuelle Woche anzeigen
         final ExerciseModel exercise = isPeriodized
             ? createProvider.getExerciseForCurrentWeek(index)
             : exercises[index];
 
-        return Container(
-            margin: const EdgeInsets.only(bottom: 16),
+        // Material widget als direktes Kind für ReorderableListView
+        return Material(
+          key: ValueKey('exercise_${exercise.id}_$index'), // Unique key für ReorderableListView
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -585,6 +630,16 @@ class TrainingDayTabWidget extends StatelessWidget {
                       children: [
                         Row(
                           children: [
+                            // Drag Handle - zeigt an, dass die Übung verschiebbar ist
+                            Container(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                Icons.drag_indicator,
+                                size: 24,
+                                color: const Color(0xFF8E8E93).withOpacity(0.8), // Mercury
+                              ),
+                            ),
+                            
                             // Übungssymbol mit verbessertem Design
                             Container(
                               width: 48,
@@ -624,257 +679,257 @@ class TrainingDayTabWidget extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
 
-                            // Übungstitel und Beschreibung
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    exercise.name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.3,
-                                      color: Color(0xFFFFFFFF), // Snow
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' / ${exercise.secondaryMuscleGroup}' : ''}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFFAEAEB2), // Silver
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                ],
+                      // Übungstitel und Beschreibung
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              exercise.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.3,
+                                color: Color(0xFFFFFFFF), // Snow
                               ),
                             ),
-
-                            // Optionen-Menü
-                            PopupMenuButton<String>(
-                              icon: const Icon(
-                                Icons.more_vert,
+                            const SizedBox(height: 2),
+                            Text(
+                              '${exercise.primaryMuscleGroup}${exercise.secondaryMuscleGroup.isNotEmpty ? ' / ${exercise.secondaryMuscleGroup}' : ''}',
+                              style: const TextStyle(
+                                fontSize: 13,
                                 color: Color(0xFFAEAEB2), // Silver
+                                letterSpacing: -0.3,
                               ),
-                              color: const Color(0xFF1C1C1E), // Charcoal
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 8,
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _showEditExerciseDialog(
-                                    context,
-                                    index,
-                                    exercise,
-                                    isPeriodized,
-                                    activeWeekIndex,
-                                    createProvider,
-                                    progressionProvider,
-                                  );
-                                } else if (value == 'delete') {
-                                  _confirmDeleteExercise(
-                                      context, index, createProvider);
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem<String>(
-                                  value: 'edit',
-                                  child: const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.edit_outlined,
-                                        size: 20,
-                                        color: Color(0xFFAEAEB2), // Silver
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text(
-                                        'Bearbeiten',
-                                        style: TextStyle(
-                                          color: Color(0xFFFFFFFF), // Snow
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.delete_outline,
-                                        size: 20,
-                                        color: Color(0xFFFF453A), // Error red
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text(
-                                        'Löschen',
-                                        style: TextStyle(
-                                          color: Color(0xFFFF453A), // Error red
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
-                        ),
-
-                        // Details-Abschnitt (Sätze, Wiederholungen, RIR)
-                        Container(
-                          margin: const EdgeInsets.only(top: 20),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                const Color(0xFF2C2C2E), // Graphite
-                                const Color(0xFF1C1C1E), // Charcoal
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: const Color(0xFF48484A)
-                                  .withOpacity(0.4), // Steel
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF000000).withOpacity(0.2),
-                                offset: const Offset(0, 2),
-                                blurRadius: 8,
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              // Sätze
-                              _buildDetailItem(
-                                'Sätze',
-                                '${exercise.numberOfSets}',
-                                Icons.repeat_rounded,
-                              ),
-
-                              // Vertikaler Trenner
-                              Container(
-                                height: 28,
-                                width: 1,
-                                color: const Color(0xFF48484A), // Steel
-                              ),
-
-                              // Wiederholungen
-                              _buildDetailItem(
-                                'Wiederholungen',
-                                '${exercise.repRangeMin}-${exercise.repRangeMax}',
-                                Icons.tag_rounded,
-                              ),
-
-                              // Vertikaler Trenner
-                              Container(
-                                height: 28,
-                                width: 1,
-                                color: const Color(0xFF48484A), // Steel
-                              ),
-
-                              // RIR
-                              _buildDetailItem(
-                                'RIR',
-                                '${exercise.rirRangeMin}-${exercise.rirRangeMax}',
-                                Icons.battery_charging_full_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Progressionsprofil-Info, wenn gesetzt
-                  if (exercise.progressionProfileId != null &&
-                      progressionProvider.progressionsProfile.any(
-                          (p) => p.id == exercise.progressionProfileId)) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            const Color(0xFF242429), // Dark graphite
-                            const Color(0xFF1C1C1E), // Charcoal
-                          ],
-                        ),
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        ),
-                        border: Border(
-                          top: BorderSide(
-                            color: const Color(0xFF48484A)
-                                .withOpacity(0.4), // Steel
-                            width: 1,
-                          ),
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.trending_up_rounded,
-                            size: 18,
-                            color: Color(0xFFFF4500), // Orange
+
+                      // Optionen-Menü
+                      PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          color: Color(0xFFAEAEB2), // Silver
+                        ),
+                        color: const Color(0xFF1C1C1E), // Charcoal
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 8,
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditExerciseDialog(
+                              context,
+                              index,
+                              exercise,
+                              isPeriodized,
+                              activeWeekIndex,
+                              createProvider,
+                              progressionProvider,
+                            );
+                          } else if (value == 'delete') {
+                            _confirmDeleteExercise(
+                                context, index, createProvider);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem<String>(
+                            value: 'edit',
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 20,
+                                  color: Color(0xFFAEAEB2), // Silver
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Bearbeiten',
+                                  style: TextStyle(
+                                    color: Color(0xFFFFFFFF), // Snow
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  const TextSpan(
-                                    text: 'Progressionsprofil: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFFFF4500), // Orange
-                                      fontSize: 13,
-                                    ),
+                          PopupMenuItem<String>(
+                            value: 'delete',
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Color(0xFFFF453A), // Error red
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Löschen',
+                                  style: TextStyle(
+                                    color: Color(0xFFFF453A), // Error red
                                   ),
-                                  TextSpan(
-                                    text: progressionProvider
-                                        .progressionsProfile
-                                        .firstWhere((p) =>
-                                            p.id ==
-                                            exercise.progressionProfileId)
-                                        .name,
-                                    style: const TextStyle(
-                                      color: Color(0xFFFFFFFF), // Snow
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  if (isPeriodized)
-                                    TextSpan(
-                                      text: ' (Woche ${activeWeekIndex + 1})',
-                                      style: const TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                        color: Color(0xFFAEAEB2), // Silver
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
+                    ],
+                  ),
+
+                  // Details-Abschnitt (Sätze, Wiederholungen, RIR)
+                  Container(
+                    margin: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF2C2C2E), // Graphite
+                          const Color(0xFF1C1C1E), // Charcoal
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color:
+                            const Color(0xFF48484A).withOpacity(0.4), // Steel
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF000000).withOpacity(0.2),
+                          offset: const Offset(0, 2),
+                          blurRadius: 8,
+                          spreadRadius: 0,
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        // Sätze
+                        _buildDetailItem(
+                          'Sätze',
+                          '${exercise.numberOfSets}',
+                          Icons.repeat_rounded,
+                        ),
+
+                        // Vertikaler Trenner
+                        Container(
+                          height: 28,
+                          width: 1,
+                          color: const Color(0xFF48484A), // Steel
+                        ),
+
+                        // Wiederholungen
+                        _buildDetailItem(
+                          'Wiederholungen',
+                          '${exercise.repRangeMin}-${exercise.repRangeMax}',
+                          Icons.tag_rounded,
+                        ),
+
+                        // Vertikaler Trenner
+                        Container(
+                          height: 28,
+                          width: 1,
+                          color: const Color(0xFF48484A), // Steel
+                        ),
+
+                        // RIR
+                        _buildDetailItem(
+                          'RIR',
+                          '${exercise.rirRangeMin}-${exercise.rirRangeMax}',
+                          Icons.battery_charging_full_rounded,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ));
+            ),
+
+            // Progressionsprofil-Info, wenn gesetzt
+            if (exercise.progressionProfileId != null &&
+                progressionProvider.progressionsProfile
+                    .any((p) => p.id == exercise.progressionProfileId)) ...[
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF242429), // Dark graphite
+                      const Color(0xFF1C1C1E), // Charcoal
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                  border: Border(
+                    top: BorderSide(
+                      color: const Color(0xFF48484A).withOpacity(0.4), // Steel
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.trending_up_rounded,
+                      size: 18,
+                      color: Color(0xFFFF4500), // Orange
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Progressionsprofil: ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFFFF4500), // Orange
+                                fontSize: 13,
+                              ),
+                            ),
+                            TextSpan(
+                              text: progressionProvider.progressionsProfile
+                                  .firstWhere((p) =>
+                                      p.id == exercise.progressionProfileId)
+                                  .name,
+                              style: const TextStyle(
+                                color: Color(0xFFFFFFFF), // Snow
+                                fontSize: 13,
+                              ),
+                            ),
+                            if (isPeriodized)
+                              TextSpan(
+                                text: ' (Woche ${activeWeekIndex + 1})',
+                                style: const TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Color(0xFFAEAEB2), // Silver
+                                  fontSize: 13,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+            ),
+          ),
+        );
       },
     );
   }

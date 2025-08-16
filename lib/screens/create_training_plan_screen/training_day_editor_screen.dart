@@ -1078,102 +1078,247 @@ class _TrainingDayEditorScreenState extends State<TrainingDayEditorScreen>
     );
   }
 
-  // Bestätigungsdialog zum Verlassen des Screens
+  // PROVER-styled Bestätigungsdialog zum Verlassen des Screens
   void _showExitConfirmation(BuildContext context) {
+    // PROVER color system
+    const Color _void = Color(0xFF000000);
+    const Color _nebula = Color(0xFF0F0F12);
+    const Color _stellar = Color(0xFF18181C);
+    const Color _lunar = Color(0xFF242429);
+    const Color _asteroid = Color(0xFF35353C);
+    const Color _comet = Color(0xFF65656F);
+    const Color _stardust = Color(0xFFA5A5B0);
+    const Color _nova = Color(0xFFF5F5F7);
+    const Color _proverCore = Color(0xFFFF4500);
+    const Color _proverGlow = Color(0xFFFF6B3D);
+    
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1C1C1E), // Charcoal
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: const Color(0xFF48484A).withOpacity(0.3), // Steel
-            width: 1,
+      barrierColor: _void.withOpacity(0.85),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 380),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                _stellar.withOpacity(0.95),
+                _nebula.withOpacity(0.9),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: _lunar.withOpacity(0.4),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _proverCore.withOpacity(0.08),
+                blurRadius: 24,
+                spreadRadius: 4,
+              ),
+              BoxShadow(
+                color: _void.withOpacity(0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Bearbeitung abbrechen?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFFFFFFF), // Snow
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Möchtest du die Bearbeitung wirklich abbrechen? Alle nicht gespeicherten Änderungen gehen verloren.',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFFAEAEB2), // Silver
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Weiter bearbeiten',
-                      style: TextStyle(
-                        color: Color(0xFF8E8E93), // Mercury
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF453A), // Error red
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF453A).withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Warning Icon with glow
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.orange.withOpacity(0.2),
+                        Colors.deepOrange.withOpacity(0.1),
                       ],
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () async {
-                          Navigator.pop(context); // Dialog schließen
-                          
-                          // Refresh training plans before leaving
-                          final plansProvider = Provider.of<TrainingPlansProvider>(context, listen: false);
-                          await plansProvider.refreshPlans();
-                          
-                          if (context.mounted) {
-                            Navigator.pop(context); // Screen verlassen
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withOpacity(0.2),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Title
+                Text(
+                  'ÄNDERUNGEN VERWERFEN',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _comet,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Bearbeitung abbrechen?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: _nova,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Description
+                Text(
+                  'Alle nicht gespeicherten Änderungen gehen verloren.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _stardust,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Buttons
+                Row(
+                  children: [
+                    // Continue editing button
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              _asteroid.withOpacity(0.8),
+                              _lunar.withOpacity(0.6),
+                            ],
                           ),
-                          child: Text(
-                            'Abbrechen',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFFFFFFFF), // Snow
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _lunar.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.pop(dialogContext);
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: Center(
+                                child: Text(
+                                  'Weiter bearbeiten',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _nova,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 12),
+                    // Cancel and exit button
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFFFF453A),
+                              Color(0xFFFF6B5A),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF453A).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () async {
+                              HapticFeedback.mediumImpact();
+                              
+                              // Close dialog first
+                              Navigator.pop(dialogContext);
+                              
+                              // Get providers and navigation before async
+                              final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                              final plansProvider = Provider.of<TrainingPlansProvider>(context, listen: false);
+                              
+                              // Set navigation to training plans tab
+                              navigationProvider.setCurrentIndex(2);
+                              
+                              // Refresh plans
+                              await plansProvider.refreshPlans();
+                              
+                              // Navigate to MainScreen and clear entire stack
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) => const MainScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Verwerfen',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: _nova,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

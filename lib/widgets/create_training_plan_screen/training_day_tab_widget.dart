@@ -131,6 +131,188 @@ class TrainingDayTabWidget extends StatelessWidget {
   }
 
 
+  // PROVER-styled Exercise Options Bottom Sheet
+  void _showExerciseOptions(
+    BuildContext context,
+    int index,
+    ExerciseModel exercise,
+    bool isPeriodized,
+    int activeWeekIndex,
+    CreateTrainingPlanProvider createProvider,
+    ProgressionManagerProvider progressionProvider,
+  ) {
+    // PROVER color system
+    const Color _void = Color(0xFF000000);
+    const Color _nebula = Color(0xFF0F0F12);
+    const Color _stellar = Color(0xFF18181C);
+    const Color _lunar = Color(0xFF242429);
+    const Color _stardust = Color(0xFFA5A5B0);
+    const Color _nova = Color(0xFFF5F5F7);
+    const Color _proverCore = Color(0xFFFF4500);
+    const Color _proverGlow = Color(0xFFFF6B3D);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [_stellar, _nebula],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: _lunar.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header mit Titel
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_proverCore, _proverGlow],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.fitness_center,
+                        color: _nova,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        exercise.name,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.3,
+                          color: _nova,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, size: 22, color: _stardust),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Option 1: Übung bearbeiten
+                _buildExerciseOptionButton(
+                  icon: Icons.edit_outlined,
+                  label: 'Bearbeiten',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    HapticFeedback.lightImpact();
+                    _showEditExerciseDialog(
+                      context,
+                      index,
+                      exercise,
+                      isPeriodized,
+                      activeWeekIndex,
+                      createProvider,
+                      progressionProvider,
+                    );
+                  },
+                  colors: [_lunar.withOpacity(0.3), _lunar.withOpacity(0.1)],
+                  borderColor: _lunar.withOpacity(0.4),
+                  iconColor: _stardust,
+                  textColor: _stardust,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Option 2: Übung löschen
+                _buildExerciseOptionButton(
+                  icon: Icons.delete_outline,
+                  label: 'Löschen',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    HapticFeedback.mediumImpact();
+                    _confirmDeleteExercise(context, index, createProvider);
+                  },
+                  colors: [Colors.red.withOpacity(0.15), Colors.red.withOpacity(0.05)],
+                  borderColor: Colors.red.withOpacity(0.4),
+                  iconColor: Colors.red,
+                  textColor: Colors.red,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExerciseOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required List<Color> colors,
+    required Color borderColor,
+    required Color iconColor,
+    required Color textColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colors),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: borderColor,
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.3,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // Verbesserte leere Zustandsanzeige
   Widget _buildEmptyState(BuildContext context) {
     return Center(
@@ -354,73 +536,27 @@ class TrainingDayTabWidget extends StatelessWidget {
                         ),
                       ),
 
-                      // Optionen-Menü
-                      PopupMenuButton<String>(
+                      // PROVER-styled Options Button
+                      IconButton(
                         icon: const Icon(
                           Icons.more_vert,
-                          color: Color(0xFFAEAEB2), // Silver
+                          color: Color(0xFFA5A5B0), // stardust
+                          size: 20,
                         ),
-                        color: const Color(0xFF1C1C1E), // Charcoal
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 8,
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _showEditExerciseDialog(
-                              context,
-                              index,
-                              exercise,
-                              isPeriodized,
-                              activeWeekIndex,
-                              createProvider,
-                              progressionProvider,
-                            );
-                          } else if (value == 'delete') {
-                            _confirmDeleteExercise(
-                                context, index, createProvider);
-                          }
+                        padding: const EdgeInsets.all(8),
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _showExerciseOptions(
+                            context,
+                            index,
+                            exercise,
+                            isPeriodized,
+                            activeWeekIndex,
+                            createProvider,
+                            progressionProvider,
+                          );
                         },
-                        itemBuilder: (context) => [
-                          PopupMenuItem<String>(
-                            value: 'edit',
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.edit_outlined,
-                                  size: 20,
-                                  color: Color(0xFFAEAEB2), // Silver
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Bearbeiten',
-                                  style: TextStyle(
-                                    color: Color(0xFFFFFFFF), // Snow
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'delete',
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                  color: Color(0xFFFF453A), // Error red
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Löschen',
-                                  style: TextStyle(
-                                    color: Color(0xFFFF453A), // Error red
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),

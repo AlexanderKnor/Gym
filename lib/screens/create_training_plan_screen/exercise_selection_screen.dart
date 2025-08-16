@@ -21,20 +21,21 @@ class ExerciseSelectionScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ExerciseSelectionScreen> createState() => _ExerciseSelectionScreenState();
+  State<ExerciseSelectionScreen> createState() =>
+      _ExerciseSelectionScreenState();
 }
 
 class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // If creating new exercise, immediately redirect to database selection
     if (widget.initialExercise == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // Check if widget is still mounted before navigating
         if (!mounted) return;
-        
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -45,7 +46,8 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   name: predefinedExercise.name,
                   primaryMuscleGroup: predefinedExercise.primaryMuscleGroup,
-                  secondaryMuscleGroup: predefinedExercise.secondaryMuscleGroups.join(', '),
+                  secondaryMuscleGroup:
+                      predefinedExercise.secondaryMuscleGroups.join(', '),
                   numberOfSets: 3,
                   repRangeMin: 8,
                   repRangeMax: 12,
@@ -55,7 +57,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                   restPeriodSeconds: 90,
                   progressionProfileId: null,
                 );
-                
+
                 // Navigate to configuration screen
                 Navigator.push(
                   context,
@@ -77,7 +79,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // Check if widget is still mounted before navigating
         if (!mounted) return;
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -120,15 +122,17 @@ class ExerciseConfigurationScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ExerciseConfigurationScreen> createState() => _ExerciseConfigurationScreenState();
+  State<ExerciseConfigurationScreen> createState() =>
+      _ExerciseConfigurationScreenState();
 }
 
-class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScreen> with TickerProviderStateMixin {
+class _ExerciseConfigurationScreenState
+    extends State<ExerciseConfigurationScreen> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _heroController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _heroScaleAnimation;
-  
+
   // Sophisticated color system - matching modern screens
   static const Color _void = Color(0xFF000000);
   static const Color _cosmos = Color(0xFF050507);
@@ -144,7 +148,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
   static const Color _proverCore = Color(0xFFFF4500);
   static const Color _proverGlow = Color(0xFFFF6B3D);
   static const Color _proverFlare = Color(0xFFFFA500);
-  
+
   late int _numberOfSets;
   late int _repRangeMin;
   late int _repRangeMax;
@@ -153,13 +157,13 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
   late double _standardIncrease;
   late int _restPeriodSeconds;
   String? _selectedProfileId;
-  
+
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -182,7 +186,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
 
     _fadeController.forward();
     _heroController.forward();
-    
+
     _numberOfSets = widget.exercise.numberOfSets;
     _repRangeMin = widget.exercise.repRangeMin;
     _repRangeMax = widget.exercise.repRangeMax;
@@ -228,28 +232,34 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
       }
 
       try {
-        final createProvider = Provider.of<CreateTrainingPlanProvider>(context, listen: false);
+        final createProvider =
+            Provider.of<CreateTrainingPlanProvider>(context, listen: false);
         if (widget.isNewExercise) {
           createProvider.addExercise(exercise);
         } else {
-          final exercises = createProvider.draftPlan?.days[createProvider.selectedDayIndex].exercises ?? [];
-          final exerciseIndex = exercises.indexWhere((e) => e.id == widget.exercise.id);
+          final exercises = createProvider
+                  .draftPlan?.days[createProvider.selectedDayIndex].exercises ??
+              [];
+          final exerciseIndex =
+              exercises.indexWhere((e) => e.id == widget.exercise.id);
           if (exerciseIndex != -1) {
             createProvider.updateExercise(exerciseIndex, exercise);
           }
         }
       } catch (e) {
-        final sessionProvider = Provider.of<TrainingSessionProvider>(context, listen: false);
+        final sessionProvider =
+            Provider.of<TrainingSessionProvider>(context, listen: false);
         if (widget.isNewExercise) {
           sessionProvider.addNewExerciseToSession(exercise);
         } else {
-          final exerciseIndex = sessionProvider.exercises.indexWhere((e) => e.id == widget.exercise.id);
+          final exerciseIndex = sessionProvider.exercises
+              .indexWhere((e) => e.id == widget.exercise.id);
           if (exerciseIndex != -1) {
             sessionProvider.updateExerciseFullDetails(exerciseIndex, exercise);
           }
         }
       }
-      
+
       HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 100));
       Navigator.of(context).pop();
@@ -259,8 +269,9 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
 
   @override
   Widget build(BuildContext context) {
-    final progressionProvider = Provider.of<ProgressionManagerProvider>(context);
-    
+    final progressionProvider =
+        Provider.of<ProgressionManagerProvider>(context);
+
     return Scaffold(
       backgroundColor: _void,
       body: Stack(
@@ -277,7 +288,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                   SliverToBoxAdapter(
                     child: SizedBox(height: 60),
                   ),
-                  
+
                   // Exercise header - elegant and minimal
                   SliverToBoxAdapter(
                     child: Padding(
@@ -323,7 +334,8 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                                     ),
                                   ),
                                 ),
-                                if (widget.exercise.secondaryMuscleGroup.isNotEmpty) ...[
+                                if (widget.exercise.secondaryMuscleGroup
+                                    .isNotEmpty) ...[
                                   const SizedBox(width: 8),
                                   Text(
                                     '+ ${widget.exercise.secondaryMuscleGroup}',
@@ -342,7 +354,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                       ),
                     ),
                   ),
-                  
+
                   // Configuration sections
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
@@ -365,9 +377,11 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                                 maxValue: _repRangeMax,
                                 onMinChanged: (value) => setState(() {
                                   _repRangeMin = value;
-                                  if (_repRangeMax < value) _repRangeMax = value;
+                                  if (_repRangeMax < value)
+                                    _repRangeMax = value;
                                 }),
-                                onMaxChanged: (value) => setState(() => _repRangeMax = value),
+                                onMaxChanged: (value) =>
+                                    setState(() => _repRangeMax = value),
                                 minLimit: 1,
                                 maxLimit: 30,
                               ),
@@ -380,18 +394,18 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                                 maxValue: _rirRangeMax,
                                 onMinChanged: (value) => setState(() {
                                   _rirRangeMin = value;
-                                  if (_rirRangeMax < value) _rirRangeMax = value;
+                                  if (_rirRangeMax < value)
+                                    _rirRangeMax = value;
                                 }),
-                                onMaxChanged: (value) => setState(() => _rirRangeMax = value),
+                                onMaxChanged: (value) =>
+                                    setState(() => _rirRangeMax = value),
                                 minLimit: 0,
                                 maxLimit: 10,
                               ),
                             ),
                           ],
                         ),
-                        
                         const SizedBox(height: 32),
-                        
                         _buildModernSection(
                           'WEITERE EINSTELLUNGEN',
                           Icons.settings_rounded,
@@ -408,13 +422,16 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                             ),
                           ],
                         ),
-                        
-                        if (progressionProvider.progressionsProfile.isNotEmpty) ...[
+                        if (progressionProvider
+                            .progressionsProfile.isNotEmpty) ...[
                           const SizedBox(height: 32),
                           _buildModernSection(
                             'PROGRESSIONSPROFIL',
                             Icons.analytics_outlined,
-                            [_buildProgressionProfileSelector(progressionProvider)],
+                            [
+                              _buildProgressionProfileSelector(
+                                  progressionProvider)
+                            ],
                             optional: true,
                           ),
                         ],
@@ -425,7 +442,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
               ),
             ),
           ),
-          
+
           // Fixed header with logo and actions
           SafeArea(
             child: Container(
@@ -484,45 +501,46 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                     ),
                   ),
                   _isSaving
-                    ? Container(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: _proverCore,
-                        ),
-                      )
-                    : GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _saveExercise();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [_proverCore, _proverGlow],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _proverCore.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                      ? Container(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: _proverCore,
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _saveExercise();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [_proverCore, _proverGlow],
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            'FERTIG',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: _nova,
-                              letterSpacing: 1,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _proverCore.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              'FERTIG',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                 ],
               ),
             ),
@@ -558,43 +576,45 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                   fontWeight: FontWeight.w700,
                   color: _proverCore,
                   letterSpacing: 1.2,
+                ),
+              ),
+              if (optional) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _comet.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _comet.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    'OPTIONAL',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: _comet,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
-                if (optional) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _comet.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: _comet.withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      'OPTIONAL',
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: _comet,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
+        ),
         ...children.map((child) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: child,
-        )),
-        ],
-      );
+              padding: const EdgeInsets.only(bottom: 16),
+              child: child,
+            )),
+      ],
+    );
   }
 
-  Widget _buildModernParameterCard(String label, IconData icon, Widget control) {
+  Widget _buildModernParameterCard(
+      String label, IconData icon, Widget control) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -779,101 +799,68 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
     required int minLimit,
     required int maxLimit,
   }) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _stellar.withOpacity(0.8),
-            _stellar.withOpacity(0.6),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _lunar.withOpacity(0.5),
-          width: 1,
-        ),
+    return GestureDetector(
+      onTap: () => _showDualWheelRangePicker(
+        context,
+        minValue: minValue,
+        maxValue: maxValue,
+        onMinChanged: onMinChanged,
+        onMaxChanged: onMaxChanged,
+        minLimit: minLimit,
+        maxLimit: maxLimit,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _showModernNumberPicker(
-                  context,
-                  'MINIMUM',
-                  minValue,
-                  minLimit,
-                  maxValue,
-                  onMinChanged,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(14),
-                  bottomLeft: Radius.circular(14),
-                ),
-                child: Container(
-                  height: 50,
-                  child: Center(
-                    child: Text(
-                      '$minValue',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: _nova,
-                      ),
-                    ),
-                  ),
-                ),
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              _stellar.withOpacity(0.8),
+              _stellar.withOpacity(0.6),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _lunar.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$minValue',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _nova,
               ),
             ),
-          ),
-          Container(
-            width: 32,
-            child: Center(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Container(
-                width: 20,
+                width: 16,
                 height: 2,
                 decoration: BoxDecoration(
-                  color: _comet,
+                  gradient: LinearGradient(
+                    colors: [
+                      _proverCore.withOpacity(0.4),
+                      _proverCore.withOpacity(0.6),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _showModernNumberPicker(
-                  context,
-                  'MAXIMUM',
-                  maxValue,
-                  minValue,
-                  maxLimit,
-                  onMaxChanged,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(14),
-                  bottomRight: Radius.circular(14),
-                ),
-                child: Container(
-                  height: 50,
-                  child: Center(
-                    child: Text(
-                      '$maxValue',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: _nova,
-                      ),
-                    ),
-                  ),
-                ),
+            Text(
+              '$maxValue',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _nova,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1048,7 +1035,8 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                   end: Alignment.bottomRight,
                   colors: [_stellar, _nebula],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 border: Border.all(
                   color: _lunar.withOpacity(0.3),
                   width: 1,
@@ -1126,7 +1114,9 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                               '$value',
                               style: TextStyle(
                                 fontSize: isSelected ? 32 : 22,
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
                                 color: isSelected ? _proverCore : _stardust,
                               ),
                             ),
@@ -1188,7 +1178,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
 
   void _showIncrementPicker(BuildContext context) {
     final increments = [0.25, 0.5, 1.0, 1.25, 2.0, 2.5, 5.0, 7.5, 10.0];
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1204,7 +1194,8 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                   end: Alignment.bottomRight,
                   colors: [_stellar, _nebula],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 border: Border.all(
                   color: _lunar.withOpacity(0.3),
                   width: 1,
@@ -1279,7 +1270,9 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                             '${increment.toStringAsFixed(increment == increment.roundToDouble() ? 0 : 2)} kg',
                             style: TextStyle(
                               fontSize: isSelected ? 32 : 22,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
                               color: isSelected ? _proverCore : _stardust,
                             ),
                           ),
@@ -1342,7 +1335,7 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
 
   void _showRestPeriodPicker(BuildContext context) {
     final restPeriods = [30, 45, 60, 90, 120, 150, 180, 240, 300];
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1358,7 +1351,8 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                   end: Alignment.bottomRight,
                   colors: [_stellar, _nebula],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 border: Border.all(
                   color: _lunar.withOpacity(0.3),
                   width: 1,
@@ -1433,7 +1427,9 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
                             _formatRestPeriod(period),
                             style: TextStyle(
                               fontSize: isSelected ? 32 : 22,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
                               color: isSelected ? _proverCore : _stardust,
                             ),
                           ),
@@ -1506,5 +1502,326 @@ class _ExerciseConfigurationScreenState extends State<ExerciseConfigurationScree
         return '${minutes}:${remainingSeconds.toString().padLeft(2, '0')}min';
       }
     }
+  }
+
+  void _showDualWheelRangePicker(
+    BuildContext context, {
+    required int minValue,
+    required int maxValue,
+    required Function(int) onMinChanged,
+    required Function(int) onMaxChanged,
+    required int minLimit,
+    required int maxLimit,
+  }) {
+    HapticFeedback.mediumImpact();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        int tempMinValue = minValue;
+        int tempMaxValue = maxValue;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: _nebula,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(
+                  top: BorderSide(color: _lunar.withOpacity(0.3), width: 1),
+                  left: BorderSide(color: _lunar.withOpacity(0.3), width: 1),
+                  right: BorderSide(color: _lunar.withOpacity(0.3), width: 1),
+                ),
+              ),
+              padding: const EdgeInsets.all(24),
+              height: 480,
+              child: Column(
+                children: [
+                  // Handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _asteroid.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Title
+                  Text(
+                    'BEREICH AUSWÄHLEN',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _stardust,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Range display
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _stellar.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _lunar.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              'MIN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _proverCore.withOpacity(0.7),
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$tempMinValue',
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Container(
+                            width: 24,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  _proverCore.withOpacity(0.3),
+                                  _proverCore.withOpacity(0.6),
+                                  _proverCore.withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'MAX',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _proverCore.withOpacity(0.7),
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$tempMaxValue',
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: _nova,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Wheels
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // MIN Wheel
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  _stellar.withOpacity(0.2),
+                                  _stellar.withOpacity(0.4),
+                                  _stellar.withOpacity(0.2),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _lunar.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: ListWheelScrollView(
+                              itemExtent: 50,
+                              physics: const FixedExtentScrollPhysics(),
+                              controller: FixedExtentScrollController(
+                                initialItem: tempMinValue - minLimit,
+                              ),
+                              diameterRatio: 1.5,
+                              perspective: 0.003,
+                              onSelectedItemChanged: (index) {
+                                HapticFeedback.selectionClick();
+                                setState(() {
+                                  tempMinValue = minLimit + index;
+                                  if (tempMinValue > tempMaxValue) {
+                                    tempMaxValue = tempMinValue;
+                                  }
+                                });
+                              },
+                              children: List.generate(
+                                maxLimit - minLimit + 1,
+                                (index) {
+                                  final value = minLimit + index;
+                                  final isSelected = value == tempMinValue;
+                                  return Center(
+                                    child: AnimatedDefaultTextStyle(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 24 : 16,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
+                                        color: isSelected ? _nova : _asteroid,
+                                      ),
+                                      child: Text('$value'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        // MAX Wheel
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  _stellar.withOpacity(0.2),
+                                  _stellar.withOpacity(0.4),
+                                  _stellar.withOpacity(0.2),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _lunar.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: ListWheelScrollView(
+                              itemExtent: 50,
+                              physics: const FixedExtentScrollPhysics(),
+                              controller: FixedExtentScrollController(
+                                initialItem: tempMaxValue - minLimit,
+                              ),
+                              diameterRatio: 1.5,
+                              perspective: 0.003,
+                              onSelectedItemChanged: (index) {
+                                HapticFeedback.selectionClick();
+                                setState(() {
+                                  tempMaxValue = minLimit + index;
+                                  if (tempMaxValue < tempMinValue) {
+                                    tempMinValue = tempMaxValue;
+                                  }
+                                });
+                              },
+                              children: List.generate(
+                                maxLimit - minLimit + 1,
+                                (index) {
+                                  final value = minLimit + index;
+                                  final isSelected = value == tempMaxValue;
+                                  return Center(
+                                    child: AnimatedDefaultTextStyle(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 24 : 16,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
+                                        color: isSelected ? _nova : _asteroid,
+                                      ),
+                                      child: Text('$value'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Confirm button
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onMinChanged(tempMinValue);
+                      onMaxChanged(tempMaxValue);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _proverCore.withOpacity(0.9),
+                            _proverGlow.withOpacity(0.8)
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _proverCore.withOpacity(0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'ÜBERNEHMEN',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _nova,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

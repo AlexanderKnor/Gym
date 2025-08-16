@@ -85,7 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Header with title
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(
+                        24, 76, 24, 24), // 60px header + 16px spacing
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -126,14 +127,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 HapticFeedback.lightImpact();
                                 showDialog(
                                   context: context,
-                                  builder: (context) => const AddFriendDialogWidget(),
+                                  builder: (context) =>
+                                      const AddFriendDialogWidget(),
                                 );
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [_proverCore.withOpacity(0.8), _proverGlow.withOpacity(0.6)],
+                                    colors: [
+                                      _proverCore.withOpacity(0.8),
+                                      _proverGlow.withOpacity(0.6)
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
@@ -151,7 +157,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.person_add_rounded, color: _nova, size: 16),
+                                    Icon(Icons.person_add_rounded,
+                                        color: _nova, size: 16),
                                     const SizedBox(width: 6),
                                     Text(
                                       'FREUND',
@@ -228,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          
+
           // Fixed header with logo
           SafeArea(
             child: Container(
@@ -250,7 +257,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: _proverCore.withOpacity(0.4),
@@ -280,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileCard(BuildContext context, dynamic userData) {
     final username = userData?.username ?? 'Benutzer';
     final email = userData?.email ?? '';
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -365,9 +373,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(width: 20),
-          
+
           // User Info
           Expanded(
             child: Column(
@@ -393,7 +401,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _lunar.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(6),
@@ -421,7 +430,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _FriendsListScreen(friendshipProvider: Provider.of<FriendshipProvider>(context, listen: false)),
+        builder: (context) => _FriendsListScreen(
+            friendshipProvider:
+                Provider.of<FriendshipProvider>(context, listen: false)),
       ),
     );
   }
@@ -431,12 +442,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _FriendRequestsScreen(friendshipProvider: Provider.of<FriendshipProvider>(context, listen: false)),
+        builder: (context) => _FriendRequestsScreen(
+            friendshipProvider:
+                Provider.of<FriendshipProvider>(context, listen: false)),
       ),
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, FriendshipProvider friendshipProvider) {
+  Widget _buildQuickActions(
+      BuildContext context, FriendshipProvider friendshipProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -479,7 +493,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, String count, VoidCallback onTap) {
+  Widget _buildActionCard(
+      String title, IconData icon, String count, VoidCallback onTap) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -577,9 +592,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           child: Column(
             children: [
-              _buildSettingsItem('Benachrichtigungen', Icons.notifications_rounded, () {}),
+              _buildSettingsItem(
+                  'Benachrichtigungen', Icons.notifications_rounded, () {}),
               _buildSettingsItem('Privatsphäre', Icons.lock_rounded, () {}),
-              _buildSettingsItem('Daten exportieren', Icons.download_rounded, () {}),
+              _buildSettingsItem(
+                  'Daten exportieren', Icons.download_rounded, () {}),
               _buildSettingsItem('Support', Icons.help_rounded, () {}),
             ],
           ),
@@ -622,12 +639,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
   void _showSettingsMenu(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-    final friendshipProvider = Provider.of<FriendshipProvider>(context, listen: false);
-    
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    final friendshipProvider =
+        Provider.of<FriendshipProvider>(context, listen: false);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -656,7 +674,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [_proverCore, _proverGlow]),
+                      gradient:
+                          LinearGradient(colors: [_proverCore, _proverGlow]),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(Icons.settings_rounded, color: _nova, size: 18),
@@ -708,10 +727,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.red.withOpacity(0.15), Colors.red.withOpacity(0.05)],
+                    colors: [
+                      Colors.red.withOpacity(0.15),
+                      Colors.red.withOpacity(0.05)
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
+                  border:
+                      Border.all(color: Colors.red.withOpacity(0.3), width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -719,22 +742,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () async {
                       HapticFeedback.lightImpact();
                       Navigator.pop(context); // Close settings menu first
-                      
-                      final shouldSignOut = await profileProvider.confirmSignOut(context);
-                      
+
+                      final shouldSignOut =
+                          await profileProvider.confirmSignOut(context);
+
                       if (shouldSignOut && context.mounted) {
-                        print('PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
-                        
+                        print(
+                            'PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
+
                         friendshipProvider.reset();
-                        print('PROFILE SCREEN: FriendshipProvider zurückgesetzt');
-                        
+                        print(
+                            'PROFILE SCREEN: FriendshipProvider zurückgesetzt');
+
                         await authProvider.signOut();
                         print('PROFILE SCREEN: Benutzer abgemeldet');
-                        
+
                         if (context.mounted) {
                           Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
-                                builder: (context) => const AuthCheckerScreen()),
+                                builder: (context) =>
+                                    const AuthCheckerScreen()),
                             (route) => false,
                           );
                         }
@@ -742,10 +769,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 16),
                       child: Row(
                         children: [
-                          Icon(Icons.logout_rounded, size: 18, color: Colors.red),
+                          Icon(Icons.logout_rounded,
+                              size: 18, color: Colors.red),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -770,7 +799,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios_rounded, color: Colors.red.withOpacity(0.5), size: 14),
+                          Icon(Icons.arrow_forward_ios_rounded,
+                              color: Colors.red.withOpacity(0.5), size: 14),
                         ],
                       ),
                     ),
@@ -784,7 +814,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMenuOption(String title, IconData icon, String subtitle, VoidCallback onTap) {
+  Widget _buildMenuOption(
+      String title, IconData icon, String subtitle, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -879,9 +910,11 @@ class _FriendsListScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: _stellar.withOpacity(0.8),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: _lunar.withOpacity(0.5)),
+                              border:
+                                  Border.all(color: _lunar.withOpacity(0.5)),
                             ),
-                            child: Icon(Icons.arrow_back_rounded, color: _nova, size: 20),
+                            child: Icon(Icons.arrow_back_rounded,
+                                color: _nova, size: 20),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -933,7 +966,8 @@ class _FriendsListScreen extends StatelessWidget {
                       if (provider.friends.isEmpty) {
                         return SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 50),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 50),
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -944,7 +978,8 @@ class _FriendsListScreen extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: _stellar.withOpacity(0.6),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: _lunar.withOpacity(0.4)),
+                                      border: Border.all(
+                                          color: _lunar.withOpacity(0.4)),
                                     ),
                                     child: Icon(
                                       Icons.people_outline_rounded,
@@ -986,7 +1021,9 @@ class _FriendsListScreen extends StatelessWidget {
                               final friend = provider.friends[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
-                                child: FriendCard(friend: friend, friendshipProvider: provider),
+                                child: FriendCard(
+                                    friend: friend,
+                                    friendshipProvider: provider),
                               );
                             },
                             childCount: provider.friends.length,
@@ -999,7 +1036,6 @@ class _FriendsListScreen extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );
@@ -1048,9 +1084,11 @@ class _FriendRequestsScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: _stellar.withOpacity(0.8),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: _lunar.withOpacity(0.5)),
+                              border:
+                                  Border.all(color: _lunar.withOpacity(0.5)),
                             ),
-                            child: Icon(Icons.arrow_back_rounded, color: _nova, size: 20),
+                            child: Icon(Icons.arrow_back_rounded,
+                                color: _nova, size: 20),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -1102,7 +1140,8 @@ class _FriendRequestsScreen extends StatelessWidget {
                       if (provider.receivedRequests.isEmpty) {
                         return SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 50),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 50),
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1113,7 +1152,8 @@ class _FriendRequestsScreen extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: _stellar.withOpacity(0.6),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: _lunar.withOpacity(0.4)),
+                                      border: Border.all(
+                                          color: _lunar.withOpacity(0.4)),
                                     ),
                                     child: Icon(
                                       Icons.mail_outline_rounded,
@@ -1155,7 +1195,8 @@ class _FriendRequestsScreen extends StatelessWidget {
                               final request = provider.receivedRequests[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
-                                child: FriendRequestCard(request: request, provider: provider),
+                                child: FriendRequestCard(
+                                    request: request, provider: provider),
                               );
                             },
                             childCount: provider.receivedRequests.length,
@@ -1168,7 +1209,6 @@ class _FriendRequestsScreen extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );

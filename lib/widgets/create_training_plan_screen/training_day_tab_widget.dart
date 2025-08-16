@@ -45,171 +45,17 @@ class TrainingDayTabWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // NEU: Wochenauswahl für periodisierte Pläne mit modernem Design
+        // PROVER-styled Mikrozyklus Dropdown für periodisierte Pläne
         if (isPeriodized) ...[
           Container(
-            margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E), // Charcoal
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF000000).withOpacity(0.3),
-                  offset: const Offset(0, 2),
-                  blurRadius: 8,
-                ),
-              ],
-              border: Border.all(
-                color: const Color(0xFF48484A).withOpacity(0.3), // Steel
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_rounded,
-                      size: 18,
-                      color: Color(0xFFFF4500), // Orange
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Mikrozyklus ${activeWeekIndex + 1} von ${plan.numberOfWeeks}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF4500), // Orange
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Wähle die Woche für die Konfiguration:',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFFAEAEB2), // Silver
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Moderne Wochenauswahl mit Chips
-                SizedBox(
-                  height: 42,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: plan.numberOfWeeks,
-                    itemBuilder: (context, weekIndex) {
-                      final isActive = weekIndex == activeWeekIndex;
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          createProvider.setActiveWeekIndex(weekIndex);
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? const Color(0xFFFF4500) // Orange
-                                : const Color(0xFF48484A), // Steel
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: isActive
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFFFF4500)
-                                          .withOpacity(0.3),
-                                      offset: const Offset(0, 2),
-                                      blurRadius: 4,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 14,
-                                color: isActive
-                                    ? const Color(0xFFFFFFFF) // Snow
-                                    : const Color(0xFFAEAEB2), // Silver
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Woche ${weekIndex + 1}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isActive
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
-                                  color: isActive
-                                      ? const Color(0xFFFFFFFF) // Snow
-                                      : const Color(0xFFAEAEB2), // Silver
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                if (activeWeekIndex > 0) ...[
-                  const SizedBox(height: 16),
-                  // Verbesserte Kopier-Funktionalität
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: const Color(0xFFFF4500).withOpacity(0.3),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          _showCopyWeekDialog(
-                              context, createProvider, activeWeekIndex);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.copy_rounded,
-                                size: 18,
-                                color: Color(0xFFFF4500), // Orange
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Woche kopieren',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFFFF4500), // Orange
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: MicrocycleDropdown(
+              currentWeek: activeWeekIndex,
+              totalWeeks: plan.numberOfWeeks,
+              onWeekChanged: (weekIndex) {
+                HapticFeedback.selectionClick();
+                createProvider.setActiveWeekIndex(weekIndex);
+              },
             ),
           ),
         ],
@@ -284,204 +130,6 @@ class TrainingDayTabWidget extends StatelessWidget {
     );
   }
 
-  // Dialog zum Kopieren einer Woche mit verbessertem Design
-  void _showCopyWeekDialog(BuildContext context,
-      CreateTrainingPlanProvider provider, int currentWeekIndex) {
-    final availableWeeks = List<int>.generate(provider.numberOfWeeks, (i) => i)
-      ..remove(currentWeekIndex);
-
-    if (availableWeeks.isEmpty) return;
-
-    int? selectedSourceWeek;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(builder: (context, setState) {
-        return Dialog(
-          backgroundColor: const Color(0xFF1C1C1E), // Charcoal
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: const Color(0xFF48484A).withOpacity(0.3), // Steel
-              width: 1,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Woche kopieren',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFFFFF), // Snow
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Wähle die Quell-Woche, deren Konfiguration du in Woche ${currentWeekIndex + 1} kopieren möchtest:',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFFAEAEB2), // Silver
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<int>(
-                  value: selectedSourceWeek,
-                  hint: const Text(
-                    'Quell-Woche auswählen',
-                    style: TextStyle(
-                      color: Color(0xFF8E8E93), // Mercury
-                    ),
-                  ),
-                  items: availableWeeks
-                      .map((weekIndex) => DropdownMenuItem<int>(
-                            value: weekIndex,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 16,
-                                  color: Color(0xFFFF4500), // Orange
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Woche ${weekIndex + 1}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFFFFF), // Snow
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedSourceWeek = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF2C2C2E), // Graphite
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFF4500), // Orange
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  style: const TextStyle(
-                    color: Color(0xFFFFFFFF), // Snow
-                  ),
-                  dropdownColor: const Color(0xFF1C1C1E), // Charcoal
-                  icon: const Icon(
-                    Icons.arrow_drop_down_rounded,
-                    color: Color(0xFFFF4500), // Orange
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'Abbrechen',
-                        style: TextStyle(
-                          color: Color(0xFF8E8E93), // Mercury
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFFFF4500), // Orange
-                            Color(0xFFFF6B3D), // Orange glow
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFF4500).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: selectedSourceWeek == null
-                              ? null
-                              : () {
-                                  // Kopiere die Einstellungen
-                                  provider.copyMicrocycleSettings(
-                                      selectedSourceWeek!, currentWeekIndex);
-                                  Navigator.pop(context);
-                                  HapticFeedback.mediumImpact();
-
-                                  // Erfolgs-Snackbar
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Einstellungen aus Woche ${selectedSourceWeek! + 1} wurden kopiert',
-                                        style: const TextStyle(
-                                          color: Color(0xFFFFFFFF), // Snow
-                                        ),
-                                      ),
-                                      backgroundColor: const Color(
-                                          0xFF34C759), // Success green
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      margin: const EdgeInsets.all(16),
-                                    ),
-                                  );
-                                },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            child: Text(
-                              'Kopieren',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: selectedSourceWeek == null
-                                    ? const Color(0xFF8E8E93) // Mercury
-                                    : const Color(0xFFFFFFFF), // Snow
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
-    );
-  }
 
   // Verbesserte leere Zustandsanzeige
   Widget _buildEmptyState(BuildContext context) {
@@ -1102,6 +750,339 @@ class TrainingDayTabWidget extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// PROVER-styled Microcycle Dropdown Widget
+class MicrocycleDropdown extends StatefulWidget {
+  final int currentWeek;
+  final int totalWeeks;
+  final Function(int) onWeekChanged;
+
+  const MicrocycleDropdown({
+    Key? key,
+    required this.currentWeek,
+    required this.totalWeeks,
+    required this.onWeekChanged,
+  }) : super(key: key);
+
+  @override
+  State<MicrocycleDropdown> createState() => _MicrocycleDropdownState();
+}
+
+class _MicrocycleDropdownState extends State<MicrocycleDropdown>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _expandAnimation;
+  late Animation<double> _rotateAnimation;
+  bool _isExpanded = false;
+
+  // PROVER color system
+  static const Color _void = Color(0xFF000000);
+  static const Color _cosmos = Color(0xFF050507);
+  static const Color _nebula = Color(0xFF0F0F12);
+  static const Color _stellar = Color(0xFF18181C);
+  static const Color _lunar = Color(0xFF242429);
+  static const Color _asteroid = Color(0xFF35353C);
+  static const Color _comet = Color(0xFF65656F);
+  static const Color _stardust = Color(0xFFA5A5B0);
+  static const Color _nova = Color(0xFFF5F5F7);
+  
+  // Prover signature gradient
+  static const Color _proverCore = Color(0xFFFF4500);
+  static const Color _proverGlow = Color(0xFFFF6B3D);
+  static const Color _proverFlare = Color(0xFFFFA500);
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    );
+    _rotateAnimation = Tween<double>(
+      begin: 0,
+      end: 0.5,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleDropdown() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+    HapticFeedback.selectionClick();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Main Dropdown Button
+        GestureDetector(
+          onTap: _toggleDropdown,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _stellar.withOpacity(0.8),
+                  _nebula.withOpacity(0.6),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _isExpanded 
+                    ? _proverCore.withOpacity(0.5)
+                    : _lunar.withOpacity(0.4),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _isExpanded 
+                      ? _proverCore.withOpacity(0.15)
+                      : _void.withOpacity(0.3),
+                  blurRadius: _isExpanded ? 12 : 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Cycle Icon with glow effect
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        _proverCore.withOpacity(0.2),
+                        _proverGlow.withOpacity(0.1),
+                      ],
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.repeat_rounded,
+                    size: 16,
+                    color: _proverCore,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Week text
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'MIKROZYKLUS',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: _comet,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Woche ${widget.currentWeek + 1} von ${widget.totalWeeks}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _nova,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Animated Arrow
+                RotationTransition(
+                  turns: _rotateAnimation,
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: _proverCore,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Expanded Dropdown List
+        SizeTransition(
+          sizeFactor: _expandAnimation,
+          child: Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _stellar.withOpacity(0.95),
+                  _nebula.withOpacity(0.85),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _lunar.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _void.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(
+                  widget.totalWeeks,
+                  (index) {
+                    final isSelected = index == widget.currentWeek;
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          widget.onWeekChanged(index);
+                          _toggleDropdown();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: isSelected
+                                ? LinearGradient(
+                                    colors: [
+                                      _proverCore.withOpacity(0.2),
+                                      _proverGlow.withOpacity(0.1),
+                                    ],
+                                  )
+                                : null,
+                            border: Border(
+                              bottom: index < widget.totalWeeks - 1
+                                  ? BorderSide(
+                                      color: _lunar.withOpacity(0.2),
+                                      width: 1,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Week number badge
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: isSelected
+                                      ? LinearGradient(
+                                          colors: [_proverCore, _proverGlow],
+                                        )
+                                      : LinearGradient(
+                                          colors: [
+                                            _asteroid.withOpacity(0.8),
+                                            _lunar.withOpacity(0.6),
+                                          ],
+                                        ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: _proverCore.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 1,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: isSelected ? _nova : _stardust,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Week label
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Woche ${index + 1}',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected ? _nova : _stardust,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                    if (isSelected) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'AKTIV',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          color: _proverCore,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              // Check icon for selected
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: _proverCore,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

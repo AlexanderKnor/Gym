@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../../providers/auth/auth_provider.dart';
 import '../../providers/profile_screen/profile_screen_provider.dart';
 import '../../providers/profile_screen/friendship_provider.dart';
+import '../../providers/training_session_screen/training_session_provider.dart';
 import '../auth/auth_checker_screen.dart';
+import '../auth/login_screen.dart';
 import '../../widgets/profile_screen/components/friend_list_widget.dart';
 import '../../widgets/profile_screen/components/add_friend_dialog_widget.dart';
 import '../../widgets/profile_screen/components/friend_request_widget.dart';
@@ -741,29 +743,199 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: InkWell(
                     onTap: () async {
                       HapticFeedback.lightImpact();
-                      Navigator.pop(context); // Close settings menu first
+                      
+                      // Store the MaterialApp navigator context before any navigation
+                      final navigatorContext = Navigator.of(context, rootNavigator: true).context;
+                      
+                      // Close settings menu first
+                      Navigator.pop(context);
+                      
+                      // Small delay to ensure modal is closed
+                      await Future.delayed(const Duration(milliseconds: 100));
 
-                      final shouldSignOut =
-                          await profileProvider.confirmSignOut(context);
+                      // Use stored context for confirmation dialog
+                      if (!navigatorContext.mounted) return;
+                      
+                      final shouldSignOut = await profileProvider.confirmSignOut(navigatorContext);
 
-                      if (shouldSignOut && context.mounted) {
-                        print(
-                            'PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
+                      if (shouldSignOut && navigatorContext.mounted) {
+                        print('PROFILE SCREEN: Benutzer hat Abmelden bestätigt');
 
-                        friendshipProvider.reset();
-                        print(
-                            'PROFILE SCREEN: FriendshipProvider zurückgesetzt');
-
-                        await authProvider.signOut();
-                        print('PROFILE SCREEN: Benutzer abgemeldet');
-
-                        if (context.mounted) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const AuthCheckerScreen()),
-                            (route) => false,
+                        try {
+                          // Show PROVER-styled loading overlay
+                          showDialog(
+                            context: navigatorContext,
+                            barrierDismissible: false,
+                            barrierColor: _void.withOpacity(0.95),
+                            builder: (context) => PopScope(
+                              canPop: false,
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 400),
+                                builder: (context, value, child) {
+                                  return Opacity(
+                                    opacity: value,
+                                    child: Center(
+                                      child: Container(
+                                        width: 200,
+                                        padding: const EdgeInsets.all(32),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              _stellar.withOpacity(0.9 * value),
+                                              _nebula.withOpacity(0.7 * value),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: _lunar.withOpacity(0.3 * value),
+                                            width: 1,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: _proverCore.withOpacity(0.1 * value),
+                                              blurRadius: 30,
+                                              spreadRadius: 5,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // Animated PROVER logo effect
+                                            TweenAnimationBuilder<double>(
+                                              tween: Tween(begin: 0.8, end: 1.2),
+                                              duration: const Duration(milliseconds: 1000),
+                                              builder: (context, scale, child) {
+                                                return Transform.scale(
+                                                  scale: scale,
+                                                  child: Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      gradient: LinearGradient(
+                                                        colors: [
+                                                          _proverCore.withOpacity(0.8 * value),
+                                                          _proverGlow.withOpacity(0.6 * value),
+                                                        ],
+                                                      ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: _proverCore.withOpacity(0.4 * value),
+                                                          blurRadius: 20,
+                                                          spreadRadius: 2,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Center(
+                                                      child: Icon(
+                                                        Icons.logout_rounded,
+                                                        color: _nova,
+                                                        size: 24,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            const SizedBox(height: 24),
+                                            // Loading dots animation
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: List.generate(3, (index) {
+                                                return TweenAnimationBuilder<double>(
+                                                  tween: Tween(begin: 0.3, end: 1.0),
+                                                  duration: Duration(milliseconds: 600 + (index * 200)),
+                                                  builder: (context, dotOpacity, child) {
+                                                    return Container(
+                                                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                                                      width: 8,
+                                                      height: 8,
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: _proverCore.withOpacity(dotOpacity * value),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Text(
+                                              'ABMELDEN',
+                                              style: TextStyle(
+                                                color: _comet.withOpacity(value),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 1.2,
+                                                decoration: TextDecoration.none,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           );
+
+                          // Small delay for animation to show
+                          await Future.delayed(const Duration(milliseconds: 300));
+                          
+                          // Reset providers first
+                          friendshipProvider.reset();
+                          print('PROFILE SCREEN: FriendshipProvider zurückgesetzt');
+                          
+                          // Clear any saved training session if exists
+                          final trainingSessionProvider = Provider.of<TrainingSessionProvider>(navigatorContext, listen: false);
+                          if (trainingSessionProvider.trainingPlan != null || trainingSessionProvider.trainingDay != null) {
+                            await trainingSessionProvider.clearSavedSession();
+                            print('PROFILE SCREEN: Gespeicherte Trainingssession gelöscht');
+                          }
+
+                          // Sign out the user - this will trigger auth state change
+                          await authProvider.signOut();
+                          print('PROFILE SCREEN: Firebase Auth signOut abgeschlossen');
+                          
+                          // Small delay for smooth transition
+                          await Future.delayed(const Duration(milliseconds: 500));
+
+                          // Navigate to AuthChecker with fade transition
+                          if (navigatorContext.mounted) {
+                            print('PROFILE SCREEN: Navigiere zur AuthCheckerScreen');
+                            Navigator.of(navigatorContext, rootNavigator: true).pushAndRemoveUntil(
+                              PageRouteBuilder(
+                                transitionDuration: const Duration(milliseconds: 600),
+                                pageBuilder: (context, animation, secondaryAnimation) => 
+                                    const AuthCheckerScreen(),
+                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
+                              ),
+                              (route) => false,
+                            );
+                            print('PROFILE SCREEN: Navigation zur AuthChecker abgeschlossen');
+                          }
+                        } catch (e) {
+                          print('PROFILE SCREEN: Fehler beim Abmelden: $e');
+                          // Close loading dialog if error
+                          if (navigatorContext.mounted) {
+                            Navigator.of(navigatorContext, rootNavigator: true).pop();
+                            ScaffoldMessenger.of(navigatorContext).showSnackBar(
+                              SnackBar(
+                                content: Text('Fehler beim Abmelden: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
                       }
                     },

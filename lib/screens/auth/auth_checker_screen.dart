@@ -20,6 +20,7 @@ class _AuthCheckerScreenState extends State<AuthCheckerScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
   bool _isTransitioning = false;
+  AuthStatus? _lastAuthStatus;
   
   // Clean color system
   static const Color _midnight = Color(0xFF000000);
@@ -109,16 +110,33 @@ class _AuthCheckerScreenState extends State<AuthCheckerScreen>
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
+    // Track auth status changes
+    if (_lastAuthStatus != authProvider.status) {
+      // Reset transition flag when auth status changes from unauthenticated to authenticated
+      if (_lastAuthStatus == AuthStatus.unauthenticated && 
+          authProvider.status == AuthStatus.authenticated) {
+        _isTransitioning = false;
+        print('AUTH CHECKER: Reset _isTransitioning nach Login');
+      }
+      _lastAuthStatus = authProvider.status;
+    }
+
     switch (authProvider.status) {
       case AuthStatus.authenticated:
-        // Trigger transition after frame
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _initializeAndTransition(context);
-        });
+        // Trigger transition after frame only if not already transitioning
+        if (!_isTransitioning) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isTransitioning) {
+              _initializeAndTransition(context);
+            }
+          });
+        }
         // Show loading screen during transition
         return _buildLoadingScreen();
         
       case AuthStatus.unauthenticated:
+        // Reset transition flag when showing login
+        _isTransitioning = false;
         return const LoginScreen();
         
       case AuthStatus.uninitialized:

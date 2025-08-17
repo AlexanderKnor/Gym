@@ -4,6 +4,7 @@ import 'dart:ui';
 import '../../models/exercise_database/predefined_exercise_model.dart';
 import '../../services/exercise_database/exercise_database_service.dart';
 import 'custom_exercise_creation_screen.dart';
+import 'exercise_detail_screen.dart';
 
 class ExerciseDatabaseSelectionScreen extends StatefulWidget {
   final Function(PredefinedExercise) onExerciseSelected;
@@ -711,7 +712,19 @@ class _ExerciseDatabaseSelectionScreenState extends State<ExerciseDatabaseSelect
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
-            widget.onExerciseSelected(exercise);
+            // Navigate to exercise detail screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ExerciseDetailScreen(
+                  exercise: exercise,
+                  onSelectExercise: (selectedExercise) {
+                    Navigator.pop(context); // Close detail screen
+                    widget.onExerciseSelected(selectedExercise);
+                  },
+                ),
+              ),
+            );
           },
           borderRadius: BorderRadius.circular(20),
           child: Padding(

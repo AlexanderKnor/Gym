@@ -5,1400 +5,900 @@
       "name": "Bankdrücken",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Langhantel"
+      "equipment": "Langhantel",
+      "movementPattern": "Horizontales Drücken",
+      "movementDescription": "Mehrgelenkige Drückbewegung in horizontaler Ebene",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 3,
+        "systemicStress": 4
+      },
+      "technique": "Schulterblätter zusammenziehen, Füße fest am Boden, kontrollierte Abwärtsbewegung",
+      "commonMistakes": ["Zu schnelle Bewegung", "Hohlkreuz", "Abprallen von der Brust"],
+      "tips": ["Handgelenke gerade halten", "Gleichmäßiges Tempo", "Volle Streckung vermeiden"]
     },
     {
       "id": 2,
       "name": "Schrägbankdrücken",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Langhantel"
+      "equipment": "Langhantel",
+      "movementPattern": "Schräges Drücken",
+      "movementDescription": "Drückbewegung in 30-45° Winkel für obere Brustmuskulatur",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "Bankwinkel 30-45°, Schulterblätter fixiert",
+      "commonMistakes": ["Zu steiler Winkel", "Ellenbogen zu weit außen"],
+      "tips": ["Fokus auf obere Brust", "Kontrollierte Negative"]
     },
     {
       "id": 3,
       "name": "Negativbankdrücken",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Langhantel"
+      "equipment": "Langhantel",
+      "movementPattern": "Negatives Drücken",
+      "movementDescription": "Drückbewegung in negativem Winkel für untere Brustmuskulatur",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "Bankwinkel -15 bis -30°, sichere Fußposition",
+      "commonMistakes": ["Gewicht rutscht nach oben", "Unsichere Position"],
+      "tips": ["Fokus auf untere Brust", "Sichere Ablage verwenden"]
     },
     {
       "id": 4,
       "name": "Kurzhantel Bankdrücken",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Kurzhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Horizontales Drücken",
+      "movementDescription": "Drückbewegung mit Kurzhanteln für besseren Bewegungsumfang",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 4
+      },
+      "technique": "Tiefere Dehnung als Langhantel, neutrale Griffposition möglich",
+      "commonMistakes": ["Asymmetrische Bewegung", "Zu schnelle Negative"],
+      "tips": ["Kurzhanteln kontrolliert zusammenführen", "Volle Dehnung nutzen", "Ellenbogen 45° Winkel"]
     },
     {
       "id": 5,
       "name": "Kurzhantel Schrägbankdrücken",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Kurzhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Schräges Drücken",
+      "movementDescription": "Fokus auf obere Brustmuskulatur mit größerem Bewegungsumfang",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "30-45° Bankwinkel, Kurzhanteln auf Schulterhöhe absenken",
+      "commonMistakes": ["Zu weiter Griff", "Rotation der Handgelenke"],
+      "tips": ["Neutrale Griffposition", "Langsame exzentrische Phase"]
     },
     {
       "id": 6,
       "name": "Kurzhantel Negativbankdrücken",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Kurzhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Negatives Drücken",
+      "movementDescription": "Untere Brustmuskulatur mit Kurzhanteln",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "Sichere Position, kontrollierte Bewegung",
+      "commonMistakes": ["Kurzhanteln rutschen", "Unsichere Ablage"],
+      "tips": ["Partner für Anreichen", "Fokus auf Kontrolle"]
     },
     {
       "id": 7,
       "name": "Brustpresse",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Horizontales Drücken",
+      "movementDescription": "Geführte Drückbewegung an der Maschine",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Rücken fest am Polster, gleichmäßiger Druck",
+      "commonMistakes": ["Abfedern", "Unvollständige Bewegung"],
+      "tips": ["Konstante Spannung halten", "Langsame Negative", "Keine Pause unten"]
     },
     {
       "id": 8,
       "name": "Schräge Brustpresse",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Schräges Drücken",
+      "movementDescription": "Geführte Schrägbank-Alternative",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Sitzposition anpassen, Griffe auf Brusthöhe",
+      "commonMistakes": ["Falsche Sitzposition", "Schultern hochziehen"],
+      "tips": ["Schulterblätter zurück", "Fokus auf obere Brust"]
     },
     {
       "id": 9,
       "name": "Negative Brustpresse",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Negatives Drücken",
+      "movementDescription": "Geführte Negativbank-Alternative",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Bewegung nach unten führen",
+      "commonMistakes": ["Zu schnelle Bewegung"],
+      "tips": ["Kontrollierte Bewegung", "Fokus auf untere Brust"]
     },
     {
       "id": 10,
       "name": "Kurzhantel Flyes",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Vordere Schulter"],
-      "equipment": "Kurzhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Fliegende Bewegung",
+      "movementDescription": "Isolationsübung für die Brustmuskulatur",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 2
+      },
+      "technique": "Ellenbogen leicht gebeugt, weite Kreisbewegung",
+      "commonMistakes": ["Zu tiefe Position", "Ellenbogen durchstrecken"],
+      "tips": ["Dehnung kontrollieren", "Fokus auf Brustkontraktion", "Leichtes Gewicht"]
     },
     {
       "id": 11,
       "name": "Cable Flyes",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Vordere Schulter"],
-      "equipment": "Kabelzug"
+      "equipment": "Kabelzug",
+      "movementPattern": "Fliegende Bewegung",
+      "movementDescription": "Konstante Spannung durch Kabelzug",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 2
+      },
+      "technique": "Kontrollierte Kreisbewegung, Spannung halten",
+      "commonMistakes": ["Zu viel Schwung", "Falsche Kabelposition"],
+      "tips": ["Verschiedene Winkel probieren", "Peak Contraction", "Langsame Bewegung"]
     },
     {
       "id": 12,
       "name": "Cable Crossover",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Vordere Schulter"],
-      "equipment": "Kabelzug"
+      "equipment": "Kabelzug",
+      "movementPattern": "Fliegende Bewegung",
+      "movementDescription": "Überkreuz-Bewegung am Kabelzug",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 2
+      },
+      "technique": "Leichte Vorbeuge, Kabel überkreuzen",
+      "commonMistakes": ["Zu aufrechte Position", "Ellenbogen durchstrecken"],
+      "tips": ["Verschiedene Höhen testen", "Squeeze am Ende"]
     },
     {
       "id": 13,
       "name": "Pec Deck",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Fliegende Bewegung",
+      "movementDescription": "Geführte Isolationsübung für die Brust",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Ellenbogen auf Polstern, kontrollierte Bewegung",
+      "commonMistakes": ["Schultern hochziehen", "Zu schnelle Bewegung"],
+      "tips": ["Brust rausstrecken", "Squeeze in der Endposition", "Konstante Spannung"]
     },
     {
       "id": 14,
       "name": "Dips",
       "primaryMuscleGroup": "Brust",
       "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Körpergewicht"
+      "equipment": "Körpergewicht",
+      "movementPattern": "Vertikales Drücken",
+      "movementDescription": "Drückbewegung am Parallelbarren",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 3,
+        "jointStress": 4,
+        "systemicStress": 3
+      },
+      "technique": "Leichte Vorneigung für Brust, aufrecht für Trizeps",
+      "commonMistakes": ["Zu tief", "Schwung", "Schultern hochziehen"],
+      "tips": ["Kontrollierte Bewegung", "Ellenbogen nicht aussperren", "Core anspannen"]
     },
     {
       "id": 15,
-      "name": "Dips Maschine",
-      "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 16,
-      "name": "Liegestütze",
-      "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 17,
-      "name": "Diamant Liegestütze",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": ["Brust", "Vordere Schulter"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 18,
-      "name": "Breite Liegestütze",
-      "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 19,
-      "name": "Kreuzheben",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Gesäß", "Beinbeuger", "Nacken"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 20,
-      "name": "Sumo Kreuzheben",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Beinbeuger", "Rücken", "Nacken"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 21,
-      "name": "Rumänisches Kreuzheben",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Gesäß", "Rücken"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 22,
-      "name": "Steifbeiniges Kreuzheben",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Gesäß", "Rücken"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 23,
-      "name": "Kurzhantel Kreuzheben",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Gesäß", "Rücken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 24,
-      "name": "Hex Bar Kreuzheben",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Gesäß", "Beinbeuger", "Nacken"],
-      "equipment": "Hex-Stange"
-    },
-    {
-      "id": 25,
-      "name": "Langhantelrudern",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 26,
-      "name": "Kurzhantel Rudern einarmig",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 27,
-      "name": "Kurzhantel Rudern beidarmig",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 28,
-      "name": "T-Bar Rudern",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 29,
-      "name": "Rudermaschine",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 30,
-      "name": "Cable Rudern",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 31,
-      "name": "Cable Rudern eng",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 32,
-      "name": "High Row",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 33,
-      "name": "Low Row",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 34,
-      "name": "Latzug",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 35,
-      "name": "Latzug breit",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 36,
-      "name": "Latzug eng",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 37,
-      "name": "Latzug Maschine",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 38,
       "name": "Klimmzüge",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Körpergewicht"
+      "equipment": "Körpergewicht",
+      "movementPattern": "Vertikales Ziehen",
+      "movementDescription": "Zugbewegung von oben nach unten",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 4,
+        "jointStress": 2,
+        "systemicStress": 4
+      },
+      "technique": "Schulterblätter nach unten ziehen, Brust zur Stange",
+      "commonMistakes": ["Schwung holen", "Unvollständige Bewegung", "Überstreckung"],
+      "tips": ["Kontrollierte Negative", "Voller Bewegungsumfang", "Core anspannen"]
     },
     {
-      "id": 39,
-      "name": "Klimmzüge breit",
+      "id": 16,
+      "name": "Latzug",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Körpergewicht"
+      "equipment": "Kabelzug",
+      "movementPattern": "Vertikales Ziehen",
+      "movementDescription": "Zugbewegung von oben am Kabelzug",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Leichte Rücklage, Stange zur oberen Brust",
+      "commonMistakes": ["Zu viel Schwung", "Stange hinter Kopf"],
+      "tips": ["Schulterblätter initiieren", "Konstante Spannung", "Verschiedene Griffe"]
     },
     {
-      "id": 40,
-      "name": "Klimmzüge eng",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Bizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 41,
-      "name": "Chin-Ups",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Rücken"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 42,
-      "name": "Assisted Pull-Up Maschine",
+      "id": 17,
+      "name": "Rudern",
       "primaryMuscleGroup": "Rücken",
       "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
-      "equipment": "Maschine"
+      "equipment": "Langhantel",
+      "movementPattern": "Horizontales Ziehen",
+      "movementDescription": "Zugbewegung in horizontaler Ebene",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Oberkörper 45° vorgeneigt, Stange zum Bauch",
+      "commonMistakes": ["Rundrücken", "Zu aufrechte Position", "Schwung"],
+      "tips": ["Core fest", "Schulterblätter zusammen", "Gleichmäßige Bewegung"]
     },
     {
-      "id": 43,
-      "name": "Hyperextensions",
+      "id": 18,
+      "name": "Kurzhantelrudern",
       "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
+      "secondaryMuscleGroups": ["Bizeps", "Hintere Schulter"],
+      "equipment": "Kurzhantel",
+      "movementPattern": "Horizontales Ziehen",
+      "movementDescription": "Einarmiges Rudern mit Kurzhantel",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 2
+      },
+      "technique": "Stabile Position, Kurzhantel zur Hüfte",
+      "commonMistakes": ["Rotation des Oberkörpers", "Zu kurze Bewegung"],
+      "tips": ["Volle Dehnung", "Ellenbogen körpernah", "Kein Schwung"]
     },
     {
-      "id": 44,
-      "name": "Good Mornings",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Gesäß", "Rücken"],
-      "equipment": "Langhantel"
+      "id": 19,
+      "name": "T-Bar Rudern",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Bizeps", "Mittlerer Rücken"],
+      "equipment": "Langhantel",
+      "movementPattern": "Horizontales Ziehen",
+      "movementDescription": "Rudern mit fixierter Langhantel",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 4,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Stabile Standposition, Griff eng oder weit",
+      "commonMistakes": ["Zu viel Hüftbewegung", "Rundrücken"],
+      "tips": ["Brust raus", "Kontrolle über ganzen Bewegungsumfang"]
     },
     {
-      "id": 45,
+      "id": 20,
+      "name": "Kreuzheben",
+      "primaryMuscleGroup": "Rücken",
+      "secondaryMuscleGroups": ["Gesäß", "Beinbeuger", "Trapezius"],
+      "equipment": "Langhantel",
+      "movementPattern": "Hip Hinge",
+      "movementDescription": "Hüftdominante Zugbewegung vom Boden",
+      "affectedJoints": ["Hüftgelenk", "Kniegelenk", "Wirbelsäule"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 5,
+        "jointStress": 4,
+        "systemicStress": 5
+      },
+      "technique": "Rücken gerade, Hüfte nach hinten schieben, Stange körpernah",
+      "commonMistakes": ["Rundrücken", "Überstreckung", "Stange zu weit vom Körper"],
+      "tips": ["Ganzkörperspannung", "Gleichmäßiger Zug", "Atmung koordinieren"]
+    },
+    {
+      "id": 21,
       "name": "Kniebeugen",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Langhantel"
+      "primaryMuscleGroup": "Beine",
+      "secondaryMuscleGroups": ["Gesäß", "Core"],
+      "equipment": "Langhantel",
+      "movementPattern": "Kniebeuge",
+      "movementDescription": "Vertikale Drückbewegung mit Knie- und Hüftbeugung",
+      "affectedJoints": ["Hüftgelenk", "Kniegelenk", "Sprunggelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 4,
+        "jointStress": 3,
+        "systemicStress": 5
+      },
+      "technique": "Knie in Richtung Zehen, Hüfte nach hinten, aufrechter Oberkörper",
+      "commonMistakes": ["Knie nach innen", "Fersen heben ab", "Rundrücken"],
+      "tips": ["Tiefe kontrollieren", "Gewicht auf ganzen Fuß", "Core fest"]
     },
     {
-      "id": 46,
-      "name": "Frontkniebeugen",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Langhantel"
+      "id": 22,
+      "name": "Frontkniebeuge",
+      "primaryMuscleGroup": "Beine",
+      "secondaryMuscleGroups": ["Gesäß", "Core"],
+      "equipment": "Langhantel",
+      "movementPattern": "Kniebeuge",
+      "movementDescription": "Kniebeuge mit Langhantel vorne",
+      "affectedJoints": ["Hüftgelenk", "Kniegelenk", "Sprunggelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 3,
+        "jointStress": 3,
+        "systemicStress": 5
+      },
+      "technique": "Ellenbogen hoch, aufrechter Oberkörper",
+      "commonMistakes": ["Ellenbogen fallen", "Nach vorne kippen"],
+      "tips": ["Handgelenk-Flexibilität", "Core extra fest"]
     },
     {
-      "id": 47,
-      "name": "Goblet Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 48,
-      "name": "Sumo Squats",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Quadrizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 49,
-      "name": "Hack Squat",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 50,
+      "id": 23,
       "name": "Beinpresse",
-      "primaryMuscleGroup": "Quadrizeps",
+      "primaryMuscleGroup": "Beine",
       "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Beindrücken",
+      "movementDescription": "Drückbewegung mit Knie- und Hüftstreckung",
+      "affectedJoints": ["Hüftgelenk", "Kniegelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 3
+      },
+      "technique": "Rücken fest an Polster, Knie in Linie mit Füßen",
+      "commonMistakes": ["Knie nach innen", "Zu tiefe Position", "Rundrücken"],
+      "tips": ["Gleichmäßiger Druck", "Volle Fußfläche", "Kontrollierte Negative"]
     },
     {
-      "id": 51,
-      "name": "Beinpresse 45°",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 52,
-      "name": "Beinstrecker",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 53,
+      "id": 24,
       "name": "Ausfallschritte",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
+      "primaryMuscleGroup": "Beine",
+      "secondaryMuscleGroups": ["Gesäß", "Core"],
+      "equipment": "Kurzhantel",
+      "movementPattern": "Einbeinige Kniebeuge",
+      "movementDescription": "Alternierende Schrittbewegung mit Kniebeugung",
+      "affectedJoints": ["Hüftgelenk", "Kniegelenk", "Sprunggelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "Großer Schritt, Knie 90°, aufrechter Oberkörper",
+      "commonMistakes": ["Knie über Zehen", "Seitliches Wackeln"],
+      "tips": ["Balance halten", "Gleichmäßige Schrittlänge"]
     },
     {
-      "id": 54,
-      "name": "Ausfallschritte vorwärts",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 55,
-      "name": "Ausfallschritte rückwärts",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 56,
-      "name": "Seitliche Ausfallschritte",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Quadrizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 57,
-      "name": "Walking Lunges",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 58,
-      "name": "Bulgarian Split Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 59,
-      "name": "Step-Ups",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 60,
-      "name": "Jump Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 61,
-      "name": "Pistol Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 62,
-      "name": "Sissy Squats",
-      "primaryMuscleGroup": "Quadrizeps",
+      "id": 25,
+      "name": "Beinstrecker",
+      "primaryMuscleGroup": "Beine",
       "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
+      "equipment": "Maschine",
+      "movementPattern": "Kniestreckung",
+      "movementDescription": "Isolierte Quadrizeps-Übung",
+      "affectedJoints": ["Kniegelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 3,
+        "systemicStress": 1
+      },
+      "technique": "Rücken am Polster, kontrollierte Streckung",
+      "commonMistakes": ["Zu schnell", "Schwung holen"],
+      "tips": ["Peak Contraction", "Langsame Negative"]
     },
     {
-      "id": 63,
-      "name": "Wall Sits",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
+      "id": 26,
+      "name": "Beinbeuger",
+      "primaryMuscleGroup": "Beine",
+      "secondaryMuscleGroups": ["Waden"],
+      "equipment": "Maschine",
+      "movementPattern": "Kniebeugung",
+      "movementDescription": "Isolierte Hamstring-Übung",
+      "affectedJoints": ["Kniegelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 5,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Hüfte am Polster, volle Beugung",
+      "commonMistakes": ["Hüfte hebt ab", "Unvollständige Bewegung"],
+      "tips": ["Fersen zu Gesäß", "Konstante Spannung"]
     },
     {
-      "id": 64,
-      "name": "Beinbeuger liegend",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 65,
-      "name": "Beinbeuger sitzend",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 66,
-      "name": "Beinbeuger stehend",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 67,
-      "name": "Single Leg Deadlifts",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 68,
-      "name": "Nordic Curls",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 69,
-      "name": "Hip Thrusts",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Beinbeuger"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 70,
-      "name": "Glute Bridges",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Beinbeuger"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 71,
-      "name": "Single Leg Glute Bridges",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Beinbeuger", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 72,
-      "name": "Cable Kickbacks",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 73,
-      "name": "Abduktor Maschine",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 74,
-      "name": "Adduktor Maschine",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 75,
-      "name": "Clamshells",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 76,
-      "name": "Fire Hydrants",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 77,
-      "name": "Wadenheben stehend",
+      "id": 27,
+      "name": "Wadenheben",
       "primaryMuscleGroup": "Waden",
       "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Plantarflexion",
+      "movementDescription": "Wadenheben im Stehen",
+      "affectedJoints": ["Sprunggelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 4,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Volle Streckung, maximale Dehnung",
+      "commonMistakes": ["Zu schnell", "Unvollständiger Bewegungsumfang"],
+      "tips": ["Pause oben", "Langsame Negative", "Verschiedene Fußpositionen"]
     },
     {
-      "id": 78,
-      "name": "Wadenheben sitzend",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 79,
-      "name": "Wadenheben mit Kurzhanteln",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 80,
-      "name": "Single Leg Calf Raises",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 81,
-      "name": "Donkey Calf Raises",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 82,
+      "id": 28,
       "name": "Schulterdrücken",
       "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Langhantel"
+      "secondaryMuscleGroups": ["Trizeps", "Oberer Rücken"],
+      "equipment": "Langhantel",
+      "movementPattern": "Vertikales Drücken",
+      "movementDescription": "Drückbewegung über Kopf",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "Core anspannen, gerade nach oben drücken, kontrollierte Bewegung",
+      "commonMistakes": ["Hohlkreuz", "Zu weiter Griff", "Asymmetrische Bewegung"],
+      "tips": ["Ellenbogen leicht vor dem Körper", "Ganzkörperspannung", "Gleichmäßiges Tempo"]
     },
     {
-      "id": 83,
-      "name": "Schulterdrücken vor dem Kopf",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 84,
-      "name": "Schulterdrücken hinter dem Kopf",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 85,
+      "id": 29,
       "name": "Kurzhantel Schulterdrücken",
       "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Kurzhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Vertikales Drücken",
+      "movementDescription": "Schulterdrücken mit Kurzhanteln",
+      "affectedJoints": ["Schultergelenk", "Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 3
+      },
+      "technique": "Neutrale oder pronierte Griffposition",
+      "commonMistakes": ["Asymmetrische Bewegung", "Zu tief absenken"],
+      "tips": ["Kurzhanteln auf Ohrhöhe", "Stabilisierung wichtig"]
     },
     {
-      "id": 86,
-      "name": "Arnold Press",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 87,
-      "name": "Schulterdrücken Maschine",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 88,
-      "name": "Pike Push-Ups",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 89,
-      "name": "Handstand Push-Ups",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 90,
+      "id": 30,
       "name": "Seitheben",
       "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
+      "secondaryMuscleGroups": ["Trapezius"],
+      "equipment": "Kurzhantel",
+      "movementPattern": "Abduktion",
+      "movementDescription": "Seitliche Hebung der Arme",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 3,
+        "stability": 2,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Leichte Vorneigung, Ellenbogen leicht gebeugt",
+      "commonMistakes": ["Zu hohes Heben", "Schwung", "Schultern hochziehen"],
+      "tips": ["Langsame Bewegung", "Auf Schulterhöhe stoppen", "Daumen leicht nach unten"]
     },
     {
-      "id": 91,
-      "name": "Seitheben am Kabel",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 92,
-      "name": "Seitheben Maschine",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 93,
+      "id": 31,
       "name": "Frontheben",
-      "primaryMuscleGroup": "Vordere Schulter",
+      "primaryMuscleGroup": "Schultern",
       "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Flexion",
+      "movementDescription": "Frontale Hebung der Arme",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 3,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Arme leicht gebeugt, bis Schulterhöhe",
+      "commonMistakes": ["Schwung aus Rücken", "Zu hoch heben"],
+      "tips": ["Langsame kontrollierte Bewegung", "Alternierend oder gleichzeitig"]
     },
     {
-      "id": 94,
-      "name": "Frontheben am Kabel",
-      "primaryMuscleGroup": "Vordere Schulter",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 95,
-      "name": "Frontheben mit Langhantel",
-      "primaryMuscleGroup": "Vordere Schulter",
-      "secondaryMuscleGroups": [],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 96,
-      "name": "Vorgebeugtes Seitheben",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 97,
+      "id": 32,
       "name": "Reverse Flyes",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": ["Nacken"],
-      "equipment": "Kurzhantel"
+      "primaryMuscleGroup": "Schultern",
+      "secondaryMuscleGroups": ["Oberer Rücken", "Trapezius"],
+      "equipment": "Kurzhantel",
+      "movementPattern": "Horizontale Abduktion",
+      "movementDescription": "Umgekehrte Fliegende für hintere Schulter",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 2,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Vorgeneigter Oberkörper, Arme seitlich heben",
+      "commonMistakes": ["Schwung", "Zu aufrechte Position"],
+      "tips": ["Schulterblätter zusammen", "Fokus auf hintere Schulter"]
     },
     {
-      "id": 98,
-      "name": "Reverse Pec Deck",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": ["Nacken"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 99,
-      "name": "Cable Reverse Flyes",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": ["Nacken"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 100,
-      "name": "Face Pulls",
-      "primaryMuscleGroup": "Hintere Schulter",
-      "secondaryMuscleGroups": ["Nacken"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 101,
-      "name": "Upright Rows",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": ["Schultern"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 102,
-      "name": "Kurzhantel Upright Rows",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": ["Schultern"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 103,
-      "name": "Cable Upright Rows",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": ["Schultern"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 104,
+      "id": 33,
       "name": "Shrugs",
-      "primaryMuscleGroup": "Nacken",
+      "primaryMuscleGroup": "Trapezius",
       "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
+      "equipment": "Langhantel",
+      "movementPattern": "Schulterheben",
+      "movementDescription": "Schulterheben für Trapezius",
+      "affectedJoints": ["Schultergelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 2,
+        "stability": 4,
+        "jointStress": 1,
+        "systemicStress": 1
+      },
+      "technique": "Schultern gerade nach oben ziehen",
+      "commonMistakes": ["Rotation", "Zu viel Gewicht"],
+      "tips": ["Pause oben", "Voller Bewegungsumfang"]
     },
     {
-      "id": 105,
-      "name": "Langhantel Shrugs",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": [],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 106,
-      "name": "Cable Shrugs",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 107,
-      "name": "Bizeps Curls",
+      "id": 34,
+      "name": "Bizepscurls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
+      "equipment": "Langhantel",
+      "movementPattern": "Ellenbogenflexion",
+      "movementDescription": "Isolierte Beugebewegung im Ellenbogen",
+      "affectedJoints": ["Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Ellenbogen fixiert, kontrollierte Bewegung, volle Streckung",
+      "commonMistakes": ["Schwung holen", "Ellenbogen bewegen", "Unvollständige Bewegung"],
+      "tips": ["Langsame Negative", "Peak Contraction", "Handgelenke neutral"]
     },
     {
-      "id": 108,
-      "name": "Langhantel Curls",
+      "id": 35,
+      "name": "Kurzhantel Bizepscurls",
       "primaryMuscleGroup": "Bizeps",
       "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Langhantel"
+      "equipment": "Kurzhantel",
+      "movementPattern": "Ellenbogenflexion",
+      "movementDescription": "Bizepscurls mit Kurzhanteln",
+      "affectedJoints": ["Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Supination möglich, alternierend oder gleichzeitig",
+      "commonMistakes": ["Oberkörper schwingen", "Zu schnell"],
+      "tips": ["Volle Supination", "Konzentrierte Bewegung"]
     },
     {
-      "id": 109,
-      "name": "SZ-Stange Curls",
+      "id": 36,
+      "name": "Hammercurls",
       "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "SZ-Stange"
+      "secondaryMuscleGroups": ["Unterarme", "Brachialis"],
+      "equipment": "Kurzhantel",
+      "movementPattern": "Ellenbogenflexion",
+      "movementDescription": "Curls mit neutralem Griff",
+      "affectedJoints": ["Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Neutraler Griff durchgehend",
+      "commonMistakes": ["Handgelenk drehen", "Schwung"],
+      "tips": ["Fokus auf Brachialis", "Langsame Bewegung"]
     },
     {
-      "id": 110,
-      "name": "Hammer Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 111,
-      "name": "Konzentrations Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 112,
+      "id": 37,
       "name": "Preacher Curls",
       "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "SZ-Stange"
+      "secondaryMuscleGroups": [],
+      "equipment": "Langhantel",
+      "movementPattern": "Ellenbogenflexion",
+      "movementDescription": "Curls am Preacher-Pult",
+      "affectedJoints": ["Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 3,
+        "stability": 5,
+        "jointStress": 3,
+        "systemicStress": 1
+      },
+      "technique": "Oberarme fest am Polster",
+      "commonMistakes": ["Überstreckung", "Zu schwer"],
+      "tips": ["Nicht vollständig strecken", "Konstante Spannung"]
     },
     {
-      "id": 113,
-      "name": "Preacher Curls Maschine",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 114,
-      "name": "Cable Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 115,
-      "name": "Cable Hammer Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 116,
-      "name": "21s Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 117,
-      "name": "Zottman Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 118,
-      "name": "Incline Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 119,
-      "name": "Spider Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 120,
-      "name": "Drag Curls",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 121,
-      "name": "Bizeps Curl Maschine",
-      "primaryMuscleGroup": "Bizeps",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 122,
-      "name": "Close Grip Bench Press",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": ["Brust"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 123,
-      "name": "Trizeps Drücken",
+      "id": 38,
+      "name": "Trizepsdrücken",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
+      "equipment": "Kabelzug",
+      "movementPattern": "Ellenbogenextension",
+      "movementDescription": "Trizepsdrücken am Kabel",
+      "affectedJoints": ["Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 4,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Ellenbogen am Körper fixiert",
+      "commonMistakes": ["Ellenbogen bewegen", "Schwung"],
+      "tips": ["Verschiedene Griffe", "Squeeze am Ende"]
     },
     {
-      "id": 124,
-      "name": "Overhead Extension",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 125,
+      "id": 39,
       "name": "French Press",
       "primaryMuscleGroup": "Trizeps",
       "secondaryMuscleGroups": [],
-      "equipment": "SZ-Stange"
+      "equipment": "Langhantel",
+      "movementPattern": "Ellenbogenextension",
+      "movementDescription": "Überkopf-Trizepsdrücken",
+      "affectedJoints": ["Ellenbogengelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 5,
+        "stability": 2,
+        "jointStress": 3,
+        "systemicStress": 1
+      },
+      "technique": "Oberarme vertikal, nur Unterarme bewegen",
+      "commonMistakes": ["Ellenbogen spreizen", "Zu tief"],
+      "tips": ["Ellenbogen eng", "Volle Streckung"]
     },
     {
-      "id": 126,
-      "name": "Skull Crushers",
+      "id": 40,
+      "name": "Dips (Trizeps)",
       "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Langhantel"
+      "secondaryMuscleGroups": ["Brust", "Vordere Schulter"],
+      "equipment": "Körpergewicht",
+      "movementPattern": "Vertikales Drücken",
+      "movementDescription": "Dips mit Fokus auf Trizeps",
+      "affectedJoints": ["Ellenbogengelenk", "Schultergelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 3,
+        "systemicStress": 2
+      },
+      "technique": "Aufrechter Oberkörper, Ellenbogen eng",
+      "commonMistakes": ["Zu tief", "Nach vorne lehnen"],
+      "tips": ["Fokus auf Trizeps", "90° im Ellenbogen"]
     },
     {
-      "id": 127,
-      "name": "Trizeps Kickbacks",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
+      "id": 41,
+      "name": "Plank",
+      "primaryMuscleGroup": "Core",
+      "secondaryMuscleGroups": ["Schultern", "Gesäß"],
+      "equipment": "Körpergewicht",
+      "movementPattern": "Isometrisch",
+      "movementDescription": "Statische Halteübung für Core",
+      "affectedJoints": [],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 1,
+        "stability": 5,
+        "jointStress": 1,
+        "systemicStress": 2
+      },
+      "technique": "Gerade Linie von Kopf bis Fersen",
+      "commonMistakes": ["Hüfte zu hoch/tief", "Kopf hängen lassen"],
+      "tips": ["Atmung nicht vergessen", "Progressiv steigern"]
     },
     {
-      "id": 128,
-      "name": "Trizepsdrücken am Kabel",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 129,
-      "name": "Cable Tricep Pushdown V-Bar",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 130,
-      "name": "Cable Tricep Pushdown Rope",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 131,
-      "name": "Overhead Cable Extension",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 132,
-      "name": "Trizeps Dips",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 133,
-      "name": "Trizeps Extension Maschine",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 134,
-      "name": "Tate Press",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 135,
-      "name": "JM Press",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": [],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 136,
+      "id": 42,
       "name": "Crunches",
       "primaryMuscleGroup": "Bauch",
       "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
+      "equipment": "Körpergewicht",
+      "movementPattern": "Rumpfbeugung",
+      "movementDescription": "Bauchmuskelübung",
+      "affectedJoints": ["Wirbelsäule"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 2,
+        "stability": 5,
+        "jointStress": 1,
+        "systemicStress": 1
+      },
+      "technique": "Unterer Rücken am Boden, Schulterblätter heben",
+      "commonMistakes": ["Nacken ziehen", "Schwung holen"],
+      "tips": ["Langsame Bewegung", "Spannung halten"]
     },
     {
-      "id": 137,
-      "name": "Sit-Ups",
+      "id": 43,
+      "name": "Beinheben",
       "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
+      "secondaryMuscleGroups": ["Hüftbeuger"],
+      "equipment": "Körpergewicht",
+      "movementPattern": "Hüftflexion",
+      "movementDescription": "Untere Bauchmuskeln trainieren",
+      "affectedJoints": ["Hüftgelenk"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 4,
+        "stability": 3,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "Rücken am Boden, Beine kontrolliert heben",
+      "commonMistakes": ["Schwung", "Hohlkreuz"],
+      "tips": ["Langsame Negative", "Core anspannen"]
     },
     {
-      "id": 138,
-      "name": "Bicycle Crunches",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 139,
+      "id": 44,
       "name": "Russian Twists",
       "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
+      "secondaryMuscleGroups": ["Schräge Bauchmuskeln"],
+      "equipment": "Körpergewicht",
+      "movementPattern": "Rotation",
+      "movementDescription": "Rotationsübung für schräge Bauchmuskeln",
+      "affectedJoints": ["Wirbelsäule"],
+      "useBackView": false,
+      "metrics": {
+        "rangeOfMotion": 3,
+        "stability": 2,
+        "jointStress": 2,
+        "systemicStress": 1
+      },
+      "technique": "V-Position, kontrollierte Rotation",
+      "commonMistakes": ["Nur Arme bewegen", "Zu schnell"],
+      "tips": ["Oberkörper rotieren", "Mit Gewicht erschweren"]
     },
     {
-      "id": 140,
-      "name": "Mountain Climbers",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 141,
-      "name": "Leg Raises",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 142,
-      "name": "Hanging Leg Raises",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 143,
-      "name": "Knee Raises",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 144,
-      "name": "Reverse Crunches",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 145,
-      "name": "V-Ups",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 146,
-      "name": "Flutter Kicks",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 147,
-      "name": "Scissor Kicks",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 148,
-      "name": "Ab Wheel Rollouts",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 149,
-      "name": "Cable Crunches",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 150,
-      "name": "Crunch Maschine",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 151,
-      "name": "Captain's Chair",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": [],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 152,
-      "name": "Roman Chair",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 153,
-      "name": "Torso Rotation Maschine",
-      "primaryMuscleGroup": "Bauch",
-      "secondaryMuscleGroups": ["Rumpf"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 154,
-      "name": "Plank",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 155,
-      "name": "Side Plank",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 156,
-      "name": "Plank Up-Downs",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch", "Trizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 157,
-      "name": "Plank Jacks",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 158,
-      "name": "Dead Bug",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 159,
-      "name": "Bird Dog",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 160,
-      "name": "Pallof Press",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 161,
-      "name": "Wood Chops",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 162,
-      "name": "Cable Woodchops hoch zu tief",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 163,
-      "name": "Cable Woodchops tief zu hoch",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Bauch"],
-      "equipment": "Kabelzug"
-    },
-    {
-      "id": 164,
-      "name": "Farmers Walk",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": ["Nacken", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 165,
-      "name": "Suitcase Carry",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Unterarme"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 166,
-      "name": "Turkish Get-Ups",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Rücken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 167,
-      "name": "Wrist Curls",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 168,
-      "name": "Reverse Wrist Curls",
-      "primaryMuscleGroup": "Unterarme",
-      "secondaryMuscleGroups": [],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 169,
-      "name": "Clean and Press",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Quadrizeps"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 170,
-      "name": "Clean and Jerk",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Quadrizeps"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 171,
-      "name": "Snatch",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Quadrizeps"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 172,
-      "name": "Power Clean",
-      "primaryMuscleGroup": "Rücken",
-      "secondaryMuscleGroups": ["Schultern", "Quadrizeps"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 173,
-      "name": "High Pull",
-      "primaryMuscleGroup": "Nacken",
-      "secondaryMuscleGroups": ["Rücken", "Schultern"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 174,
-      "name": "Thrusters",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Quadrizeps", "Trizeps"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 175,
-      "name": "Burpees",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Brust", "Schultern", "Quadrizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 176,
-      "name": "Box Jumps",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 177,
-      "name": "Broad Jumps",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 178,
-      "name": "Vertical Jumps",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 179,
-      "name": "Split Jumps",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 180,
-      "name": "Tuck Jumps",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Bauch", "Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 181,
-      "name": "Jumping Jacks",
-      "primaryMuscleGroup": "Waden",
-      "secondaryMuscleGroups": ["Schultern"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 182,
-      "name": "High Knees",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 183,
-      "name": "Butt Kicks",
-      "primaryMuscleGroup": "Beinbeuger",
-      "secondaryMuscleGroups": ["Waden"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 184,
-      "name": "Bear Crawls",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Quadrizeps"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 185,
-      "name": "Crab Walks",
-      "primaryMuscleGroup": "Trizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 186,
-      "name": "Duck Walks",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Körpergewicht"
-    },
-    {
-      "id": 187,
-      "name": "Man Makers",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Brust", "Schultern", "Rücken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 188,
-      "name": "Battle Ropes",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Unterarme"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 189,
-      "name": "Kettlebell Swings",
-      "primaryMuscleGroup": "Gesäß",
-      "secondaryMuscleGroups": ["Beinbeuger", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 190,
-      "name": "Kettlebell Goblet Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 191,
-      "name": "Kettlebell Snatches",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 192,
-      "name": "Kettlebell Clean and Press",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Rücken", "Rumpf"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 193,
-      "name": "Kettlebell Turkish Get-Ups",
-      "primaryMuscleGroup": "Rumpf",
-      "secondaryMuscleGroups": ["Schultern", "Rücken"],
-      "equipment": "Kurzhantel"
-    },
-    {
-      "id": 194,
-      "name": "Overhead Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf", "Schultern"],
-      "equipment": "Langhantel"
-    },
-    {
-      "id": 195,
-      "name": "Smith Machine Squats",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß", "Rumpf"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 196,
-      "name": "Smith Machine Bankdrücken",
-      "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 197,
-      "name": "Smith Machine Schrägbankdrücken",
-      "primaryMuscleGroup": "Brust",
-      "secondaryMuscleGroups": ["Trizeps", "Vordere Schulter"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 198,
-      "name": "Smith Machine Ausfallschritte",
-      "primaryMuscleGroup": "Quadrizeps",
-      "secondaryMuscleGroups": ["Gesäß"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 199,
-      "name": "Smith Machine Kreuzheben",
-      "primaryMuscleGroup": "Rücken",
+      "id": 45,
+      "name": "Hyperextensions",
+      "primaryMuscleGroup": "Unterer Rücken",
       "secondaryMuscleGroups": ["Gesäß", "Beinbeuger"],
-      "equipment": "Maschine"
-    },
-    {
-      "id": 200,
-      "name": "Smith Machine Schulterdrücken",
-      "primaryMuscleGroup": "Schultern",
-      "secondaryMuscleGroups": ["Trizeps"],
-      "equipment": "Maschine"
+      "equipment": "Maschine",
+      "movementPattern": "Rückenstreckung",
+      "movementDescription": "Rückenstrecker trainieren",
+      "affectedJoints": ["Wirbelsäule", "Hüftgelenk"],
+      "useBackView": true,
+      "metrics": {
+        "rangeOfMotion": 3,
+        "stability": 4,
+        "jointStress": 2,
+        "systemicStress": 2
+      },
+      "technique": "Kontrollierte Beugung und Streckung",
+      "commonMistakes": ["Überstreckung", "Schwung"],
+      "tips": ["Neutrale Endposition", "Langsame Bewegung"]
     }
   ]
 }

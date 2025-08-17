@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import '../../models/exercise_database/predefined_exercise_model.dart';
 import '../../models/exercise_database/exercise_detail_model.dart';
 import '../../services/exercise_database/exercise_detail_service.dart';
+import '../../widgets/create_training_plan_screen/optimized_anatomy_widget.dart';
 
 class ExerciseDetailScreen extends StatefulWidget {
   final PredefinedExercise exercise;
@@ -41,6 +42,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen>
   
   // Tab selection
   int _selectedTab = 0;
+  // Muscle visualization selection
+  bool _showPrimaryMuscles = true;
   
   // Cosmic Color System - matching app theme
   static const Color _void = Color(0xFF000000);
@@ -437,7 +440,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen>
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
       child: Column(
         children: [
-          // Anatomy visualization placeholder
+          // Anatomy visualization with optimized SVG
           AnimatedBuilder(
             animation: _floatingAnimation,
             builder: (context, child) {
@@ -446,32 +449,48 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen>
                 child: Container(
                   height: 280,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        _stellar.withOpacity(0.3),
-                        _nebula.withOpacity(0.2),
-                      ],
-                    ),
+                    color: _stellar.withOpacity(0.4), // Simple dark background
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: _lunar.withOpacity(0.2),
+                      color: _lunar.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Stack(
                         children: [
-                          // Muscle visualization
+                          // Optimized SVG anatomy visualization
                           Center(
-                            child: Icon(
-                              Icons.accessibility_new_rounded,
-                              size: 120,
-                              color: _proverCore.withOpacity(0.2),
+                            child: OptimizedAnatomyWidget(
+                              svgPath: _exerciseDetails.useBackView
+                                  ? 'assets/body/male_back.svg'
+                                  : 'assets/body/male_front.svg',
+                              primaryMuscleIds: _exerciseDetails.primaryMuscleIds,
+                              secondaryMuscleIds: _exerciseDetails.secondaryMuscleIds,
+                              showPrimary: _showPrimaryMuscles,
+                              width: 200,
+                              height: 260,
+                              useBackView: _exerciseDetails.useBackView,
+                            ),
+                          ),
+                          
+                          // Muscle toggle buttons
+                          Positioned(
+                            top: 16,
+                            left: 16,
+                            child: Row(
+                              children: [
+                                _buildMuscleToggle('Primär', _showPrimaryMuscles, () {
+                                  setState(() => _showPrimaryMuscles = true);
+                                }),
+                                const SizedBox(width: 8),
+                                _buildMuscleToggle('Sekundär', !_showPrimaryMuscles, () {
+                                  setState(() => _showPrimaryMuscles = false);
+                                }),
+                              ],
                             ),
                           ),
                           
@@ -740,6 +759,35 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen>
                 child,
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildMuscleToggle(String label, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? _proverCore.withOpacity(0.2) : _stellar.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive ? _proverCore.withOpacity(0.5) : _lunar.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? _proverCore : _stardust,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),

@@ -21,7 +21,7 @@ dependencies:
   # Hilfsbibliotheken (können nach Bedarf erweitert werden)
   intl: ^0.20.2
   shared_preferences: ^2.2.0
-  # flutter_svg: ^2.0.10  # Temporär deaktiviert bis SVG-Integration gefixt ist
+  flutter_svg: ^2.0.10
   
 dev_dependencies:
   flutter_test:
@@ -39,6 +39,7 @@ flutter:
   # Assets
   assets:
     - assets/data/
+    - assets/body/
   
   # Hier kannst du später Schriftarten hinzufügen:
   # fonts:
